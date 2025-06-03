@@ -2,7 +2,6 @@
 #define DETECTOR_HH
 
 #include "G4ParticleDefinition.hh"
-
 #include "G4VSensitiveDetector.hh"
 #include "G4RunManager.hh"
 #include "G4SystemOfUnits.hh"

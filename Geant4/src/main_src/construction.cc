@@ -8,7 +8,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isDetector_Shell = true;
 	
 	// Set the material for each logical volume
-	matWorld = Air; //Vacuum;
+	matWorld = Vacuum; //Vacuum;
 
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
@@ -25,6 +25,14 @@ void MyDetectorConstruction::DefineMaterials() {
 	
 	Air = nist->FindOrBuildMaterial("G4_AIR");
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
+	// Defining Xenon gas for test
+	auto a = 131.29*g/mole;
+	G4Element* Xe = new G4Element("Xe", "Xe", 54., a);
+	auto density = 5.858*mg/cm3;  
+	double pressure = 1*bar;  // [X->Your choice]
+	double temperature = 296.15*kelvin;  // [your choice]
+	matXe  = new G4Material("matXe", density, 1, kStateGas, temperature, pressure);
+	matXe->AddElement(Xe, 1);  //--> Monoatomic nature
 }
 
 void MyDetectorConstruction::DefineMessenger() {
@@ -55,9 +63,12 @@ G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 
 // Set Sensitive Detector(SD) and Field
 void MyDetectorConstruction::ConstructSDandField() {
-	MySensentiveDetector* sensDet = new MySensentiveDetector("SensitiveDetector");
+	G4SDManager* sdManager = G4SDManager::GetSDMpointer();
+    Tracker* tracker0 = new Tracker("ShellTracker");
+	sdManager->AddNewDetector(tracker0);
 	if(logicDetector_Shell != NULL)
-		logicDetector_Shell->SetSensitiveDetector(sensDet);
+		logicDetector_Shell->SetSensitiveDetector(tracker0);
+
 }
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
@@ -65,7 +76,7 @@ void MyDetectorConstruction::ConstructShell_Detector() {
 	G4double inner_radius = 10*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
-	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matWorld, "logicDetector_Shell");
+	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, Air, "logicDetector_Shell");
 	physDetector_Shell = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicDetector_Shell, "Detector_Shell", logicWorld, false, 0, true);
 }
 // End Ideal Detector

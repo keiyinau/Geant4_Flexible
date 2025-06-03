@@ -13,7 +13,6 @@ public:
 	MyRunAction();
 	~MyRunAction();
 	void CreateDataFile_SensitiveDetector(G4AnalysisManager*);
-	void CreateDataFile_Stepping(G4AnalysisManager*);
 	virtual void BeginOfRunAction(const G4Run*);
 	virtual void EndOfRunAction(const G4Run*);
 };

@@ -15,11 +15,6 @@ G4bool MySensentiveDetector::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhi
 	G4StepPoint* preStepPoint = aStep->GetPreStepPoint();
 	G4StepPoint* postStepPoint = aStep->GetPostStepPoint();
 
-    // Check if preStepPoint and postStepPoint are in the detector volume
-	//G4bool isInDetectorPre = (preStepPoint->GetTouchableHandle()->GetVolume() &&
-    //                          preStepPoint->GetTouchableHandle()->GetVolume()->GetLogicalVolume() == fDetectorVolume);
-    //G4bool isInDetectorPost = (postStepPoint->GetTouchableHandle()->GetVolume() &&
-    //                           postStepPoint->GetTouchableHandle()->GetVolume()->GetLogicalVolume() == fDetectorVolume);
 	// Check if particle enters the detector (first entry)
 	if (preStepPoint->GetStepStatus() == fGeomBoundary|| track->GetCurrentStepNumber() == 1){
 		//SaveToDataFile(aStep,ROhist,track);
