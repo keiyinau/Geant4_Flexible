@@ -15,6 +15,7 @@
 #include "action.hh"
 #include "G4GeometryManager.hh"
 #include "FTFP_BERT.hh"
+#include "G4HadronicParameters.hh"
 
 int main(int argc, char** argv)	// argc = argument count, argv = argument vector, https://www.ibm.com/docs/en/i/7.1?topic=functions-main-function
 {
@@ -25,7 +26,7 @@ int main(int argc, char** argv)	// argc = argument count, argv = argument vector
 	#else
 		G4RunManager* runManager = new G4RunManager();
 	#endif
-
+	G4HadronicParameters::Instance()->SetTimeThresholdForRadioactiveDecay( 1.0e+60*CLHEP::year );
 	G4bool physics_selector = 0;	// 0 = MyPhysicsList, 1 = Default PhysicsList
 	if (physics_selector == 0) {
 		G4VModularPhysicsList* physicsList = new MyPhysicsList();

@@ -47,6 +47,10 @@ public:
 	void ConstructShell_Detector();
 	// End Ideal Detector
 
+	//Construct source
+	void ConstructSource();
+	// End Construct source
+
 	static G4String file_name;
 
 private:
@@ -63,8 +67,23 @@ private:
 	G4VPhysicalVolume *physDetector_Shell;
 	// End Ideal Detector
 	
+
+	// Radioactive Source (Positron Source)
+	G4bool isSource;
+	G4double ring_radius, ring_height_half, disk_radius, disk_height_half, bare_source_radius, bare_source_height_half;
+	G4LogicalVolume *logicRing, *logicDisk, *logicBareSource;
+	G4VPhysicalVolume *physRing, *physDisk, *physBareSource;
+	G4bool isBareSource_Dt, isBS_Disk_Dt, isBSD_Ring_Dt;						//BS = Bare Source, D = Disk, Dt = Detector
+	G4LogicalVolume *logicBareSource_Dt, *logicBS_Disk_Dt, *logicBSD_Ring_Dt;
+	G4VPhysicalVolume *physBareSource_Dt, *physBS_Disk_Dt, *physBSD_Ring_Dt;
+	// End Radioactive Source
+
+
 	//Materials
 	G4Material *matXe;  // Xenon gas for test
+	// Radioactive Source (Positron Source)
+	G4Material *matTi, *matNaCl, *matCsI;
+
 
 };
 

@@ -1,0 +1,10 @@
+/run/numberOfThreads 20
+/run/initialize
+
+# Enable command echo
+/control/verbose 0
+
+# Set the active region of Na-22
+
+# Run commands
+/run/beamOn 100000
