@@ -30,6 +30,8 @@
 
 #include "detector.hh"
 #include "detector_tracker.hh"
+#include "detector_ideal.hh"
+#include "detector_calorimeter.hh"
 
 class MyDetectorConstruction : public G4VUserDetectorConstruction
 {
