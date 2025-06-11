@@ -92,10 +92,10 @@ void Detect_reference::SaveToRoot(){
 		analysisManager->FillNtupleSColumn(3, 4, data.particleName); // particleName
 		analysisManager->FillNtupleSColumn(3, 5, data.creatorProcessName); // creatorProcessName
 		analysisManager->FillNtupleSColumn(3, 6, data.ProcessName); // ProcessName
-		analysisManager->FillNtupleDColumn(3, 7, data.kineticEnergy); // kineticEnergy
-		analysisManager->FillNtupleDColumn(3, 8, data.x_distance); // x_distance
-		analysisManager->FillNtupleDColumn(3, 9, data.y_distance); // y_distance
-		analysisManager->FillNtupleDColumn(3, 10, data.z_distance); // z_distance
+		analysisManager->FillNtupleDColumn(3, 7, data.kineticEnergy/MeV); // kineticEnergy
+		analysisManager->FillNtupleDColumn(3, 8, data.x_distance/mm); // x_distance
+		analysisManager->FillNtupleDColumn(3, 9, data.y_distance/mm); // y_distance
+		analysisManager->FillNtupleDColumn(3, 10, data.z_distance/mm); // z_distance
 		analysisManager->AddNtupleRow(3);
 	}
 }

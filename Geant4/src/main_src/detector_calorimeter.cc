@@ -76,7 +76,7 @@ void Calorimeter::SaveToRoot(){
 		analysisManager->FillNtupleIColumn(1,1, data.trackID);
 		analysisManager->FillNtupleSColumn(1,2, data.detectorName);
 		analysisManager->FillNtupleDColumn(1,3, data.scintillatorCount);
-		analysisManager->FillNtupleDColumn(1,4, data.Hittime);
+		analysisManager->FillNtupleDColumn(1,4, data.Hittime/ns);
 		analysisManager->AddNtupleRow(1);
 	}
 }

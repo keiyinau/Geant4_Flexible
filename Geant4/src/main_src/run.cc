@@ -45,11 +45,11 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("ProcessName"); // Process that defined the step
     man->CreateNtupleSColumn("CreatorProcess");
-    man->CreateNtupleDColumn("KineticEnergy");
-    man->CreateNtupleDColumn("Energy_Deposit"); // Total energy deposited
-    man->CreateNtupleDColumn("AccumulatedDistance"); // Accumulated distance in mm
-    man->CreateNtupleDColumn("AccumulatedTime"); // Accumulated
-    man->CreateNtupleDColumn("AccumulatedEnergy"); // Accumulated
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
+    man->CreateNtupleDColumn("Energy_Deposit_MeV"); // Total energy deposited
+    man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
+    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
     man->CreateNtupleDColumn("PositionX_mm"); // Position X in
     man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
@@ -61,7 +61,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleIColumn("TrackID");
     man->CreateNtupleSColumn("DetectorName");
-    man->CreateNtupleDColumn("HitTime"); // Accumulated
+    man->CreateNtupleDColumn("HitTime_ns"); // Accumulated
     man->CreateNtupleDColumn("ScintillatorCount"); // Accumulated
     man->FinishNtuple(1);
 
@@ -75,10 +75,10 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("ProcessName"); // Process that defined the step
     man->CreateNtupleSColumn("CreatorProcess");
-    man->CreateNtupleDColumn("Kinetic Energy"); // Total energy deposited
-    man->CreateNtupleDColumn("AccumulatedDistance"); // Accumulated distance in mm
-    man->CreateNtupleDColumn("AccumulatedTime"); // Accumulated
-    man->CreateNtupleDColumn("AccumulatedEnergy"); // Accumulated
+    man->CreateNtupleDColumn("Kinetic Energy_MeV"); // Total energy deposited
+    man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
+    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
     man->CreateNtupleDColumn("PositionX_mm"); // Position X in
     man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
@@ -92,7 +92,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("CreatorProcess");
     man->CreateNtupleSColumn("ProcessName");
-    man->CreateNtupleDColumn("KineticEnergy");
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
     man->CreateNtupleDColumn("PositionX_mm"); // Position X in
     man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in

@@ -86,14 +86,14 @@ void Tracker::SaveToRoot(){
 		analysisManager->FillNtupleSColumn(0,5,data.particleName);
 		analysisManager->FillNtupleSColumn(0,6,data.ProcessName); // Fill the process name
 		analysisManager->FillNtupleSColumn(0,7,data.creatorProcessName);
-		analysisManager->FillNtupleDColumn(0,8, data.kineticEnergy);
-		analysisManager->FillNtupleDColumn(0,9, data.edep); // Fill the energy deposited
-		analysisManager->FillNtupleDColumn(0,10, data.AccumatedDistance); // Fill the accumulated distance
-		analysisManager->FillNtupleDColumn(0,11, data.AccumulatedTime); // Fill the accumulated time
-		analysisManager->FillNtupleDColumn(0,12, data.AccumulatedEnergy); // Fill the accumulated energy
-		analysisManager->FillNtupleDColumn(0,13, data.x_distance); // Fill the x position
-		analysisManager->FillNtupleDColumn(0,14, data.y_distance); // Fill the y position
-		analysisManager->FillNtupleDColumn(0,15, data.z_distance); // Fill the z position
+		analysisManager->FillNtupleDColumn(0,8, data.kineticEnergy/MeV);
+		analysisManager->FillNtupleDColumn(0,9, data.edep/MeV); // Fill the energy deposited
+		analysisManager->FillNtupleDColumn(0,10, data.AccumatedDistance/mm); // Fill the accumulated distance
+		analysisManager->FillNtupleDColumn(0,11, data.AccumulatedTime/ns); // Fill the accumulated time
+		analysisManager->FillNtupleDColumn(0,12, data.AccumulatedEnergy/MeV); // Fill the accumulated energy
+		analysisManager->FillNtupleDColumn(0,13, data.x_distance/mm); // Fill the x position
+		analysisManager->FillNtupleDColumn(0,14, data.y_distance/mm); // Fill the y position
+		analysisManager->FillNtupleDColumn(0,15, data.z_distance/mm); // Fill the z position
 		analysisManager->AddNtupleRow(0);
 	}
 }
