@@ -34,15 +34,15 @@ G4bool Detect_reference::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4StepPoint* postStepPoint = aStep->GetPostStepPoint();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if(particleName != "opticalphoton") {
-		// Check if particle enters the detector (first entry)
-		if (preStepPoint->GetStepStatus() == fGeomBoundary|| track->GetCurrentStepNumber() == 1){
+		// Check if particle enters the detector, ignore particle create within the material.
+		if (preStepPoint->GetStepStatus() == fGeomBoundary){
 			SaveToStepData(aStep,ROhist,track);
 			//ReadOut(aStep, track);	// Output Information just touch the detector
 			//track->SetTrackStatus(fStopAndKill);
 		}
 
-		// Check if particle leaves the detector or dies inside
-		if ((postStepPoint->GetStepStatus() == fGeomBoundary || track->GetTrackStatus() == fStopAndKill)){
+		// Check if particle leaves the detector, ignore die inside
+		if ((postStepPoint->GetStepStatus() == fGeomBoundary)){
 			// Record leave/die data
 			SaveToStepData(aStep,ROhist,track);
 			//ReadOut(aStep, track);	// Output Information just touch the detector
@@ -85,18 +85,18 @@ void Detect_reference::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 	for(const auto&data:CurrentData){
 		// Fill the ntuple with the data
-		analysisManager->FillNtupleIColumn(3, 0, data.eventID); // eventID
-		analysisManager->FillNtupleIColumn(3, 1, data.trackID); // trackID
-		analysisManager->FillNtupleIColumn(3, 2, data.parentID); // parentID
-		analysisManager->FillNtupleSColumn(3, 3, data.detectorName); // detectorName
-		analysisManager->FillNtupleSColumn(3, 4, data.particleName); // particleName
-		analysisManager->FillNtupleSColumn(3, 5, data.creatorProcessName); // creatorProcessName
-		analysisManager->FillNtupleSColumn(3, 6, data.ProcessName); // ProcessName
-		analysisManager->FillNtupleDColumn(3, 7, data.kineticEnergy); // kineticEnergy
-		analysisManager->FillNtupleDColumn(3, 8, data.x_distance); // x_distance
-		analysisManager->FillNtupleDColumn(3, 9, data.y_distance); // y_distance
-		analysisManager->FillNtupleDColumn(3, 10, data.z_distance); // z_distance
-		analysisManager->AddNtupleRow(3);
+		analysisManager->FillNtupleIColumn(1, 0, data.eventID); // eventID
+		analysisManager->FillNtupleIColumn(1, 1, data.trackID); // trackID
+		analysisManager->FillNtupleIColumn(1, 2, data.parentID); // parentID
+		analysisManager->FillNtupleSColumn(1, 3, data.detectorName); // detectorName
+		analysisManager->FillNtupleSColumn(1, 4, data.particleName); // particleName
+		analysisManager->FillNtupleSColumn(1, 5, data.creatorProcessName); // creatorProcessName
+		analysisManager->FillNtupleSColumn(1, 6, data.ProcessName); // ProcessName
+		analysisManager->FillNtupleDColumn(1, 7, data.kineticEnergy/MeV); // kineticEnergy
+		analysisManager->FillNtupleDColumn(1, 8, data.x_distance/mm); // x_distance
+		analysisManager->FillNtupleDColumn(1, 9, data.y_distance/mm); // y_distance
+		analysisManager->FillNtupleDColumn(1, 10, data.z_distance/mm); // z_distance
+		analysisManager->AddNtupleRow(1);
 	}
 }
 

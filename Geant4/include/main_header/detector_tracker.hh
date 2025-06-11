@@ -25,19 +25,13 @@ public:
 		G4int eventID;
 		G4int trackID;
 		G4int stepID;
-		G4int parentID; // Parent ID of the track
-		G4String detectorName;
 		G4String particleName;
-		G4String creatorProcessName; // Process that created the track
 		G4String ProcessName;
 		G4double kineticEnergy;
-		G4double edep;
 		G4double AccumatedDistance;
 		G4double AccumulatedTime;
 		G4double AccumulatedEnergy;
-		G4double x_distance;
-		G4double y_distance;
-		G4double z_distance;
+
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
 private:

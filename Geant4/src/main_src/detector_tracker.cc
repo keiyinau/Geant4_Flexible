@@ -59,19 +59,12 @@ void Tracker::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track*
     data.eventID = evt;
     data.trackID = trackID;
 	data.stepID = stepID;
-	data.parentID = parentID; // Store the parent ID of the track
-	data.detectorName = detector_Name;
 	data.particleName = particle_name;
 	data.ProcessName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName(); // Get the process name of the step
-	data.creatorProcessName = creator_process_name;
 	data.kineticEnergy = ekin;
-	data.edep = edep; // Store the energy deposited in this step
 	data.AccumatedDistance = AccumatedDistance_count[trackID];
 	data.AccumulatedTime = AccumulatedTime_count[trackID];
 	data.AccumulatedEnergy = AccumulatedEnergy_count[trackID];
-	data.x_distance = aStep->GetPreStepPoint()->GetPosition().x();
-	data.y_distance = aStep->GetPreStepPoint()->GetPosition().y();
-	data.z_distance = aStep->GetPreStepPoint()->GetPosition().z();
 	CurrentData.push_back(data); // Store the data for this step
 
 	
@@ -85,11 +78,10 @@ void Tracker::SaveToRoot(){
 		analysisManager->FillNtupleIColumn(0,2, data.stepID);
 		analysisManager->FillNtupleSColumn(0,3, data.particleName);
 		analysisManager->FillNtupleSColumn(0,4, data.ProcessName); // Fill the process name
-		analysisManager->FillNtupleSColumn(0,5, data.creatorProcessName);
-		analysisManager->FillNtupleDColumn(0,6, data.kineticEnergy);
-		analysisManager->FillNtupleDColumn(0,7, data.AccumatedDistance); // Fill the accumulated distance
-		analysisManager->FillNtupleDColumn(0,8, data.AccumulatedTime); // Fill the accumulated time
-		analysisManager->FillNtupleDColumn(0,9, data.AccumulatedEnergy); // Fill the accumulated energy
+		analysisManager->FillNtupleDColumn(0,5, data.kineticEnergy/MeV);
+		analysisManager->FillNtupleDColumn(0,6, data.AccumatedDistance/mm); // Fill the accumulated distance
+		analysisManager->FillNtupleDColumn(0,7, data.AccumulatedTime/ns); // Fill the accumulated time
+		analysisManager->FillNtupleDColumn(0,8, data.AccumulatedEnergy/MeV); // Fill the accumulated energy
 		analysisManager->AddNtupleRow(0);
 	}
 }

@@ -42,10 +42,10 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleIColumn("StepID");
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("ProcessName"); // Process that defined the step
-    man->CreateNtupleDColumn("KineticEnergy");
-    man->CreateNtupleDColumn("AccumulatedDistance"); // Accumulated distance in mm
-    man->CreateNtupleDColumn("AccumulatedTime"); // Accumulated
-    man->CreateNtupleDColumn("AccumulatedEnergy"); // Accumulated
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
+    man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
+    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
     man->FinishNtuple(0);
 
     man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
@@ -56,7 +56,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("CreatorProcess");
     man->CreateNtupleSColumn("ProcessName");
-    man->CreateNtupleDColumn("KineticEnergy");
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
     man->CreateNtupleDColumn("PositionX_mm"); // Position X in
     man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
