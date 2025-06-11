@@ -5,6 +5,7 @@
 /control/verbose 0
 
 # Set the active region of Na-22
+/control/execute region_setup.mac
 
 # Run commands
-/run/beamOn 100000
+/run/beamOn 6806 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806

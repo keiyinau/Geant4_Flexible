@@ -27,9 +27,11 @@ void Tracker::EndOfEvent(G4HCofThisEvent*){
 
 G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
-	
 	G4Track* track = aStep->GetTrack();
-	SaveToStepData(aStep,ROhist,track);
+	G4String particleName = track->GetParticleDefinition()->GetParticleName(); //Consider only Positron
+	if(particleName == "e+") {
+		SaveToStepData(aStep,ROhist,track);
+	}
 	return 0;
 }
 
@@ -81,19 +83,13 @@ void Tracker::SaveToRoot(){
 		analysisManager->FillNtupleIColumn(0,0, data.eventID);
 		analysisManager->FillNtupleIColumn(0,1, data.trackID);
 		analysisManager->FillNtupleIColumn(0,2, data.stepID);
-		analysisManager->FillNtupleIColumn(0,3, data.parentID); // Fill the parent ID
-		analysisManager->FillNtupleSColumn(0,4, data.detectorName);
-		analysisManager->FillNtupleSColumn(0,5,data.particleName);
-		analysisManager->FillNtupleSColumn(0,6,data.ProcessName); // Fill the process name
-		analysisManager->FillNtupleSColumn(0,7,data.creatorProcessName);
-		analysisManager->FillNtupleDColumn(0,8, data.kineticEnergy);
-		analysisManager->FillNtupleDColumn(0,9, data.edep); // Fill the energy deposited
-		analysisManager->FillNtupleDColumn(0,10, data.AccumatedDistance); // Fill the accumulated distance
-		analysisManager->FillNtupleDColumn(0,11, data.AccumulatedTime); // Fill the accumulated time
-		analysisManager->FillNtupleDColumn(0,12, data.AccumulatedEnergy); // Fill the accumulated energy
-		analysisManager->FillNtupleDColumn(0,13, data.x_distance); // Fill the x position
-		analysisManager->FillNtupleDColumn(0,14, data.y_distance); // Fill the y position
-		analysisManager->FillNtupleDColumn(0,15, data.z_distance); // Fill the z position
+		analysisManager->FillNtupleSColumn(0,3, data.particleName);
+		analysisManager->FillNtupleSColumn(0,4, data.ProcessName); // Fill the process name
+		analysisManager->FillNtupleSColumn(0,5, data.creatorProcessName);
+		analysisManager->FillNtupleDColumn(0,6, data.kineticEnergy);
+		analysisManager->FillNtupleDColumn(0,7, data.AccumatedDistance); // Fill the accumulated distance
+		analysisManager->FillNtupleDColumn(0,8, data.AccumulatedTime); // Fill the accumulated time
+		analysisManager->FillNtupleDColumn(0,9, data.AccumulatedEnergy); // Fill the accumulated energy
 		analysisManager->AddNtupleRow(0);
 	}
 }
