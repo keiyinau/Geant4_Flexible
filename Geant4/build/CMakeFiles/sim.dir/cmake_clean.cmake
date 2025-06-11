@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/sim.dir/sim.cc.o"
+  "CMakeFiles/sim.dir/sim.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/G4OrthoPositronium.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/G4OrthoPositronium.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/G4ParaPositronium.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/G4ParaPositronium.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/G4eeToPositronium.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/G4eeToPositronium.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/G4eeToPositroniumModel.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/G4eeToPositroniumModel.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/action.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/action.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/construction.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/construction.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/detector.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/detector.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/detector_calorimeter.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/detector_calorimeter.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/detector_ideal.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/detector_ideal.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/detector_tracker.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/detector_tracker.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/event.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/event.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/generator.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/generator.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/physics.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/physics.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/run.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/run.cc.o.d"
+  "CMakeFiles/sim.dir/src/main_src/stepping.cc.o"
+  "CMakeFiles/sim.dir/src/main_src/stepping.cc.o.d"
+  "sim"
+  "sim.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/sim.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
