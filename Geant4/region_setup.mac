@@ -13,7 +13,7 @@
 #Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono
 /gps/ene/mono 0. MeV
-/gps/number 185000 #Simulating 0.1 s
+/gps/number 1 #Simulating 0.1 s
 
 #Set the direction distribution of Source
 /gps/ang/type iso
