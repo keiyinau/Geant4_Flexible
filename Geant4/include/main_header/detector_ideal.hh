@@ -24,6 +24,7 @@ public:
 	struct StepData {
 		G4int eventID;
 		G4int trackID;
+		G4int stepID;
 		G4int parentID; // Parent ID of the track
 		G4String detectorName;
 		G4String particleName;

@@ -70,6 +70,7 @@ void Detect_reference::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist,
 	StepData data;
 	data.eventID = evt;
 	data.trackID = trackID;
+	data.stepID = track->GetCurrentStepNumber(); // Get the current step number
 	data.parentID = parentID; // Store the parent ID
 	data.detectorName = detector_Name;
 	data.particleName = particle_name;
@@ -87,15 +88,16 @@ void Detect_reference::SaveToRoot(){
 		// Fill the ntuple with the data
 		analysisManager->FillNtupleIColumn(1, 0, data.eventID); // eventID
 		analysisManager->FillNtupleIColumn(1, 1, data.trackID); // trackID
-		analysisManager->FillNtupleIColumn(1, 2, data.parentID); // parentID
-		analysisManager->FillNtupleSColumn(1, 3, data.detectorName); // detectorName
-		analysisManager->FillNtupleSColumn(1, 4, data.particleName); // particleName
-		analysisManager->FillNtupleSColumn(1, 5, data.creatorProcessName); // creatorProcessName
-		analysisManager->FillNtupleSColumn(1, 6, data.ProcessName); // ProcessName
-		analysisManager->FillNtupleDColumn(1, 7, data.kineticEnergy/MeV); // kineticEnergy
-		analysisManager->FillNtupleDColumn(1, 8, data.x_distance/mm); // x_distance
-		analysisManager->FillNtupleDColumn(1, 9, data.y_distance/mm); // y_distance
-		analysisManager->FillNtupleDColumn(1, 10, data.z_distance/mm); // z_distance
+		analysisManager->FillNtupleIColumn(1, 2, data.stepID); // stepID
+		analysisManager->FillNtupleIColumn(1, 3, data.parentID); // parentID
+		analysisManager->FillNtupleSColumn(1, 4, data.detectorName); // detectorName
+		analysisManager->FillNtupleSColumn(1, 5, data.particleName); // particleName
+		analysisManager->FillNtupleSColumn(1, 6, data.creatorProcessName); // creatorProcessName
+		analysisManager->FillNtupleSColumn(1, 7, data.ProcessName); // ProcessName
+		analysisManager->FillNtupleDColumn(1, 8, data.kineticEnergy/MeV); // kineticEnergy
+		analysisManager->FillNtupleDColumn(1, 9, data.x_distance/mm); // x_distance
+		analysisManager->FillNtupleDColumn(1, 10, data.y_distance/mm); // y_distance
+		analysisManager->FillNtupleDColumn(1, 11, data.z_distance/mm); // z_distance
 		analysisManager->AddNtupleRow(1);
 	}
 }
