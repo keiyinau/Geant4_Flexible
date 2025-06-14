@@ -51,6 +51,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleIColumn("StepID");
     man->CreateNtupleIColumn("ParentID");
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleSColumn("ParticleName");
