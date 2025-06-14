@@ -29,7 +29,7 @@ G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName(); //Consider only Positron
-	if(particleName == "gamma" || particleName == "e-") {
+	if(particleName == "gamma" || particleName == "e+") {
 		SaveToStepData(aStep,ROhist,track);
 	}
 	return 0;
