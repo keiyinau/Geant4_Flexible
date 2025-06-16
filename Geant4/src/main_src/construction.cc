@@ -6,7 +6,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = true;
-	isSource=true;
+	isSource=false;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
 
@@ -100,7 +100,7 @@ void MyDetectorConstruction::ConstructShell_Detector() {
 	G4double inner_radius = 0.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
-	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matCsI, "logicDetector_Shell");
+	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matXe, "logicDetector_Shell");
 	physDetector_Shell = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicDetector_Shell, "Detector_Shell", logicWorld, false, 0, true);
 }
 // End Ideal Detector
