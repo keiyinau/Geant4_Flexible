@@ -31,6 +31,9 @@ public:
 		G4double postPositionY;
 		G4double postPositionZ;
 		G4double preKE;
+		G4String detectorName;
+		G4String particleName;
+		G4String creatorProcessName;
 
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track

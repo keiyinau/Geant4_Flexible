@@ -52,6 +52,7 @@ void Tracker::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track*
 	G4double ldep= aStep->GetStepLength(); // Length of the step
 	G4double tdep= aStep->GetDeltaTime(); // Time difference for this step
 	G4double ekin = track->GetKineticEnergy();	
+	G4String particlename = track->GetDefinition()->GetParticleName(); // Get the particle name
 	AccumatedDistance_count[trackID]+=ldep;
     AccumulatedTime_count[trackID]+=tdep;
     AccumulatedEnergy_count[trackID]+=edep;
@@ -69,6 +70,9 @@ void Tracker::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track*
 	} else {
 		data.preKE = StepData_count[trackID].preKE; // Use the existing event ID
 	}
+	data.detectorName = detector_Name; // Store the detector name
+	data.particleName = particle_name; // Store the particle name
+	data.creatorProcessName = creator_process_name; // Store the creator process name
 	StepData_count[trackID] = data; // Store the data in the map
 }
 void Tracker::SaveToRoot(){
@@ -85,6 +89,9 @@ void Tracker::SaveToRoot(){
 		analysisManager->FillNtupleDColumn(0, 6, data.postPositionY / mm);
 		analysisManager->FillNtupleDColumn(0, 7, data.postPositionZ / mm);
 		analysisManager->FillNtupleDColumn(0, 8, data.preKE / MeV);
+		analysisManager->FillNtupleSColumn(0, 9, data.detectorName);
+		analysisManager->FillNtupleSColumn(0, 10, data.particleName);
+		analysisManager->FillNtupleSColumn(0, 11, data.creatorProcessName);
 		analysisManager->AddNtupleRow(0);
 	}
 }

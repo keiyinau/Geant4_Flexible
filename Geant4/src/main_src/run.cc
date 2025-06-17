@@ -46,6 +46,9 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
     man->CreateNtupleDColumn("KineticEnergy_MeV"); // Kinetic Energy
+    man->CreateNtupleSColumn("DetectorName"); // Detector Name
+    man->CreateNtupleSColumn("ParticleName"); // Particle Name
+    man->CreateNtupleSColumn("CreatorProcess"); // Creator Process
     man->FinishNtuple(0);
 
     man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
