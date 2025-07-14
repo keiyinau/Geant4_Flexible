@@ -6,12 +6,16 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = true;
-	isSource=false;
+	isSource=true;
+	isTPC = true;
+	isCalorimeter = true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
 
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
+	logicTPC = NULL;
+	logicCalorimeter = NULL;
 
 	DefineMessenger();
 }
@@ -74,6 +78,11 @@ G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 		ConstructShell_Detector();
 	if (isSource)
 		ConstructSource();
+	if (isTPC)
+		ConstructTPC();
+	if (isCalorimeter)
+		ConstructCalorimeter();
+
 	return physWorld;
 }
 
@@ -81,30 +90,44 @@ G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 void MyDetectorConstruction::ConstructSDandField() {
 	G4SDManager* sdManager = G4SDManager::GetSDMpointer();
     Tracker* tracker0 = new Tracker("ShellTracker");
-	Detect_reference *detect_reference = new Detect_reference("Detect_reference");
+	//Detect_reference *detect_reference = new Detect_reference("Detect_reference");
 	sdManager->AddNewDetector(tracker0);
-	sdManager->AddNewDetector(detect_reference);
+	//sdManager->AddNewDetector(detect_reference);
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(tracker0);
-	if(logicBareSource != NULL)
-		logicBareSource->SetSensitiveDetector(detect_reference);
-	if(logicDisk != NULL)
-		logicDisk->SetSensitiveDetector(detect_reference);
-	if(logicRing != NULL)
-		logicRing->SetSensitiveDetector(detect_reference);
+	//if(logicBareSource != NULL)
+	//	logicBareSource->SetSensitiveDetector(detect_reference);
+	//if(logicDisk != NULL)
+	//	logicDisk->SetSensitiveDetector(detect_reference);
+	//if(logicRing != NULL)
+	//	logicRing->SetSensitiveDetector(detect_reference);
 
 }
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
-	G4double shell_thickness = 1.*m;
-	G4double inner_radius = 0.*cm;
+	G4double shell_thickness = 1.*nm;
+	G4double inner_radius = 25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
 	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matCsI, "logicDetector_Shell");
 	physDetector_Shell = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicDetector_Shell, "Detector_Shell", logicWorld, false, 0, true);
 }
 // End Ideal Detector
-
+void MyDetectorConstruction::ConstructTPC() {
+	G4double inner_radius = 0.*m;
+	G4double outer_radius = 25.*cm;
+	G4Sphere* solidDetector_Shell = new G4Sphere("solidTPC", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
+	logicTPC = new G4LogicalVolume(solidDetector_Shell, matXe, "logicTPC");
+	physTPC = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicTPC, "DetectorTPC", logicWorld, false, 0, true);
+}
+// End Ideal Detector
+void MyDetectorConstruction::ConstructCalorimeter() {
+	G4double inner_radius = 25.*cm;
+	G4double outer_radius = 25.*cm+80.*cm;
+	G4Sphere* solidDetector_Shell = new G4Sphere("solidCalorimeter", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
+	logicCalorimeter = new G4LogicalVolume(solidDetector_Shell, matCsI, "logicCalorimeter");
+	physCalorimeter = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicCalorimeter, "Calorimeter", logicWorld, false, 0, true);
+}
 //Construct source
 void MyDetectorConstruction::ConstructSource(){
 	ring_radius = 19.1/2*mm;

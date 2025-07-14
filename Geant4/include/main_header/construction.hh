@@ -46,7 +46,12 @@ public:
 	// Ideal Detector
 	void ConstructShell_Detector();
 	// End Ideal Detector
-
+	// tpc
+	void ConstructTPC();
+	// End tpc
+	// Calorimeter
+	void ConstructCalorimeter();
+	// End Calorimeter
 	//Construct source
 	void ConstructSource();
 	// End Construct source
@@ -65,6 +70,17 @@ private:
 	G4bool isDetector_Shell;
 	G4LogicalVolume *logicDetector_Shell;
 	G4VPhysicalVolume *physDetector_Shell;
+	// End Ideal Detector
+
+	// Ideal Detector
+	G4bool isTPC;
+	G4LogicalVolume *logicTPC;
+	G4VPhysicalVolume *physTPC;
+	// End Ideal Detector
+	// Ideal Detector
+	G4bool isCalorimeter;
+	G4LogicalVolume *logicCalorimeter;
+	G4VPhysicalVolume *physCalorimeter;
 	// End Ideal Detector
 	
 
