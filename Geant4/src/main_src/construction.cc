@@ -97,9 +97,9 @@ void MyDetectorConstruction::DefineMaterials() {
 	std::vector<double> CsI_emission_Energy, CsI_emission_fractions;
 	readAndProcessData("EmissionSpectrum_295K.csv", CsI_emission_Energy, CsI_emission_fractions);
 	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
-	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions, 1);	
+	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions);	
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 30./keV);
-	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1500.0*ns);	
+	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 20.0*ns);	
 	matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
 
@@ -162,11 +162,15 @@ G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 void MyDetectorConstruction::ConstructSDandField() {
 	G4SDManager* sdManager = G4SDManager::GetSDMpointer();
     Tracker* tracker0 = new Tracker("ShellTracker");
+	Calorimeter* calorimeter = new Calorimeter("Calorimeter");
 	//Detect_reference *detect_reference = new Detect_reference("Detect_reference");
 	sdManager->AddNewDetector(tracker0);
+	sdManager->AddNewDetector(calorimeter);
 	//sdManager->AddNewDetector(detect_reference);
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(tracker0);
+	if(logicCalorimeter!=NULL)
+		logicCalorimeter->SetSensitiveDetector(calorimeter);
 	//if(logicBareSource != NULL)
 	//	logicBareSource->SetSensitiveDetector(detect_reference);
 	//if(logicDisk != NULL)
@@ -221,9 +225,10 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         std::string name_scint = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
-        logicSiPM[i] = logicSiPM_pre;
-        physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicSiPM_pre, name_scint, logicWorld, false, i, true);    
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+		logicCalorimeter=logicSiPM_pre;
+        logicSiPM[i] = logicCalorimeter;
+        physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicCalorimeter, name_scint, logicWorld, false, i, true);    
     }
 	for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
         std::string name_scint = Tapflon_name_list[i];

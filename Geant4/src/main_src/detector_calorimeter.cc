@@ -6,18 +6,18 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	collectionName.insert("Calorimeter");
 
 
-	double signalLength=500; //ns
-	double SampleTime=1; //ns
-	double DarkCountRate=1.7*1000*1000; //Hz
-	double RiseTime=10; //ns
-	double FallTimeFast=55; //ns
-	double RecoveryTime=55; //ns
-	double Dcr=1.7*1000*1000; //Hz
-	double Xt=0.23; //ns
-	double Ap=0.01; //ns	
-	double pitch=40; //um
-	double nCells=8334; //total number of cells
-	double size=4.5; //mm
+	signalLength=500; //ns
+	SampleTime=1; //ns
+	DarkCountRate=1.7*1000*1000; //Hz
+	RiseTime=10; //ns
+	FallTimeFast=55; //ns
+	RecoveryTime=55; //ns
+	Dcr=1.7*1000*1000; //Hz
+	Xt=0.23; //ns
+	Ap=0.01; //ns	
+	pitch=40; //um
+	nCells=8334; //total number of cells
+	size=4.5; //mm
 	// Reading PDE
 	std::vector<double> wlen;
 	std::vector<double> pde;
@@ -38,7 +38,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	double threshold=-0.5; //mV
 
 	//Load the SiPM properties
-	sipm::SiPMProperties myProperties = sipm::SiPMProperties();
+	myProperties = sipm::SiPMProperties();
 	myProperties.setDcr(DarkCountRate);
 	myProperties.setFallTimeFast(FallTimeFast);
 	myProperties.setProperty("nCells",nCells);
@@ -52,7 +52,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
 	myProperties.setPdeSpectrum(wlen,pde);
 	std::cout<<"Properties:"<<myProperties<<std::endl;
-	sipm::SiPMSensor mySensor(myProperties);
+	mySensor = sipm::SiPMSensor(myProperties);
 	std::cout<<"My Sensor:"<<mySensor<<"\n";
 
 }
@@ -69,6 +69,8 @@ void Calorimeter::Initialize(G4HCofThisEvent* hce)
     }
     G4VHitsCollection* hc = new G4VHitsCollection(SensitiveDetectorName, collectionName[0]);
     hce->AddHitsCollection(fHitsCollectionID, hc);
+	
+	
 }
 
 void Calorimeter::EndOfEvent(G4HCofThisEvent*){
@@ -76,20 +78,51 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 	mySensor.resetState();
 	mySensor.addPhotons(photonTimes, photonWavelengths);
 	mySensor.runEvent();
-
-	//std::cout<<"Hits:"<<mySensor.hits().size()<<"\n";
+	std::cout<<"Hits:"<<mySensor.hits().size()<<"\n";
 	//std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
 //
 	//std::cout<<"Photon count from debug info:"<<mySensor.debug().nPhotons<<"\n";
 	//std::cout<<"Photonelectron count from debug info:"<<mySensor.debug().nPhotoelectrons<<"\n";
 //
 	//std::cout<<"Signal:"<<mySensor.signal()<<"\n";
-	//SiPMAnalogSignal mySignal = mySensor.signal();
-	//std::vector<float> waveform = mySignal.waveform();
-	//for (float& val : waveform) {
-    //        val *= -2.54;
-    //    }
-	SaveToRoot();
+	mySignal = mySensor.signal();
+	std::vector<float> waveform = mySignal.waveform();
+	for (float& val : waveform) {
+            val *= -2.54;
+        }
+
+
+	
+	//// Generate time points for plotting
+    //size_t nPoints = static_cast<size_t>(signalLength / SampleTime);
+    //std::vector<double> timePoints(nPoints);
+    //for (size_t i = 0; i < nPoints; ++i) {
+    //    timePoints[i] = i * SampleTime;
+    //}
+    //// Create ROOT TGraph for plotting
+    //TGraph* graph = new TGraph(nPoints);
+    //for (size_t i = 0; i < nPoints && i < waveform.size(); ++i) {
+    //    graph->SetPoint(i, timePoints[i], waveform[i]);
+    //}
+    //graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
+    //graph->SetMarkerStyle(20);
+    //graph->SetMarkerSize(0.5);
+//
+    //// Create canvas and draw the graph
+    //TCanvas* canvas = new TCanvas("canvas", "SiPM Waveform", 800, 600);
+    //graph->Draw("APL"); // Draw with axis, points, and line
+    //canvas->Update();
+//
+    //// Save the plot to a file
+    //canvas->SaveAs("waveform.png");
+//
+    //// If running interactively, uncomment the next line to keep the window open
+    //// app.Run();
+//
+    //// Clean up
+    //delete graph;
+    //delete canvas;
+	//SaveToRoot();
 	ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
 }
 
@@ -115,30 +148,32 @@ void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Tr
 	G4StepPoint *preStepPoint=aStep->GetPreStepPoint();
 	G4double time=preStepPoint->GetGlobalTime();
 	G4ThreeVector momPhoton = preStepPoint->GetMomentum();
-	G4double wlen= (1.239841939*eV/momPhoton.mag())*1E+3
+	G4double wlen= (1239.841939/(momPhoton.mag()));
 	StepData data;
-	data.detectorName = detector_Name;
+	data.detector_Name = detector_Name;
 	data.wavelength = (double)wlen;
 	data.Hittime = (double)time;
 	photonTimes.push_back(data.Hittime); // Store the data for this step
 	photonWavelengths.push_back(data.wavelength); // Store the wavelength for this step
+	//std::cout<<"Photon Hit at"<<data.Hittime/ns<<std::endl;
+	//std::cout<<"Photon Wavelength is"<<momPhoton.mag()<<std::endl;
 }
 void Calorimeter::SaveToRoot(){
 	std::map<G4int, StepData> filteredExitData;
-    for (const auto& data : CurrentData) {
-        filteredExitData[data.trackID] = data; // Overwrite with the last entry
-    }
-	G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-	for (const auto&pair : filteredExitData) {
-		auto& data=pair.second;
-		if(data.scintillatorCount == 0) continue; // Skip if no scintillators were hit
-		analysisManager->FillNtupleIColumn(1,0, data.eventID);
-		analysisManager->FillNtupleIColumn(1,1, data.trackID);
-		analysisManager->FillNtupleSColumn(1,2, data.detectorName);
-		analysisManager->FillNtupleDColumn(1,3, data.scintillatorCount);
-		analysisManager->FillNtupleDColumn(1,4, data.Hittime);
-		analysisManager->AddNtupleRow(1);
-	}
+    //for (const auto& data : CurrentData) {
+    //    filteredExitData[data.trackID] = data; // Overwrite with the last entry
+    //}
+	//G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+	//for (const auto&pair : filteredExitData) {
+	//	auto& data=pair.second;
+	//	if(data.scintillatorCount == 0) continue; // Skip if no scintillators were hit
+	//	analysisManager->FillNtupleIColumn(1,0, data.eventID);
+	//	analysisManager->FillNtupleIColumn(1,1, data.trackID);
+	//	analysisManager->FillNtupleSColumn(1,2, data.detectorName);
+	//	analysisManager->FillNtupleDColumn(1,3, data.scintillatorCount);
+	//	analysisManager->FillNtupleDColumn(1,4, data.Hittime);
+	//	analysisManager->AddNtupleRow(1);
+	//}
 }
 
 // Output Information just touch the detector

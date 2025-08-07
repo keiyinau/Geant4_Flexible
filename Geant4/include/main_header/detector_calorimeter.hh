@@ -14,6 +14,9 @@
 #include <vector>
 #include <fstream>  // Required for std::ifstream
 #include <iostream>
+
+#include <TGraph.h>
+#include <TCanvas.h>
 class Calorimeter : public G4VSensitiveDetector
 {
 public:
@@ -31,8 +34,27 @@ public:
 		double Hittime;
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
-private:
 
+
+	sipm::SiPMProperties myProperties ;
+	sipm::SiPMSensor mySensor;
+	sipm::SiPMAnalogSignal mySignal;
+	double signalLength;
+	double SampleTime;
+	double DarkCountRate;
+	double RiseTime;
+	double FallTimeFast;
+	double RecoveryTime;
+	double Dcr;
+	double Xt;
+	double Ap;
+	double pitch;
+	int nCells;
+	double size;
+	double gatewidth, threshold;
+private:
+	std::vector<double> photonTimes; // Map of TrackID to scintillator count
+	std::vector<double> photonWavelengths; // Map of TrackID to hit time
 	virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 	G4int fHitsCollectionID; // Declare fHitsCollectionID
 };
