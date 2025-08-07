@@ -72,6 +72,23 @@ void Calorimeter::Initialize(G4HCofThisEvent* hce)
 }
 
 void Calorimeter::EndOfEvent(G4HCofThisEvent*){
+	
+	mySensor.resetState();
+	mySensor.addPhotons(photonTimes, photonWavelengths);
+	mySensor.runEvent();
+
+	//std::cout<<"Hits:"<<mySensor.hits().size()<<"\n";
+	//std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
+//
+	//std::cout<<"Photon count from debug info:"<<mySensor.debug().nPhotons<<"\n";
+	//std::cout<<"Photonelectron count from debug info:"<<mySensor.debug().nPhotoelectrons<<"\n";
+//
+	//std::cout<<"Signal:"<<mySensor.signal()<<"\n";
+	//SiPMAnalogSignal mySignal = mySensor.signal();
+	//std::vector<float> waveform = mySignal.waveform();
+	//for (float& val : waveform) {
+    //        val *= -2.54;
+    //    }
 	SaveToRoot();
 	ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
 }
@@ -83,8 +100,8 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if (particleName == "opticalphoton")
     {
-		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
 		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
+		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
         return true;
     }
 	return 0;
@@ -94,26 +111,17 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track* track){
 
     G4AnalysisManager *man = G4AnalysisManager::Instance();
-	G4String particle_name = track->GetDefinition()->GetParticleName();								//Get the particle name
 	G4String detector_Name = track->GetTouchable()->GetVolume()->GetName();
-	G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-	G4int trackID = track->GetTrackID();
-	G4int parentID=aStep->GetTrack()->GetParentID();
-	G4double tdep= aStep->GetDeltaTime(); // Time difference for this step
 	G4StepPoint *preStepPoint=aStep->GetPreStepPoint();
 	G4double time=preStepPoint->GetGlobalTime();
-	scintillatorCount[parentID]+=1;
-    HitTime[parentID]=time;
+	G4ThreeVector momPhoton = preStepPoint->GetMomentum();
+	G4double wlen= (1.239841939*eV/momPhoton.mag())*1E+3
 	StepData data;
-    data.eventID = evt;
-    data.trackID = trackID;
 	data.detectorName = detector_Name;
-	data.scintillatorCount = scintillatorCount[trackID];
-	data.Hittime = HitTime[trackID];
-	CurrentData.push_back(data); // Store the data for this step
-	track->SetTrackStatus(fStopAndKill);
-
-	
+	data.wavelength = (double)wlen;
+	data.Hittime = (double)time;
+	photonTimes.push_back(data.Hittime); // Store the data for this step
+	photonWavelengths.push_back(data.wavelength); // Store the wavelength for this step
 }
 void Calorimeter::SaveToRoot(){
 	std::map<G4int, StepData> filteredExitData;
@@ -167,10 +175,8 @@ void Calorimeter::ReadOut(G4Step* step, G4Track* track) {
 
 void Calorimeter::ClearVectorsCounts()
 {
-    //G4cout << "Clearing photon counts: opticalPhotonCounts size=" << opticalPhotonCounts.size() 
-    //       << ", exitData size=" << exitData.size() << G4endl;
-	scintillatorCount.clear();
-	HitTime.clear();
+	photonTimes.clear(); // Clear the vector that stores photon times
+	photonWavelengths.clear(); // Clear the vector that stores photon wavelengths
 	// Clear the vector that stores the current data
 	CurrentData.clear();
 

@@ -26,16 +26,13 @@ public:
 	void ReadOut(G4Step* aStep, G4Track* track);
 	void ClearVectorsCounts(); // Clear photon counts and stored data
 	struct StepData {
-		G4int eventID;
-		G4int trackID;
-		G4String detectorName;
-		G4double scintillatorCount; // Number of scintillators hit by the optical photon
-		G4double Hittime;
+		G4String detector_Name;
+		double wavelength; // Number of scintillators hit by the optical photon
+		double Hittime;
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
 private:
-	std::map<G4int, G4double> scintillatorCount; // Map of TrackID to scintillator count
-	std::map<G4int, G4double> HitTime; // Map of TrackID to hit time
+
 	virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 	G4int fHitsCollectionID; // Declare fHitsCollectionID
 };
