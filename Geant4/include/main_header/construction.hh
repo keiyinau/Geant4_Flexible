@@ -43,6 +43,9 @@ public:
 	virtual void ConstructSDandField();
 	void DefineMaterials();
 	void DefineMessenger();
+	bool readAndProcessData(const std::string& filename, 
+					   std::vector<double>& emission_Energy, 
+					   std::vector<double>& emission_fractions);
 	// Ideal Detector
 	void ConstructShell_Detector();
 	// End Ideal Detector
@@ -81,6 +84,7 @@ private:
 	G4bool isCalorimeter;
 	G4LogicalVolume *logicCalorimeter;
 	G4VPhysicalVolume *physCalorimeter;
+
 	// End Ideal Detector
 	
 
@@ -99,6 +103,8 @@ private:
 	G4Material *matXe;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI;
+	G4Material *matSi, *matTeflon;
+
 
 
 };

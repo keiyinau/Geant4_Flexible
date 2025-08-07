@@ -4,6 +4,57 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 {
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
+
+
+	double signalLength=500; //ns
+	double SampleTime=1; //ns
+	double DarkCountRate=1.7*1000*1000; //Hz
+	double RiseTime=10; //ns
+	double FallTimeFast=55; //ns
+	double RecoveryTime=55; //ns
+	double Dcr=1.7*1000*1000; //Hz
+	double Xt=0.23; //ns
+	double Ap=0.01; //ns	
+	double pitch=40; //um
+	double nCells=8334; //total number of cells
+	double size=4.5; //mm
+	// Reading PDE
+	std::vector<double> wlen;
+	std::vector<double> pde;
+	std::ifstream datafile;
+	datafile.open("SiPMPDE.txt");
+	while(1){
+		double wavelength_, pde_;
+		datafile >> wavelength_ >> pde_;
+		if(datafile.eof()) break; // End of file reached
+		// Process the wavelength and pde values as needed
+		std::cout << "Wavelength: " << wavelength_ << ", PDE: " << pde_ << std::endl;
+		wlen.push_back(wavelength_);
+		pde.push_back(pde_/100.0); // Convert percentage to fraction
+	}
+	datafile.close();
+	// Electronic parameters
+	double gatewidth=40; //ns
+	double threshold=-0.5; //mV
+
+	//Load the SiPM properties
+	sipm::SiPMProperties myProperties = sipm::SiPMProperties();
+	myProperties.setDcr(DarkCountRate);
+	myProperties.setFallTimeFast(FallTimeFast);
+	myProperties.setProperty("nCells",nCells);
+	myProperties.setProperty("Xt",Xt);
+	myProperties.setProperty("Ap",Ap);
+	myProperties.setProperty("Pitch", pitch);
+	myProperties.setProperty("recoveryTime", RecoveryTime);
+	myProperties.setProperty("signalLength",signalLength);
+	myProperties.setProperty("sampling",SampleTime);
+	myProperties.setProperty("size",size);
+	myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
+	myProperties.setPdeSpectrum(wlen,pde);
+	std::cout<<"Properties:"<<myProperties<<std::endl;
+	sipm::SiPMSensor mySensor(myProperties);
+	std::cout<<"My Sensor:"<<mySensor<<"\n";
+
 }
 
 Calorimeter::~Calorimeter()
@@ -33,6 +84,7 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	if (particleName == "opticalphoton")
     {
 		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
+		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
         return true;
     }
 	return 0;

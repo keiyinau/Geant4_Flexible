@@ -8,8 +8,12 @@
 #include "G4SystemOfUnits.hh"
 #include "run.hh"
 #include <map>
+#include "SiPMProperties.h"
+#include "SiPMAnalogSignal.h"
+#include "SiPMSensor.h"
 #include <vector>
-
+#include <fstream>  // Required for std::ifstream
+#include <iostream>
 class Calorimeter : public G4VSensitiveDetector
 {
 public:

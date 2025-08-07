@@ -18,10 +18,57 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	logicCalorimeter = NULL;
 
 	DefineMessenger();
+
+
 }
 MyDetectorConstruction::~MyDetectorConstruction()
 {}
+bool MyDetectorConstruction::readAndProcessData(const std::string& filename, 
+                       std::vector<double>& emission_Energy, 
+                       std::vector<double>& emission_fractions) {
+    // Open the file
+    std::ifstream datafile(filename);
+    if (!datafile.is_open()) {
+        return false; // Return false if file cannot be opened
+    }
 
+    // Read and parse the file
+    std::string line;
+    while (std::getline(datafile, line)) {
+        std::istringstream iss(line);
+        double wlen, fraction;
+        char delim;
+        if (iss >> wlen >> delim >> fraction && delim == ',') {
+            emission_Energy.push_back(1239.84193 / wlen); // E=hc/λ
+            emission_fractions.push_back(fraction);
+        }
+    }
+
+    // If no data was read, return false
+    if (emission_Energy.empty()) {
+        return false;
+    }
+
+    // Pair energies and fractions for sorting
+    std::vector<std::pair<double, double>> paired;
+    for (size_t i = 0; i < emission_Energy.size(); ++i) {
+        paired.emplace_back(emission_Energy[i], emission_fractions[i]);
+    }
+
+    // Sort by energy (first element)
+    std::sort(paired.begin(), paired.end());
+
+    // Update vectors with sorted values
+    emission_Energy.clear();
+    emission_fractions.clear();
+    for (const auto& p : paired) {
+        emission_Energy.push_back(p.first);
+        emission_fractions.push_back(p.second);
+    }
+	
+
+    return true; // Success
+	}
 G4String MyDetectorConstruction::file_name = "";
 
 void MyDetectorConstruction::DefineMaterials() {
@@ -46,48 +93,27 @@ void MyDetectorConstruction::DefineMaterials() {
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
 	G4MaterialPropertiesTable* mptCsI = new G4MaterialPropertiesTable();
-		//CsI Emssion spectrum
-	std::vector<double> emission_Energy, emission_fractions;
-    std::ifstream datafile("EmissionSpectrum_295K.csv");
-    std::string line;
-    while (std::getline(datafile, line)) {
-        std::istringstream iss(line);
-        double wlen, fraction;
-        char delim;
-        if (iss >> wlen >> delim >> fraction && delim == ',') {
-            emission_Energy.push_back(1239.84193/wlen); // E=hc/λ
-            emission_fractions.push_back(fraction);
-            std::cout << "Energy: " << 1239.84193/wlen << ", PDE: " << fraction / 100.0 << "\n";
-        }
-    }
-	// Sort energies and fractions in increasing energy order
-    std::vector<std::pair<double, double>> paired;
-    for (size_t i = 0; i < emission_Energy.size(); ++i) {
-        paired.emplace_back(emission_Energy[i], emission_fractions[i]);
-    }
-    std::sort(paired.begin(), paired.end()); // Sort by energy (first element)
-	// Update vectors with sorted values
-    emission_Energy.clear();
-    emission_fractions.clear();
-    for (const auto& p : paired) {
-        emission_Energy.push_back(p.first);
-        emission_fractions.push_back(p.second);
-    }
+	//CsI Emssion spectrum
+	std::vector<double> CsI_emission_Energy, CsI_emission_fractions;
+	readAndProcessData("EmissionSpectrum_295K.csv", CsI_emission_Energy, CsI_emission_fractions);
 	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
-	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", emission_Energy, emission_fractions, 1);	
+	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions, 1);	
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 30./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1500.0*ns);	
 	matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
 
 	// Define Tapflon(teflon) for wrapping
-
-
-
+	matTeflon = nist->FindOrBuildMaterial("G4_TEFLON");
+	std::vector<double> tapflon_reflectance_Energy, tapflon_reflectance_fractions;
+	readAndProcessData("EmissionSpectrum_295K.csv", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
+	G4MaterialPropertiesTable* matTeflon = new G4MaterialPropertiesTable();
+	matTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
 	// End Tapflon
 
 
 	// Define SiPM
+	matSi = nist->FindOrBuildMaterial("G4_Si");
 
 	// End SiPM
 
@@ -168,7 +194,7 @@ void MyDetectorConstruction::ConstructTPC() {
 }
 // End Ideal Detector
 void MyDetectorConstruction::ConstructCalorimeter() {
-    std::string Scintillator_name_list[] = {"CsI_CenteredCsI_CenteredS1(1)"};
+	std::string Scintillator_name_list[] = {"CsI_CenteredCsI_CenteredS1(1)"};
     std::string SiPM_name_list[] = {"CsI_CenteredCsI_CenteredD1(1)"};
     std::string Tapflon_name_list[] = {"CsI_CenteredCsI_CenteredT1(1)"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
@@ -195,7 +221,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         std::string name_scint = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
         logicSiPM[i] = logicSiPM_pre;
         physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicSiPM_pre, name_scint, logicWorld, false, i, true);    
     }
@@ -203,7 +229,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         std::string name_scint = Tapflon_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matTeflon, name_scint + "Logic");
         logicTapflon[i] = logicTapflon_pre;
         physTapflon[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicTapflon_pre, name_scint, logicWorld, false, i, true);    
     }
