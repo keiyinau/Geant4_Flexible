@@ -45,7 +45,53 @@ void MyDetectorConstruction::DefineMaterials() {
 	// End NaCl
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
+	G4MaterialPropertiesTable* mptCsI = new G4MaterialPropertiesTable();
+		//CsI Emssion spectrum
+	std::vector<double> emission_Energy, emission_fractions;
+    std::ifstream datafile("EmissionSpectrum_295K.csv");
+    std::string line;
+    while (std::getline(datafile, line)) {
+        std::istringstream iss(line);
+        double wlen, fraction;
+        char delim;
+        if (iss >> wlen >> delim >> fraction && delim == ',') {
+            emission_Energy.push_back(1239.84193/wlen); // E=hc/λ
+            emission_fractions.push_back(fraction);
+            std::cout << "Energy: " << 1239.84193/wlen << ", PDE: " << fraction / 100.0 << "\n";
+        }
+    }
+	// Sort energies and fractions in increasing energy order
+    std::vector<std::pair<double, double>> paired;
+    for (size_t i = 0; i < emission_Energy.size(); ++i) {
+        paired.emplace_back(emission_Energy[i], emission_fractions[i]);
+    }
+    std::sort(paired.begin(), paired.end()); // Sort by energy (first element)
+	// Update vectors with sorted values
+    emission_Energy.clear();
+    emission_fractions.clear();
+    for (const auto& p : paired) {
+        emission_Energy.push_back(p.first);
+        emission_fractions.push_back(p.second);
+    }
+	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
+	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", emission_Energy, emission_fractions, 1);	
+	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 30./keV);
+	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1500.0*ns);	
+	matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
+
+	// Define Tapflon(teflon) for wrapping
+
+
+
+	// End Tapflon
+
+
+	// Define SiPM
+
+	// End SiPM
+
+
 
 	// Ti_
 	G4Element* Ti = nist->FindOrBuildElement("Ti");
@@ -122,9 +168,9 @@ void MyDetectorConstruction::ConstructTPC() {
 }
 // End Ideal Detector
 void MyDetectorConstruction::ConstructCalorimeter() {
-    std::string Scintillator_name_list[] = {"CsI_CenteredCsI_CenteredS1"};
-    std::string SiPM_name_list[] = {"CsI_CenteredCsI_CenteredD1"};
-    std::string Tapflon_name_list[] = {"CsI_CenteredCsI_CenteredT1"};
+    std::string Scintillator_name_list[] = {"CsI_CenteredCsI_CenteredS1(1)"};
+    std::string SiPM_name_list[] = {"CsI_CenteredCsI_CenteredD1(1)"};
+    std::string Tapflon_name_list[] = {"CsI_CenteredCsI_CenteredT1(1)"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -156,7 +202,6 @@ void MyDetectorConstruction::ConstructCalorimeter() {
 	for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
         std::string name_scint = Tapflon_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-		scintillatorDet->SetScale(100.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
         logicTapflon[i] = logicTapflon_pre;
