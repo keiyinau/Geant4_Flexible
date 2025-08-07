@@ -4,7 +4,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 {
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
-
+	isGraph=false;
 
 	signalLength=500; //ns
 	SampleTime=1; //ns
@@ -92,36 +92,37 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
         }
 
 
-	
-	//// Generate time points for plotting
-    //size_t nPoints = static_cast<size_t>(signalLength / SampleTime);
-    //std::vector<double> timePoints(nPoints);
-    //for (size_t i = 0; i < nPoints; ++i) {
-    //    timePoints[i] = i * SampleTime;
-    //}
-    //// Create ROOT TGraph for plotting
-    //TGraph* graph = new TGraph(nPoints);
-    //for (size_t i = 0; i < nPoints && i < waveform.size(); ++i) {
-    //    graph->SetPoint(i, timePoints[i], waveform[i]);
-    //}
-    //graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
-    //graph->SetMarkerStyle(20);
-    //graph->SetMarkerSize(0.5);
-//
-    //// Create canvas and draw the graph
-    //TCanvas* canvas = new TCanvas("canvas", "SiPM Waveform", 800, 600);
-    //graph->Draw("APL"); // Draw with axis, points, and line
-    //canvas->Update();
-//
-    //// Save the plot to a file
-    //canvas->SaveAs("waveform.png");
-//
-    //// If running interactively, uncomment the next line to keep the window open
-    //// app.Run();
-//
-    //// Clean up
-    //delete graph;
-    //delete canvas;
+	if(isGraph){
+		// Generate time points for plotting
+		size_t nPoints = static_cast<size_t>(signalLength / SampleTime);
+		std::vector<double> timePoints(nPoints);
+		for (size_t i = 0; i < nPoints; ++i) {
+			timePoints[i] = i * SampleTime;
+		}
+		// Create ROOT TGraph for plotting
+		TGraph* graph = new TGraph(nPoints);
+		for (size_t i = 0; i < nPoints && i < waveform.size(); ++i) {
+			graph->SetPoint(i, timePoints[i], waveform[i]);
+		}
+		graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
+		graph->SetMarkerStyle(20);
+		graph->SetMarkerSize(0.5);
+
+		// Create canvas and draw the graph
+		TCanvas* canvas = new TCanvas("canvas", "SiPM Waveform", 800, 600);
+		graph->Draw("APL"); // Draw with axis, points, and line
+		canvas->Update();
+
+		// Save the plot to a file
+		canvas->SaveAs("waveform.png");
+
+		// If running interactively, uncomment the next line to keep the window open
+		// app.Run();
+
+		// Clean up
+		delete graph;
+		delete canvas;
+	}
 	//SaveToRoot();
 	ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
 }

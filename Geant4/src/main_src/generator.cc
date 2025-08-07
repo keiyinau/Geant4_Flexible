@@ -22,11 +22,11 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	fParticleSource->SetParticleDefinition(pdParticleSource);
 
 	// Set the default parameters for the fParticleGun
-	pdParticleGun = fPositron;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
+	pdParticleGun = fElectron;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm-1*mm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 13*MeV; 
+	kinParticleGun = 500*keV; 
 	chargeParticleGun = 0.*eplus;
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);
@@ -45,6 +45,7 @@ MyPrimaryGenerator::~MyPrimaryGenerator(){
 void MyPrimaryGenerator::ParticleDefinition(){
 	fGamma = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
 	fPositron = G4ParticleTable::GetParticleTable()->FindParticle("e+");
+	fElectron=G4ParticleTable::GetParticleTable()->FindParticle("e-");
 	fGeantino = G4ParticleTable::GetParticleTable()->FindParticle("geantino");
 	fo_Ps = G4OrthoPositronium::Definition();
 	fp_Ps = G4ParaPositronium::Definition();

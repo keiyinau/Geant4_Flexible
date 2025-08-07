@@ -39,19 +39,10 @@ public:
 	sipm::SiPMProperties myProperties ;
 	sipm::SiPMSensor mySensor;
 	sipm::SiPMAnalogSignal mySignal;
-	double signalLength;
-	double SampleTime;
-	double DarkCountRate;
-	double RiseTime;
-	double FallTimeFast;
-	double RecoveryTime;
-	double Dcr;
-	double Xt;
-	double Ap;
-	double pitch;
+	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size;
 	int nCells;
-	double size;
 	double gatewidth, threshold;
+	bool isGraph;
 private:
 	std::vector<double> photonTimes; // Map of TrackID to scintillator count
 	std::vector<double> photonWavelengths; // Map of TrackID to hit time
