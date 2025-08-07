@@ -5,9 +5,9 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = true;
-	isSource=true;
-	isTPC = true;
+	isDetector_Shell = false;
+	isSource=false;
+	isTPC = false;
 	isCalorimeter = true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
@@ -122,11 +122,47 @@ void MyDetectorConstruction::ConstructTPC() {
 }
 // End Ideal Detector
 void MyDetectorConstruction::ConstructCalorimeter() {
-	G4double inner_radius = 25.*cm;
-	G4double outer_radius = 25.*cm+80.*cm;
-	G4Sphere* solidDetector_Shell = new G4Sphere("solidCalorimeter", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
-	logicCalorimeter = new G4LogicalVolume(solidDetector_Shell, matCsI, "logicCalorimeter");
-	physCalorimeter = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicCalorimeter, "Calorimeter", logicWorld, false, 0, true);
+    std::string Scintillator_name_list[] = {"CsI_CenteredCsI_CenteredS1"};
+    std::string SiPM_name_list[] = {"CsI_CenteredCsI_CenteredD1"};
+    std::string Tapflon_name_list[] = {"CsI_CenteredCsI_CenteredT1"};
+    int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
+    int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
+    int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
+    std::vector<G4LogicalVolume*> logicScintillators(Size_of_Scintillator_name_list);
+	std::vector<G4LogicalVolume*> logicTapflon(Size_of_Tapflon_name_list);
+    std::vector<G4LogicalVolume*> logicSiPM(Size_of_SiPM_name_list);
+    std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
+    std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Tapflon_name_list);
+    std::vector<G4VPhysicalVolume*> physSiPM(Size_of_SiPM_name_list);
+    G4double angle = 90 * deg;
+    G4RotationMatrix* rotation = new G4RotationMatrix();
+    rotation->rotateX(angle);
+	for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
+        std::string name_scint = Scintillator_name_list[i];
+        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        auto ScintillatorDet = scintillatorDet->GetSolid();
+        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        logicScintillators[i] = logicScintillator_pre;
+        physScintillators[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicScintillator_pre, name_scint, logicWorld, false, i, true);    
+    }
+	for (int i = 0; i < Size_of_SiPM_name_list; i++) {
+        std::string name_scint = SiPM_name_list[i];
+        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        auto ScintillatorDet = scintillatorDet->GetSolid();
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        logicSiPM[i] = logicSiPM_pre;
+        physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicSiPM_pre, name_scint, logicWorld, false, i, true);    
+    }
+	for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
+        std::string name_scint = Tapflon_name_list[i];
+        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+		scintillatorDet->SetScale(100.0);
+        auto ScintillatorDet = scintillatorDet->GetSolid();
+        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        logicTapflon[i] = logicTapflon_pre;
+        physTapflon[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicTapflon_pre, name_scint, logicWorld, false, i, true);    
+    }
+
 }
 //Construct source
 void MyDetectorConstruction::ConstructSource(){
