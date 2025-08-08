@@ -396,7 +396,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         std::string name_scint = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM[i] = logicCalorimeter;
         physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicCalorimeter, name_scint, logicWorld, false, i, true);    

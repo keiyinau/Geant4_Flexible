@@ -4,7 +4,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 {
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
-	isGraph=false;
+	isGraph=true;
 
 	signalLength=500; //ns
 	SampleTime=1; //ns
@@ -78,8 +78,10 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 	mySensor.resetState();
 	mySensor.addPhotons(photonTimes, photonWavelengths);
 	mySensor.runEvent();
-	std::cout<<"Hits:"<<mySensor.hits().size()<<"\n";
-	//std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
+	//for(int i=0; i<photonTimes.size(); i++){
+	//	std::cout<<"Photon "<<i<<": Time = "<<photonTimes[i]<<" ns, Wavelength = "<<photonWavelengths[i]<<" nm"<<std::endl;
+	//}
+	std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
 //
 	//std::cout<<"Photon count from debug info:"<<mySensor.debug().nPhotons<<"\n";
 	//std::cout<<"Photonelectron count from debug info:"<<mySensor.debug().nPhotoelectrons<<"\n";
@@ -134,7 +136,6 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if (particleName == "opticalphoton")
     {
-		std::cout << "Optical photon hit detected in Calorimeter" << std::endl;
 		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
 		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
         return true;
@@ -150,7 +151,7 @@ void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Tr
 	G4StepPoint *preStepPoint=aStep->GetPreStepPoint();
 	G4double time=preStepPoint->GetGlobalTime();
 	G4ThreeVector momPhoton = preStepPoint->GetMomentum();
-	G4double wlen= (1239.841939/(momPhoton.mag()));
+	G4double wlen= (1239.841939/(track->GetDynamicParticle()->GetTotalEnergy()/eV));
 	StepData data;
 	data.detector_Name = detector_Name;
 	data.wavelength = (double)wlen;
