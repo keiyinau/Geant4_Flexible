@@ -20,9 +20,10 @@ file(GLOB MACRO_FILES
 	"HodoscopeParts/*.STL"
 )
 file(GLOB DATA_FILES
-	"src/DataFile/CsI/*.csv",
-	"src/DataFile/SiPMAFBR/*.txt",
-	"src/DataFile/Tapflon/*.txt"
+	"src/DataFile/CsI/*",
+	"src/DataFile/CsI(Ti)/*",
+	"src/DataFile/SiPMAFBR/*",
+	"src/DataFile/Tapflon/*"
 )
 file(GLOB 3D_MODELS
 	"src/CADModel/*.stl"

@@ -41,7 +41,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	myProperties = sipm::SiPMProperties();
 	myProperties.setDcr(DarkCountRate);
 	myProperties.setFallTimeFast(FallTimeFast);
-	myProperties.setProperty("nCells",nCells);
+	//myProperties.setProperty("nCells",nCells);
 	myProperties.setProperty("Xt",Xt);
 	myProperties.setProperty("Ap",Ap);
 	myProperties.setProperty("Pitch", pitch);
@@ -134,6 +134,7 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if (particleName == "opticalphoton")
     {
+		std::cout << "Optical photon hit detected in Calorimeter" << std::endl;
 		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
 		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
         return true;
@@ -156,8 +157,8 @@ void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Tr
 	data.Hittime = (double)time;
 	photonTimes.push_back(data.Hittime); // Store the data for this step
 	photonWavelengths.push_back(data.wavelength); // Store the wavelength for this step
-	//std::cout<<"Photon Hit at"<<data.Hittime/ns<<std::endl;
-	//std::cout<<"Photon Wavelength is"<<momPhoton.mag()<<std::endl;
+	//G4cout<<"Photon Hit at"<<data.Hittime/ns<<std::endl;
+	//std::cout<<wlen<<std::endl;
 }
 void Calorimeter::SaveToRoot(){
 	std::map<G4int, StepData> filteredExitData;
