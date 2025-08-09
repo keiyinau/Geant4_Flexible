@@ -26,7 +26,7 @@ public:
 	void ParticleDefinition();
 
 private:
-	G4ParticleDefinition *fGamma, *fPositron, *fElectron, *fGeantino, *fIon, *fo_Ps, *fp_Ps;
+	G4ParticleDefinition *fGamma, *fPositron, *fElectron, *fGeantino, *fIon, *fo_Ps, *fp_Ps,*fOpticalPhoton;
 	G4ParticleDefinition *pdParticleGun, *pdParticleSource;			// pd = ParticleDefinition
 	G4ParticleGun *fParticleGun;
 	G4GeneralParticleSource *fParticleSource;

@@ -26,7 +26,7 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm-1*mm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 1025*keV; 
+	kinParticleGun = 511*keV; 
 	chargeParticleGun = 0.*eplus;
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);
@@ -47,6 +47,7 @@ void MyPrimaryGenerator::ParticleDefinition(){
 	fPositron = G4ParticleTable::GetParticleTable()->FindParticle("e+");
 	fElectron=G4ParticleTable::GetParticleTable()->FindParticle("e-");
 	fGeantino = G4ParticleTable::GetParticleTable()->FindParticle("geantino");
+	fOpticalPhoton = G4ParticleTable::GetParticleTable()->FindParticle("opticalphoton");
 	fo_Ps = G4OrthoPositronium::Definition();
 	fp_Ps = G4ParaPositronium::Definition();
 }

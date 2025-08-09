@@ -225,7 +225,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
 	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions,CsI_emission_fractions.size());
 	mptCsI->AddProperty("RINDEX", CsI_refraction_Energy, CsI_refraction_Index,CsI_refraction_Index.size());	
-	//mptCsI->AddProperty("TRANSMITTANCE", CsI_transmission_Energy, CsI_rtransmission_Index,CsI_rtransmission_Index.size());	
+	mptCsI->AddProperty("TRANSMITTANCE", CsI_transmission_Energy, CsI_rtransmission_Index,CsI_rtransmission_Index.size());	
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 30./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
 	matCsI->SetMaterialPropertiesTable(mptCsI);
@@ -235,18 +235,18 @@ void MyDetectorConstruction::DefineMaterials() {
 	matTeflon = nist->FindOrBuildMaterial("G4_TEFLON");
 	std::vector<G4double> tapflon_reflectance_Energy, tapflon_reflectance_fractions;
 	readAndProcessData_Energy_txt("teflon_Reflectance-modified.txt", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
-	G4MaterialPropertiesTable* matTeflon = new G4MaterialPropertiesTable();
-	//matTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
-	
+	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
+	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
+    matTeflon->SetMaterialPropertiesTable(mptTeflon);
+
     // CsI-Teflon (reflective surface)
     G4OpticalSurface* surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
     surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
     surfCsI_Teflon->SetFinish(polished);
     surfCsI_Teflon->SetModel(unified);
     G4MaterialPropertiesTable* mptSurfTeflon = new G4MaterialPropertiesTable();
-    //mptSurfTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions, tapflon_reflectance_fractions.size());
+    mptSurfTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions, tapflon_reflectance_fractions.size());
     surfCsI_Teflon->SetMaterialPropertiesTable(mptSurfTeflon);
-    
     // End Tapflon
 
 
@@ -259,10 +259,11 @@ void MyDetectorConstruction::DefineMaterials() {
 	std::vector<G4double> Si_refraction_Energy, Si_refraction_Index;
 	readAndProcessData_txt("RefractiveIndexINFO_Si.txt", Si_refraction_Energy, Si_refraction_Index);
 
-	G4MaterialPropertiesTable* matSi = new G4MaterialPropertiesTable();
-	//matSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
-    //matSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
-    matSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
+	G4MaterialPropertiesTable* mptSi = new G4MaterialPropertiesTable();
+	mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
+    mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
+    mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
+	matSi->SetMaterialPropertiesTable(mptSi);
 
     // CsI-SiPM (dielectric-dielectric interface)
     surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
@@ -270,16 +271,18 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_SiPM->SetFinish(polished);
     surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
 	// End SiPM
+
+
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Printing the material properties of CsI"<<std::endl;
     mptCsI->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Printing the material properties of Teflon"<<std::endl;
-    matTeflon->DumpTable();
+    mptTeflon->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Printing the material properties of Si"<<std::endl;
-    matSi->DumpTable();
+    mptSi->DumpTable();
     std::cout<<"==========================="<<std::endl;
 
 
@@ -396,7 +399,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         std::string name_scint = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM[i] = logicCalorimeter;
         physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicCalorimeter, name_scint, logicWorld, false, i, true);    
@@ -412,6 +415,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     for (int i=0; i<Size_of_Scintillator_name_list; i++) {
         new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
         new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
+        new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
+        new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
     }
 
 }

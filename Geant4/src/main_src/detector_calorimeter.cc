@@ -79,7 +79,8 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 	mySensor.addPhotons(photonTimes, photonWavelengths);
 	mySensor.runEvent();
 	//for(int i=0; i<photonTimes.size(); i++){
-	//	std::cout<<"Photon "<<i<<": Time = "<<photonTimes[i]<<" ns, Wavelength = "<<photonWavelengths[i]<<" nm"<<std::endl;
+	//	//std::cout<<"Photon "<<i<<": Time = "<<photonTimes[i]<<" ns, Wavelength = "<<photonWavelengths[i]<<" nm"<<std::endl;
+	//	//std::cout<<""<<photonTimes[i]<<std::endl;
 	//}
 	std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
 //
@@ -88,13 +89,15 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 //
 	//std::cout<<"Signal:"<<mySensor.signal()<<"\n";
 	mySignal = mySensor.signal();
-	std::vector<float> waveform = mySignal.waveform();
-	for (float& val : waveform) {
-            val *= -2.54;
-        }
-
+  	float integral = mySignal.integral(0,200,0.5);
 
 	if(isGraph){
+		std::vector<float> waveform = mySignal.waveform();
+		for (float& val : waveform) {
+				val *= -2.54;
+		}
+
+
 		// Generate time points for plotting
 		size_t nPoints = static_cast<size_t>(signalLength / SampleTime);
 		std::vector<double> timePoints(nPoints);
