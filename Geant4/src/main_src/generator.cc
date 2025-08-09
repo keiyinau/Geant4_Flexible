@@ -26,7 +26,7 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm-1*mm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 50*keV; 
+	kinParticleGun = 511*keV; 
 	chargeParticleGun = 0.*eplus;
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);

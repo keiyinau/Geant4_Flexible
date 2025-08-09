@@ -33,13 +33,22 @@ public:
 		double wavelength; // Number of scintillators hit by the optical photon
 		double Hittime;
 	};
-	std::vector<StepData> CurrentData; // Store exit data for each track
-
+	struct LoadData{
+		G4int eventID;
+		G4String SiPMName;
+		G4double Area;
+		G4int RealPhotonCount;
+		G4int PEsCount;
+		G4int NoisePEsCount;
+		G4double Time_Of_Triggering;
+	};
+	std::vector<LoadData> CurrentData; // Store exit data for each track
+	G4String detectorname; // Store exit data for each track
 
 	sipm::SiPMProperties myProperties ;
 	sipm::SiPMSensor mySensor;
 	sipm::SiPMAnalogSignal mySignal;
-	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size;
+	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size,gain;
 	int nCells;
 	double gatewidth, threshold;
 	bool isGraph;
