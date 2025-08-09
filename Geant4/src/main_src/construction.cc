@@ -194,8 +194,13 @@ G4String MyDetectorConstruction::file_name = "";
 
 void MyDetectorConstruction::DefineMaterials() {
 	G4NistManager* nist = G4NistManager::Instance();
-	
+	//Define the world material as Air
 	Air = nist->FindOrBuildMaterial("G4_AIR");
+    G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
+    mptAir->AddProperty("RINDEX", "Air");
+    Air->SetMaterialPropertiesTable(mptAir);
+
+    // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
 	// Defining Xenon gas for test
 	auto a = 131.29*g/mole;
@@ -235,8 +240,12 @@ void MyDetectorConstruction::DefineMaterials() {
 	matTeflon = nist->FindOrBuildMaterial("G4_TEFLON");
 	std::vector<G4double> tapflon_reflectance_Energy, tapflon_reflectance_fractions;
 	readAndProcessData_Energy_txt("teflon_Reflectance-modified.txt", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
+    std::vector<G4double> tapflon_refraction_Energy, tapflon_refraction_Index;
+	readAndProcessData_Energy_txt("Refraction_Index_Teflon_Gray.txt", tapflon_refraction_Energy, tapflon_refraction_Index);
 	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
 	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
+    mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
+
     matTeflon->SetMaterialPropertiesTable(mptTeflon);
 
     // CsI-Teflon (reflective surface)
@@ -415,8 +424,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     for (int i=0; i<Size_of_Scintillator_name_list; i++) {
         new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
         new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
-        new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
-        new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
+        //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
+        //new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
     }
 
 }
