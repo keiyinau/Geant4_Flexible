@@ -104,8 +104,8 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 	mySignal = mySensor.signal();
 	G4double timeofArrival= mySignal.toa(0,signalLength, threshold);
 	if(timeofArrival>=0){
-		G4double integral = mySignal.integral((double)timeofArrival,(double)timeofArrival+(double)gatewidth,threshold);
 		if((double)timeofArrival+(double)gatewidth<signalLength){
+			G4double integral = mySignal.integral((double)timeofArrival,(double)timeofArrival+(double)gatewidth,threshold);
 			if(integral>0 && integral<1e10){
 				LoadData data;
 				data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
