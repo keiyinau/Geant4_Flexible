@@ -396,33 +396,29 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     rotation->rotateX(angle);
 	for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillatorDet->SetScale(10.0);
-        auto ScintillatorDet = scintillatorDet->GetSolid();
-
-
-        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(ScintillatorDet, matCsI, name_scint + "Logic");
+        auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        scintillator->SetScale(10.0);
+        auto Scintillator = scintillator->GetSolid();
+        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matCsI, name_scint + "Logic");
         logicScintillators[i] = logicScintillator_pre;
         physScintillators[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicScintillator_pre, name_scint, logicWorld, false, i, true);    
-    }
-	for (int i = 0; i < Size_of_SiPM_name_list; i++) {
-        std::string name_scint = SiPM_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+
+        std::string name_SiPM = SiPM_name_list[i];
+        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
         scintillatorDet->SetScale(10.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM[i] = logicCalorimeter;
-        physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicCalorimeter, name_scint, logicWorld, false, i, true);    
-    }
-	for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
-        std::string name_scint = Tapflon_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillatorDet->SetScale(10.0);
-        auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matTeflon, name_scint + "Logic");
+        physSiPM[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicCalorimeter, name_SiPM, logicWorld, false, i, true);    
+
+        std::string name_Wrapping = Tapflon_name_list[i];
+        auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
+        scintillatorwrapping->SetScale(10.0);
+        auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
+        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matTeflon, name_Wrapping + "Logic");
         logicTapflon[i] = logicTapflon_pre;
-        physTapflon[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicTapflon_pre, name_scint, logicWorld, false, i, true);    
+        physTapflon[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicTapflon_pre, name_Wrapping, logicWorld, false, i, true);    
     }
     //for (int i=0; i<Size_of_Scintillator_name_list; i++) {
     //    new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
