@@ -64,6 +64,7 @@ public:
 	// End tpc
 	// Calorimeter
 	void ConstructCalorimeter();
+	void ConstructCalorimeter_unit(G4ThreeVector translation, G4double angle,G4String name);
 	// End Calorimeter
 	//Construct source
 	void ConstructSource();
