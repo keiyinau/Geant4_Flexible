@@ -315,9 +315,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 2*cm;
-	G4double yWorld = 2*cm;
-	G4double zWorld = 2*cm;
+	G4double xWorld = 10*cm;
+	G4double yWorld = 10*cm;
+	G4double zWorld = 10*cm;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -404,7 +404,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM+name + ".stl");
+        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
         scintillatorDet->SetScale(10.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM+name + "Logic");
@@ -413,7 +413,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
-        auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping+name + ".stl");
+        auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
         scintillatorwrapping->SetScale(10.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matTeflon, name_Wrapping+name + "Logic");
@@ -429,10 +429,17 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-
-    G4double angle = 90 * deg;
-    G4ThreeVector translation(0.*cm, 0.*cm, 0.*cm);
-	ConstructCalorimeter_unit(translation,angle,"test");
+    int range=80;
+    for(int i=-range;i<=range;i++){
+        for(int j=0;j<=range;j++){
+            for(int k=-range;k<=range;k++){
+                G4String name_=to_string(i);
+                G4double angle = 90 * deg;
+                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm+0.001*mm, 0.*mm+(j*6.05*2)*mm+0.001*mm, 0.*mm+(k*6.05*2)*mm+0.001*mm);
+                ConstructCalorimeter_unit(translation,angle,name_);
+            }
+        }
+    }
 }
 //Construct source
 void MyDetectorConstruction::ConstructSource(){
