@@ -5,6 +5,9 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
+	isDCR=false;
+	isXT=false;
+	isAP=false;
 	signalLength=500; //ns
 	SampleTime=1; //ns
 	DarkCountRate=1.7*1000*1000; //Hz
@@ -48,6 +51,15 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	myProperties.setProperty("signalLength",signalLength);
 	myProperties.setProperty("sampling",SampleTime);
 	myProperties.setProperty("size",size);
+	if(isXT==false){
+		myProperties.setXtOff();
+	}
+	if(isDCR==false){
+		myProperties.setDcrOff();
+	}
+	if(isAP==false){
+		myProperties.setApOff();
+	}
 	myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
 	myProperties.setPdeSpectrum(wlen,pde);
 	std::cout<<"Properties:"<<myProperties<<std::endl;
@@ -91,15 +103,25 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*){
 	//std::cout<<"Signal:"<<mySensor.signal()<<"\n";
 	mySignal = mySensor.signal();
 	G4double timeofArrival= mySignal.toa(0,signalLength, threshold);
-  	G4double integral = gain*mySignal.integral((double)timeofArrival,(double)timeofArrival+(double)gatewidth,threshold);
-	LoadData data;
-	data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-	data.Area = integral;
-	data.RealPhotonCount = mySensor.debug().nPhotons;
-	data.PEsCount = mySensor.debug().nPhotoelectrons;
-	data.NoisePEsCount = mySensor.debug().nDcr + mySensor.debug().nXt + mySensor.debug().nAp;
-	data.Time_Of_Triggering = timeofArrival;
-	CurrentData.push_back(data); // Store the data for this event
+	if(timeofArrival>=0){
+		G4double integral = mySignal.integral((double)timeofArrival,(double)timeofArrival+(double)gatewidth,threshold);
+		if((double)timeofArrival+(double)gatewidth<signalLength){
+			if(integral>0 && integral<1e10){
+				LoadData data;
+				data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+				data.Area = integral;
+				data.RealPhotonCount = mySensor.debug().nPhotons;
+				data.PEsCount = mySensor.debug().nPhotoelectrons;
+				data.NoisePEsCount = mySensor.debug().nDcr + mySensor.debug().nXt + mySensor.debug().nAp;
+				data.Time_Of_Triggering = timeofArrival;
+				CurrentData.push_back(data); // Store the data for this event
+			}	
+		}
+		
+	}
+
+
+
 
 
 	if(isGraph){

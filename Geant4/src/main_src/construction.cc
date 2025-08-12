@@ -231,7 +231,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions,CsI_emission_fractions.size());
 	mptCsI->AddProperty("RINDEX", CsI_refraction_Energy, CsI_refraction_Index,CsI_refraction_Index.size());	
 	mptCsI->AddProperty("TRANSMITTANCE", CsI_transmission_Energy, CsI_rtransmission_Index,CsI_rtransmission_Index.size());	
-	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 30./keV);
+	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 3./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
 	matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
@@ -315,9 +315,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 2*m;
-	G4double yWorld = 2*m;
-	G4double zWorld = 2*m;
+	G4double xWorld = 2*cm;
+	G4double yWorld = 2*cm;
+	G4double zWorld = 2*cm;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -379,9 +379,9 @@ void MyDetectorConstruction::ConstructTPC() {
 }
 // End Ideal Detector
 void MyDetectorConstruction::ConstructCalorimeter() {
-	std::string Scintillator_name_list[] = {"CsI_Centered_CleanFacesCsI_CenteredS1"};
-    std::string SiPM_name_list[] = {"CsI_Centered_CleanFacesCsI_CenteredD1"};
-    std::string Tapflon_name_list[] = {"CsI_Centered_CleanFacesCsI_CenteredT1"};
+	std::string Scintillator_name_list[] = {"Scintillator"};
+    std::string SiPM_name_list[] = {"SiPM"};
+    std::string Tapflon_name_list[] = {"Wrapping"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -397,6 +397,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
 	for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        scintillatorDet->SetScale(10.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
 
 
@@ -407,6 +408,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
 	for (int i = 0; i < Size_of_SiPM_name_list; i++) {
         std::string name_scint = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        scintillatorDet->SetScale(10.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_scint + "Logic");
 		logicCalorimeter=logicSiPM_pre;
@@ -416,17 +418,18 @@ void MyDetectorConstruction::ConstructCalorimeter() {
 	for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
         std::string name_scint = Tapflon_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
+        scintillatorDet->SetScale(10.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(ScintillatorDet, matTeflon, name_scint + "Logic");
         logicTapflon[i] = logicTapflon_pre;
         physTapflon[i] = new G4PVPlacement(rotation, G4ThreeVector(), logicTapflon_pre, name_scint, logicWorld, false, i, true);    
     }
-    for (int i=0; i<Size_of_Scintillator_name_list; i++) {
-        new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
-        new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
-        new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
-        new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
-    }
+    //for (int i=0; i<Size_of_Scintillator_name_list; i++) {
+    //    new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
+    //    new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
+    //    new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
+    //    new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
+    //}
 
 }
 //Construct source

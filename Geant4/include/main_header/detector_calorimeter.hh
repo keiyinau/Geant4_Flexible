@@ -51,7 +51,7 @@ public:
 	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size,gain;
 	int nCells;
 	double gatewidth, threshold;
-	bool isGraph;
+	bool isGraph, isDCR, isXT, isAP;
 private:
 	std::vector<double> photonTimes; // Map of TrackID to scintillator count
 	std::vector<double> photonWavelengths; // Map of TrackID to hit time
