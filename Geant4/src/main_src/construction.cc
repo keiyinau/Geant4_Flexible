@@ -315,9 +315,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 10*cm;
-	G4double yWorld = 10*cm;
-	G4double zWorld = 10*cm;
+	G4double xWorld = 1*m;
+	G4double yWorld = 1*m;
+	G4double zWorld = 1*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
