@@ -189,6 +189,42 @@ bool MyDetectorConstruction::readAndProcessData_Energy_txt(const std::string& fi
 
     return true;
 }
+bool MyDetectorConstruction::readAndProcessData_Energy_cm_txt(const std::string& filename, 
+                                                      std::vector<G4double>& emission_Energy, 
+                                                      std::vector<G4double>& emission_fractions) {
+    std::ifstream datafile(filename);
+    if (!datafile) {
+        std::cerr << "Error: Cannot open file " << filename << "\n";
+        return false;
+    }
+
+    std::vector<std::pair<G4double, G4double>> paired;
+    std::string line;
+    while (std::getline(datafile, line)) {
+        std::istringstream iss(line);
+        G4double wlen, fraction;
+        if (iss >> wlen >> fraction) { // Space-separated values
+            if (wlen <= 0) continue; // Skip invalid wavelengths
+            paired.emplace_back(1239.84193 / wlen, fraction); // Energy (eV), fraction
+        }
+    }
+
+    if (paired.empty()) {
+        std::cerr << "Error: No valid data read from " << filename << "\n";
+        return false;
+    }
+
+    std::sort(paired.begin(), paired.end()); // Sort by energy (increasing)
+
+    emission_Energy.clear();
+    emission_fractions.clear();
+    for (const auto& p : paired) {
+        emission_Energy.push_back(p.first*eV);
+        emission_fractions.push_back(p.second*cm);
+    }
+
+    return true;
+}
 
 G4String MyDetectorConstruction::file_name = "";
 
@@ -226,11 +262,16 @@ void MyDetectorConstruction::DefineMaterials() {
 	readAndProcessData_txt("RefractiveIndexINFO_CsI.txt", CsI_refraction_Energy, CsI_refraction_Index);
 	std::vector<G4double> CsI_transmission_Energy, CsI_rtransmission_Index;
 	readAndProcessData_txt("transmittance_CsI.txt", CsI_transmission_Energy, CsI_rtransmission_Index);
+	std::vector<G4double> CsI_absorption_Energy, CsI_absorption_Index;
+	readAndProcessData_Energy_cm_txt("Absorption_CsITi.txt", CsI_absorption_Energy, CsI_absorption_Index);
+
+
 
 	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
 	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions,CsI_emission_fractions.size());
 	mptCsI->AddProperty("RINDEX", CsI_refraction_Energy, CsI_refraction_Index,CsI_refraction_Index.size());	
 	mptCsI->AddProperty("TRANSMITTANCE", CsI_transmission_Energy, CsI_rtransmission_Index,CsI_rtransmission_Index.size());	
+    mptCsI->AddProperty("ABSLENGTH", CsI_absorption_Energy, CsI_absorption_Index,CsI_absorption_Index.size());
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 3./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
 	matCsI->SetMaterialPropertiesTable(mptCsI);
@@ -247,15 +288,6 @@ void MyDetectorConstruction::DefineMaterials() {
     mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
 
     matTeflon->SetMaterialPropertiesTable(mptTeflon);
-
-    // CsI-Teflon (reflective surface)
-    G4OpticalSurface* surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
-    surfCsI_Teflon->SetFinish(polished);
-    surfCsI_Teflon->SetModel(unified);
-    G4MaterialPropertiesTable* mptSurfTeflon = new G4MaterialPropertiesTable();
-    mptSurfTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions, tapflon_reflectance_fractions.size());
-    surfCsI_Teflon->SetMaterialPropertiesTable(mptSurfTeflon);
     // End Tapflon
 
 
@@ -277,9 +309,17 @@ void MyDetectorConstruction::DefineMaterials() {
     // CsI-SiPM (dielectric-dielectric interface)
     surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
     surfCsI_SiPM->SetType(dielectric_dielectric);
+    surfCsI_SiPM->SetModel(unified); // Glisur for smooth dielectric interface
     surfCsI_SiPM->SetFinish(polished);
-    surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
 	// End SiPM
+
+    // CsI-Teflon (reflective surface)
+    surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
+    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
+    surfCsI_Teflon->SetModel(unified);
+    surfCsI_Teflon->SetFinish(polished);
+    //End surface
+
 
 
     std::cout<<"==========================="<<std::endl;
@@ -410,7 +450,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM[i] = logicCalorimeter;
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM, logicWorld, false, i, true);    
+        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
@@ -420,25 +460,36 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         logicTapflon[i] = logicTapflon_pre;
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
-    //for (int i=0; i<Size_of_Scintillator_name_list; i++) {
-    //    new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
-    //    new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
-    //    new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
-    //    new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
-    //}
+    for (int i=0; i<Size_of_Scintillator_name_list; i++) {
+        new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
+        new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
+        //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
+        //new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
+    }
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-    int range=80;
-    for(int i=-range;i<=range;i++){
-        for(int j=0;j<=range;j++){
+    int range=0;
+    G4double dist=0*mm;
+    int counter=0;
+    for(int j=0;j<=range;j++){
+        for(int i=-range;i<=range;i++){
             for(int k=-range;k<=range;k++){
-                G4String name_=to_string(i);
+                G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
                 G4double angle = 90 * deg;
-                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm+0.001*mm, 0.*mm+(j*6.05*2)*mm+0.001*mm, 0.*mm+(k*6.05*2)*mm+0.001*mm);
-                ConstructCalorimeter_unit(translation,angle,name_);
+                if(i==0&&j==0&&k==0){
+                    G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
+                    ConstructCalorimeter_unit(translation,angle,name_);
+                    counter+=1;
+                }
+                else{
+                    G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
+                    ConstructCalorimeter_unit(translation,angle,name_);
+                }       
+
             }
         }
+
     }
 }
 //Construct source

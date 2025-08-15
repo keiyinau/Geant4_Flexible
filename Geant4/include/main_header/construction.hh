@@ -1,6 +1,7 @@
 #ifndef CONSTRUCTION_HH
 #define CONSTRUCTION_HH
 
+#include <cmath>
 
 #include "G4VUserDetectorConstruction.hh"
 
@@ -55,6 +56,9 @@ public:
 	bool readAndProcessData_Energy_txt(const std::string& filename, 
 			   std::vector<double>& emission_Energy, 
 			   std::vector<double>& emission_fractions);
+	bool readAndProcessData_Energy_cm_txt(const std::string& filename, 
+		   std::vector<double>& emission_Energy, 
+		   std::vector<double>& emission_fractions);
 	
 	// Ideal Detector
 	void ConstructShell_Detector();

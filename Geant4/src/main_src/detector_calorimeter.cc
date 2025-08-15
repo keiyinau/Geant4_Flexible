@@ -172,6 +172,7 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if (particleName == "opticalphoton")
     {
+		//std::cout<<"There is an hit";
 		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
 		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
         return true;
