@@ -10,7 +10,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isTPC = false;
 	isCalorimeter = true;
 	// Set the material for each logical volume
-	matWorld = Air; //Vacuum;
+	matWorld = Vacuum; //Vacuum;
 
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
@@ -238,6 +238,9 @@ void MyDetectorConstruction::DefineMaterials() {
 
     // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
+    G4MaterialPropertiesTable* mptVacuum = new G4MaterialPropertiesTable();
+    mptVacuum->AddProperty("RINDEX", "Air");
+    Air->SetMaterialPropertiesTable(mptAir);
 	// Defining Xenon gas for test
 	auto a = 131.29*g/mole;
 	G4Element* Xe = new G4Element("Xe", "Xe", 54., a);
@@ -470,7 +473,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 
 void MyDetectorConstruction::ConstructCalorimeter() {
     int range=0;
-    G4double dist=0*mm;
+    G4double dist=3*mm;
     int counter=0;
     for(int j=0;j<=range;j++){
         for(int i=-range;i<=range;i++){
