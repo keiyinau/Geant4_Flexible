@@ -470,7 +470,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-    int range=3;
+    int range=30;
     G4double dist=0*mm;
     int counter=0;
     for(int j=0;j<=range;j++){
