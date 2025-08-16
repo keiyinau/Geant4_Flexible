@@ -10,7 +10,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isTPC = false;
 	isCalorimeter = true;
 	// Set the material for each logical volume
-	matWorld = Vacuum; //Vacuum;
+	matWorld = Air; //Vacuum;
 
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
@@ -238,9 +238,6 @@ void MyDetectorConstruction::DefineMaterials() {
 
     // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
-    G4MaterialPropertiesTable* mptVacuum = new G4MaterialPropertiesTable();
-    mptVacuum->AddProperty("RINDEX", "Air");
-    Air->SetMaterialPropertiesTable(mptAir);
 	// Defining Xenon gas for test
 	auto a = 131.29*g/mole;
 	G4Element* Xe = new G4Element("Xe", "Xe", 54., a);
@@ -394,7 +391,10 @@ void MyDetectorConstruction::ConstructSDandField() {
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(tracker0);
 	if(logicCalorimeter!=NULL)
-		logicCalorimeter->SetSensitiveDetector(calorimeter);
+        for(int i=0; i < logicSiPM.size(); i++) {
+            logicSiPM[i]->SetSensitiveDetector(calorimeter);
+        }
+		//logicCalorimeter->SetSensitiveDetector(calorimeter);
 	//if(logicBareSource != NULL)
 	//	logicBareSource->SetSensitiveDetector(detect_reference);
 	//if(logicDisk != NULL)
@@ -431,9 +431,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
-    std::vector<G4LogicalVolume*> logicScintillators(Size_of_Scintillator_name_list);
-	std::vector<G4LogicalVolume*> logicTapflon(Size_of_Tapflon_name_list);
-    std::vector<G4LogicalVolume*> logicSiPM(Size_of_SiPM_name_list);
+
     std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
     std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Tapflon_name_list);
     std::vector<G4VPhysicalVolume*> physSiPM(Size_of_SiPM_name_list);
@@ -443,7 +441,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         scintillator->SetScale(10.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matCsI, name_scint+name + "Logic");
-        logicScintillators[i] = logicScintillator_pre;
+        logicScintillators.push_back(logicScintillator_pre);
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
@@ -452,7 +450,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
-        logicSiPM[i] = logicCalorimeter;
+        logicSiPM.push_back(logicCalorimeter);
         physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
@@ -460,7 +458,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
         scintillatorwrapping->SetScale(10.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matTeflon, name_Wrapping+name + "Logic");
-        logicTapflon[i] = logicTapflon_pre;
+        logicTapflon.push_back(logicTapflon_pre);
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
     for (int i=0; i<Size_of_Scintillator_name_list; i++) {
@@ -472,8 +470,8 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-    int range=0;
-    G4double dist=3*mm;
+    int range=3;
+    G4double dist=0*mm;
     int counter=0;
     for(int j=0;j<=range;j++){
         for(int i=-range;i<=range;i++){

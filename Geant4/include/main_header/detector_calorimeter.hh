@@ -52,6 +52,10 @@ public:
 	int nCells;
 	double gatewidth, threshold;
 	bool isGraph, isDCR, isXT, isAP;
+
+
+
+
 private:
 	std::vector<double> photonTimes; // Map of TrackID to scintillator count
 	std::vector<double> photonWavelengths; // Map of TrackID to hit time

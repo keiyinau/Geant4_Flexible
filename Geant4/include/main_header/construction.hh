@@ -100,6 +100,7 @@ private:
 	G4LogicalVolume *logicCalorimeter;
 	G4VPhysicalVolume *physCalorimeter;
 	G4OpticalSurface *surfCsI_SiPM, *surfCsI_Teflon;
+	std::vector<G4LogicalVolume*> logicScintillators,logicSiPM,logicTapflon;
 	// End Ideal Detector
 	
 
