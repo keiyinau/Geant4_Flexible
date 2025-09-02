@@ -84,6 +84,9 @@ void Detect_reference::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist,
 	data.x_distance = x_pos; // Store the x position
 	data.y_distance = y_pos; // Store the y position
 	data.z_distance = z_pos; // Store the z position
+	data.x_momentum = track->GetMomentum().x(); // Store the x momentum
+	data.y_momentum = track->GetMomentum().y();
+	data.z_momentum = track->GetMomentum().z();
 	CurrentData.push_back(data); // Store the data for this step
 }
 void Detect_reference::SaveToRoot(){
@@ -102,6 +105,9 @@ void Detect_reference::SaveToRoot(){
 		analysisManager->FillNtupleDColumn(1, 9, data.x_distance/mm); // x_distance
 		analysisManager->FillNtupleDColumn(1, 10, data.y_distance/mm); // y_distance
 		analysisManager->FillNtupleDColumn(1, 11, data.z_distance/mm); // z_distance
+		analysisManager->FillNtupleDColumn(1, 12, data.x_momentum/MeV); // x_momentum
+		analysisManager->FillNtupleDColumn(1, 13, data.y_momentum/MeV); // y_momentum
+		analysisManager->FillNtupleDColumn(1, 14, data.z_momentum/MeV); // z_momentum
 		analysisManager->AddNtupleRow(1);
 	}
 }

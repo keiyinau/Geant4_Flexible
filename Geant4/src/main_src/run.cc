@@ -59,6 +59,9 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("x_distance_mm");
     man->CreateNtupleDColumn("y_distance_mm");
     man->CreateNtupleDColumn("z_distance_mm");
+    man->CreateNtupleDColumn("x_momentum_MeV");
+    man->CreateNtupleDColumn("y_momentum_MeV");
+    man->CreateNtupleDColumn("z_momentum_MeV");
     man->FinishNtuple(1);
 
 }

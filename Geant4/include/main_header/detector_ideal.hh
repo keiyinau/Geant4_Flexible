@@ -34,6 +34,9 @@ public:
 		G4double x_distance;
 		G4double y_distance;
 		G4double z_distance;
+		G4double x_momentum;
+		G4double y_momentum;
+		G4double z_momentum;
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
 private:

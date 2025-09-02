@@ -81,7 +81,7 @@ void MyPhysicsList::ConstructProcess()
 
 void MyPhysicsList::SetCuts()
 {
-	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1*eV, 100.*GeV);
+	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1e-1*eV, 100.*GeV);
 	
 	//SetCutsWithDefault();		// default cut value  (1.0mm)
 }
