@@ -1,0 +1,8 @@
+/run/numberOfThreads 20
+/run/initialize
+
+# Enable command echo
+/control/verbose 0
+
+# Run commands
+/run/beamOn 1000000

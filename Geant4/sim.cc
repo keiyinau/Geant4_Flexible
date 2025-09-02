@@ -27,7 +27,7 @@ int main(int argc, char** argv)	// argc = argument count, argv = argument vector
 		G4RunManager* runManager = new G4RunManager();
 	#endif
 	G4HadronicParameters::Instance()->SetTimeThresholdForRadioactiveDecay( 1.0e+60*CLHEP::year );
-	G4bool physics_selector = 1;	// 0 = MyPhysicsList, 1 = Default PhysicsList
+	G4bool physics_selector = 0;	// 0 = MyPhysicsList, 1 = Default PhysicsList
 	if (physics_selector == 0) {
 		G4VModularPhysicsList* physicsList = new MyPhysicsList();
 		runManager->SetUserInitialization(physicsList);					// Set PhysicsList of the RunManager using MyPhysicsList

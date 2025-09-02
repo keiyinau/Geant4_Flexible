@@ -34,20 +34,24 @@ G4bool Detect_reference::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	G4StepPoint* postStepPoint = aStep->GetPostStepPoint();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	if(particleName != "opticalphoton") {
+		if (track->GetParentID() == 1) {
+			SaveToStepData(aStep,ROhist,track);
+			track->SetTrackStatus(fStopAndKill);
+		}
 		// Check if particle enters the detector, ignore particle create within the material.
-		if (preStepPoint->GetStepStatus() == fGeomBoundary){
-			SaveToStepData(aStep,ROhist,track);
-			//ReadOut(aStep, track);	// Output Information just touch the detector
-			//track->SetTrackStatus(fStopAndKill);
-		}
-
-		// Check if particle leaves the detector, ignore die inside
-		if ((postStepPoint->GetStepStatus() == fGeomBoundary)){
-			// Record leave/die data
-			SaveToStepData(aStep,ROhist,track);
-			//ReadOut(aStep, track);	// Output Information just touch the detector
-			//track->SetTrackStatus(fStopAndKill);
-		}
+		//if (preStepPoint->GetStepStatus() == fGeomBoundary){
+		//	SaveToStepData(aStep,ROhist,track);
+		//	//ReadOut(aStep, track);	// Output Information just touch the detector
+		//	//track->SetTrackStatus(fStopAndKill);
+		//}
+//
+		//// Check if particle leaves the detector, ignore die inside
+		//if ((postStepPoint->GetStepStatus() == fGeomBoundary)){
+		//	// Record leave/die data
+		//	SaveToStepData(aStep,ROhist,track);
+		//	//ReadOut(aStep, track);	// Output Information just touch the detector
+		//	//track->SetTrackStatus(fStopAndKill);
+		//}
 	}
 	return 0;
 }

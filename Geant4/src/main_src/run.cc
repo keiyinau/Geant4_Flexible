@@ -45,4 +45,20 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("Time_Of_Triggering_ns"); // Position Y in
     //man->CreateNtupleSColumn("SiPMName");
     man->FinishNtuple(0);
+
+    man->CreateNtuple("Ideal", "Ideal data"); 
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleIColumn("StepID");
+    man->CreateNtupleIColumn("ParentID");
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleSColumn("ParticleName");
+    man->CreateNtupleSColumn("CreatorProcessName");
+    man->CreateNtupleSColumn("ProcessName");
+    man->CreateNtupleDColumn("KineticEnergy_MeV"); // in Me
+    man->CreateNtupleDColumn("x_distance_mm");
+    man->CreateNtupleDColumn("y_distance_mm");
+    man->CreateNtupleDColumn("z_distance_mm");
+    man->FinishNtuple(1);
+
 }

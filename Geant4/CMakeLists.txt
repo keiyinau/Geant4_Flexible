@@ -15,7 +15,7 @@ file(GLOB sources_main ${PROJECT_SOURCE_DIR}/src/main_src/*.cc)
 file(GLOB headers_main ${PROJECT_SOURCE_DIR}/include/main_header/*.hh)
 
 file(GLOB MACRO_FILES
-	"*.mac",
+	"macro/*.mac",
 	"*.STL",
 	"HodoscopeParts/*.STL"
 )
