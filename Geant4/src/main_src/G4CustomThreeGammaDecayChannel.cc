@@ -3,6 +3,7 @@
 #include "G4DecayProducts.hh"
 #include "G4LorentzVector.hh"
 #include <cmath>
+#include <random>
 
 G4CustomThreeGammaDecayChannel::G4CustomThreeGammaDecayChannel(const G4String& theParentName, G4double theBR)
     : G4VDecayChannel("Custom 3 Gamma Decay", theParentName, theBR, 3, "gamma", "gamma", "gamma") {}
@@ -11,27 +12,49 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     if (parentMass <= 0.0) parentMass = GetParentMass();  // Fallback to default if not provided
 
     G4double M = parentMass;  // o-Ps rest mass (~1.022 MeV)
+    auto dXS=[M](double e1,double e2, double e3){const double pi=std::acos(-1.0);
+    return (((M/2 - e1) / (e2 * e3)) * ((M/2 - e1) / (e2 * e3)) +
+                ((M/2 - e2) / (e1 * e3)) * ((M/2 - e2) / (e1 * e3)) +
+                ((M/2 - e3) / (e1 * e2)) * ((M/2 - e3) / (e1 * e2))) /
+               (pi * pi - 9);
+            };
+
 
     // Sample energies with rejection for phase space
-    G4double E1, E2, E3, p1, p2, p3, maxp, sump;
-    G4double rd1, rd2;
-    do {
+    G4double E1, E2, E3, p1, p2, p3, s;
+    G4double rd1, rd2,rd3;
+    G4float dXS_val, dXS_min, dXS_max, rng_gen;
+    dXS_min=6.620097e-6;
+    dXS_max=8.807577e-06;
+    s=0;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    while(s==0){
         rd1 = G4UniformRand();
         rd2 = G4UniformRand();
-        if (rd2 > rd1) { G4double temp = rd1; rd1 = rd2; rd2 = temp; }  // Ensure rd2 <= rd1
-        E1 = rd2 * M;
-        E2 = (rd1 - rd2) * M;
-        E3 = (1.0 - rd1) * M;
-        p1 = E1; p2 = E2; p3 = E3;  // Massless: p = E
-        maxp = std::max(E1, std::max(E2, E3));
-        sump = E1 + E2 + E3;  // Should be ~M
-    } while (maxp > sump - maxp);  // Equivalent to max(Ei) > M/2
-
-    // Create parent at rest
+        rd3 = G4UniformRand();
+        E1=0+rd1*M/2;
+        E2=M/2-E1+rd2*E1;
+        E3=M-E1-E2;
+        if(E1>0 & E2>0 & E3>0){
+            if(E1<M/2 & E2<M/2 & E3<M/2 & E1+E2+E3==M){
+                rng_gen=dXS_min+(dXS_max-dXS_min)*rd3;
+                dXS_val=dXS(E1,E2,E3);
+                if(rng_gen<dXS_val){
+                    std::vector<double> E_pshuffle = {E1, E2, E3};
+                    std::shuffle(E_pshuffle.begin(), E_pshuffle.end(), gen);
+                    E1=E_pshuffle[0];
+                    E2=E_pshuffle[1];
+                    E3=E_pshuffle[2];
+                    s+=1;
+                }
+            }
+        }
+    }
+        // Create parent at rest
     G4DynamicParticle* parentParticle = new G4DynamicParticle(GetParent(), G4ThreeVector(0., 0., 0.), 0.0);
     G4DecayProducts* products = new G4DecayProducts(*parentParticle);
     delete parentParticle;
-
     // Sample directions (photon 1, 2, 3 correspond to E1, E2, E3)
     // Random isotropic direction for photon 1
     G4double cost = 2.0 * G4UniformRand() - 1.0;
