@@ -5,4 +5,4 @@
 /control/verbose 0
 
 # Run commands
-/run/beamOn 1000000
+/run/beamOn 100000

@@ -4,6 +4,8 @@
 #include "G4LorentzVector.hh"
 #include <cmath>
 #include <random>
+#include <vector>
+#include <algorithm>
 
 G4CustomThreeGammaDecayChannel::G4CustomThreeGammaDecayChannel(const G4String& theParentName, G4double theBR)
     : G4VDecayChannel("Custom 3 Gamma Decay", theParentName, theBR, 3, "gamma", "gamma", "gamma") {}
@@ -12,73 +14,82 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     if (parentMass <= 0.0) parentMass = GetParentMass();  // Fallback to default if not provided
 
     G4double M = parentMass;  // o-Ps rest mass (~1.022 MeV)
-    auto dXS=[M](double e1,double e2, double e3){const double pi=std::acos(-1.0);
-    return (((M/2 - e1) / (e2 * e3)) * ((M/2 - e1) / (e2 * e3)) +
-                ((M/2 - e2) / (e1 * e3)) * ((M/2 - e2) / (e1 * e3)) +
-                ((M/2 - e3) / (e1 * e2)) * ((M/2 - e3) / (e1 * e2))) /
-               (pi * pi - 9);
-            };
+    const static G4double min_energy = 0.001 * M / 2;  // Infrared cutoff, ~0.5 keV normalized to M/2
+    const G4int n_points = 1;  // Generate one event per call
+    const G4int n_probe = 1000000;  // Number of probes to estimate max density
 
+    // Dalitz density function
+    auto dalitz_density = [M](G4double e1, G4double e2, G4double e3) {
+        G4double z = M - e1 - e2;
+        if (e1 < min_energy || e2 < min_energy || z < min_energy) return 0.0;
+        if (e1 >= M / 2 || e2 >= M / 2 || z >= M / 2) return 0.0;
+        G4double term1 = std::pow((M / 2 - e1), 2) / (std::pow(e2, 2) * std::pow(z, 2));
+        G4double term2 = std::pow((M / 2 - e2), 2) / (std::pow(e1, 2) * std::pow(z, 2));
+        G4double term3 = std::pow((M / 2 - z), 2) / (std::pow(e1, 2) * std::pow(e2, 2));
+        return term1 + term2 + term3;
+    };
 
-    // Sample energies with rejection for phase space
-    G4double E1, E2, E3, p1, p2, p3, s;
-    G4double rd1, rd2,rd3;
-    G4float dXS_val, dXS_min, dXS_max, rng_gen;
-    dXS_min=6.620097e-6;
-    dXS_max=8.807577e-06;
-    s=0;
+    // Find approximate max density for rejection sampling
+    G4double max_d = 0.0;
     std::random_device rd;
     std::mt19937 gen(rd());
-    while(s==0){
-        rd1 = G4UniformRand();
-        rd2 = G4UniformRand();
-        rd3 = G4UniformRand();
-        E1=0+rd1*M/2;
-        E2=M/2-E1+rd2*E1;
-        E3=M-E1-E2;
-        if(E1>0 & E2>0 & E3>0){
-            if(E1<M/2 & E2<M/2 & E3<M/2 & E1+E2+E3==M){
-                rng_gen=dXS_min+(dXS_max-dXS_min)*rd3;
-                dXS_val=dXS(E1,E2,E3);
-                if(rng_gen<dXS_val){
-                    std::vector<double> E_pshuffle = {E1, E2, E3};
-                    std::shuffle(E_pshuffle.begin(), E_pshuffle.end(), gen);
-                    E1=E_pshuffle[0];
-                    E2=E_pshuffle[1];
-                    E3=E_pshuffle[2];
-                    s+=1;
-                }
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+    for (G4int i = 0; i < n_probe; ++i) {
+        G4double x = min_energy + dis(gen) * (M / 2 - 2 * min_energy);
+        G4double y = min_energy + dis(gen) * (M / 2 - 2 * min_energy);
+        G4double z = M - x - y;
+        if (z > min_energy && z < M / 2 && x + y < M) {
+            G4double d = dalitz_density(x, y, z);
+            if (d > max_d) max_d = d;
+        }
+    }
+    max_d *= 1.1;  // Safety margin
+
+    // Generate one event using rejection sampling
+    G4double E1, E2, E3;
+    G4int accepted = 0;
+    while (accepted == 0) {
+        G4double x = min_energy + dis(gen) * (M / 2 - min_energy);
+        G4double y = min_energy + dis(gen) * (M / 2 - min_energy);
+        E3 = M - x - y;
+        if (E3 > min_energy && E3 < M / 2 && x + y < M) {
+            G4double d = dalitz_density(x, y, E3);
+            if (dis(gen) * max_d < d) {
+                // Shuffle energies to avoid bias
+                std::vector<G4double> E_pshuffle = {x, y, E3};
+                std::shuffle(E_pshuffle.begin(), E_pshuffle.end(), gen);
+                E1 = E_pshuffle[0];
+                E2 = E_pshuffle[1];
+                E3 = E_pshuffle[2];
+                accepted = 1;
             }
         }
     }
-        // Create parent at rest
+
+    // Create parent at rest
     G4DynamicParticle* parentParticle = new G4DynamicParticle(GetParent(), G4ThreeVector(0., 0., 0.), 0.0);
     G4DecayProducts* products = new G4DecayProducts(*parentParticle);
     delete parentParticle;
-    // Sample directions (photon 1, 2, 3 correspond to E1, E2, E3)
-    // Random isotropic direction for photon 1
+
+    // Sample directions
+    // Photon 1 direction (isotropic)
     G4double cost = 2.0 * G4UniformRand() - 1.0;
     G4double sint = std::sqrt(1.0 - cost * cost);
-    G4double phi = twopi * G4UniformRand();
+    G4double phi = 2.0 * M_PI * G4UniformRand();
     G4ThreeVector dir1(sint * std::cos(phi), sint * std::sin(phi), cost);
     G4ThreeVector p1v = E1 * dir1;
 
-    // Fixed cos(theta12) for angle between photon 1 and 2
+    // Angle between photon 1 and 2 using cosine law
     G4double cos_theta12 = (E3 * E3 - E1 * E1 - E2 * E2) / (2.0 * E1 * E2);
-    // Ensure cos_theta12 is in valid range [-1, 1]
     if (std::abs(cos_theta12) > 1.0) {
         cos_theta12 = (cos_theta12 > 1.0) ? 1.0 : -1.0;
     }
     G4double theta12 = std::acos(cos_theta12);
     G4double sin_theta12 = std::sin(theta12);
+    G4double phi2 = 2.0 * M_PI * G4UniformRand();
 
-    // Random azimuthal angle for photon 2 relative to photon 1
-    G4double phi2 = twopi * G4UniformRand();
-
-    // Construct dir2 in frame where dir1 is along z
+    // Direction for photon 2
     G4ThreeVector dir2(sin_theta12 * std::cos(phi2), sin_theta12 * std::sin(phi2), cos_theta12);
-
-    // Rotate dir2 to align with actual dir1 (new z-axis)
     dir2.rotateUz(dir1);
     G4ThreeVector p2v = E2 * dir2;
 
