@@ -5,10 +5,10 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = true;
+	isDetector_Shell = false;
 	isSource=false;
 	isTPC = false;
-	isCalorimeter = false;
+	isCalorimeter = true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
 
@@ -428,9 +428,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Scintillator"};
-    std::string SiPM_name_list[] = {"SiPM"};
-    std::string Tapflon_name_list[] = {"Wrapping"};
+    std::string Scintillator_name_list[] = {"Square/Scintillator"};
+    std::string SiPM_name_list[] = {"Square/SiPM"};
+    std::string Tapflon_name_list[] = {"Square/Wrapping"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -441,7 +441,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
         auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(10.0);
+        scintillator->SetScale(5.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matCsI, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
@@ -449,7 +449,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 
         std::string name_SiPM = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(10.0);
+        scintillatorDet->SetScale(5.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
@@ -458,7 +458,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(10.0);
+        scintillatorwrapping->SetScale(5.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matTeflon, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);
@@ -473,7 +473,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-    int range=30;
+    int range=0;
     G4double dist=0*mm;
     int counter=0;
     for(int j=0;j<=range;j++){

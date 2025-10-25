@@ -16,8 +16,6 @@ file(GLOB headers_main ${PROJECT_SOURCE_DIR}/include/main_header/*.hh)
 
 file(GLOB MACRO_FILES
 	"macro/*.mac",
-	"*.STL",
-	"HodoscopeParts/*.STL"
 )
 file(GLOB DATA_FILES
 	"src/DataFile/CsI/*",
@@ -26,7 +24,7 @@ file(GLOB DATA_FILES
 	"src/DataFile/Tapflon/*"
 )
 file(GLOB 3D_MODELS
-	"src/CADModel/*.stl"
+	"src/3DModel/*"
 )
 file(COPY ${MACRO_FILES} ${DATA_FILES} ${3D_MODELS} DESTINATION ${PROJECT_BINARY_DIR})
 
