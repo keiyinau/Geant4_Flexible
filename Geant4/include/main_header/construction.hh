@@ -72,6 +72,7 @@ public:
 	// End Calorimeter
 	//Construct source
 	void ConstructSource();
+	void ConstructLiquidScintillator();
 	// End Construct source
 
 	static G4String file_name;
@@ -114,8 +115,18 @@ private:
 	G4VPhysicalVolume *physBareSource_Dt, *physBS_Disk_Dt, *physBSD_Ring_Dt;
 	// End Radioactive Source
 
+	//Liquid Scintillator
+	G4Material *matContainer, *matLiquid;
+	G4bool isLiquid, isCupDetector;
+	G4double container_radius, container_height_half, container_thickness, d_pos_z;
+	G4LogicalVolume *logiContainer_F, *logiContainer_B, *logicLiquid_F, *logicLiquid_B;		// F = Front, B = Back
+	G4LogicalVolume *logicPlaneDetector_W, *logicPlaneDetector_C, *logicPlaneDetector_L;	// W = World, C = Container, L = Liquid
+	G4LogicalVolume *logicRingDetector, *logicTubeDetector;
+	G4VPhysicalVolume *physContainer_F, *physContainer_B, *physLiquid_F, *physLiquid_B, *physPlaneDetector, *physRingDetector, *physTubeDetector;
+	//End Liquid Scintillator
 
 	//Materials
+	G4Material *matScintillator, *matWrapping, *matSiPM;
 	G4Material *matXe;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI;

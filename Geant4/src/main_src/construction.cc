@@ -6,18 +6,37 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = false;
-	isSource=false;
+	isSource=true;
 	isTPC = false;
 	isCalorimeter = true;
+    isLiquid=true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
-
+    matLiquid=matCsI;
+    matContainer=matTi;
+    matScintillator=matCsI;
+    matSiPM=matSi;
+    matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
 	logicCalorimeter = NULL;
 
+
+    ring_radius = 19.1/2*mm;
+	ring_height_half = 0.254*mm;			//Supported by two 0.254 mm Ti disks
+	disk_radius = 9.53/2*mm;
+	disk_height_half = 0.00508*mm;			//The activity is placed between two layers of 0.00508*mm Ti foil which is 0.0102*mm in total
+	bare_source_radius = disk_radius;
+	bare_source_height_half = 0.0001*mm;	//The thickness of bare source is not provide so this is a made up value
+    container_radius = 2*cm;				//All variables of container are made up.
+	container_height_half = 2/2*cm;
+	container_thickness = 1.*mm;
+	d_pos_z = 0.02*mm;						//Distance between two nearest plane detectors, spacing of two plane detectors
+
 	DefineMessenger();
+
+
 
 
 }
@@ -371,6 +390,8 @@ G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 		ConstructTPC();
 	if (isCalorimeter)
 		ConstructCalorimeter();
+    if (isLiquid)
+        ConstructLiquidScintillator();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Test if there are overlap"<<std::endl;
     physWorld->CheckOverlaps();
@@ -428,9 +449,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Square/Scintillator"};
-    std::string SiPM_name_list[] = {"Square/SiPM"};
-    std::string Tapflon_name_list[] = {"Square/Wrapping"};
+    std::string Scintillator_name_list[] = {"Hexagonal/Scintillator"};
+    std::string SiPM_name_list[] = {"Hexagonal/SiPM"};
+    std::string Tapflon_name_list[] = {"Hexagonal/Wrapping"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -441,26 +462,26 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
         auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(5.0);
+        scintillator->SetScale(1.0);
         auto Scintillator = scintillator->GetSolid();
-        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matCsI, name_scint+name + "Logic");
+        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(5.0);
+        scintillatorDet->SetScale(1.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSi, name_SiPM+name + "Logic");
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM.push_back(logicCalorimeter);
         physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(5.0);
+        scintillatorwrapping->SetScale(1.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
-        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matTeflon, name_Wrapping+name + "Logic");
+        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
@@ -473,37 +494,62 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
-    int range=0;
-    G4double dist=0*mm;
-    int counter=0;
-    for(int j=0;j<=range;j++){
-        for(int i=-range;i<=range;i++){
-            for(int k=-range;k<=range;k++){
-                G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
-                G4double angle = 90 * deg;
-                if(i==0&&j==0&&k==0){
-                    G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
-                    ConstructCalorimeter_unit(translation,angle,name_);
-                    counter+=1;
-                }
-                else{
-                    G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
-                    ConstructCalorimeter_unit(translation,angle,name_);
-                }       
+    // Generate cubic
+    //int range=0;
+    //G4double dist=0*mm;
+    //int counter=0;
+    //for(int j=0;j<=range;j++){
+    //    for(int i=-range;i<=range;i++){
+    //        for(int k=-range;k<=range;k++){
+    //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
+    //            G4double angle = 0 * deg;
+    //            if(i==0&&j==0&&k==0){
+    //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
+    //                ConstructCalorimeter_unit(translation,angle,name_);
+    //                counter+=1;
+    //            }
+    //            else{
+    //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
+    //                ConstructCalorimeter_unit(translation,angle,name_);
+    //            }       
+//
+    //        }
+    //    }
+    //}
+    // Generate hcc
+    G4double apothem = 6.94/2;  // Apothem (distance from center to flat side)
+    G4double side_length = 2.0 * apothem;  // Side length
+    G4double a1_x = side_length;  // Primitive vector 1 x-component
+    G4double a1_y = 0.0;  // Primitive vector 1 y-component
+    G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
+    G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
-            }
+    int min_N = 4;  // Start from ring 1 for placing source
+    int max_N = 6;  // End at ring 6
+    int count = 0;  // For unique naming
+
+    for (int n1 = -max_N; n1 <= max_N; ++n1) {
+        for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
+        // Calculate the "ring" distance from origin using the max norm
+        int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
+        if (ring >= min_N && ring <= max_N) {
+            // Calculate position using primitive vectors
+            G4double x = n1 * a1_x + n2 * a2_x;
+            G4double y = n1 * a1_y + n2 * a2_y;
+            G4double z = 0.0;  // Adjust if prisms are offset along z
+
+            G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+            G4double angle = 0.0;  // No rotation; adjust if needed to align with prism definition
+            G4String name = "calor_unit_" + std::to_string(count++);
+
+            // Call your function to place the unit
+            ConstructCalorimeter_unit(translation, angle, name);
         }
-
+        }
     }
 }
 //Construct source
 void MyDetectorConstruction::ConstructSource(){
-	ring_radius = 19.1/2*mm;
-	ring_height_half = 0.254*mm;			//Supported by two 0.254 mm Ti disks
-	disk_radius = 9.53/2*mm;
-	disk_height_half = 0.00508*mm;			//The activity is placed between two layers of 0.00508*mm Ti foil which is 0.0102*mm in total
-	bare_source_radius = disk_radius;
-	bare_source_height_half = 0.0001*mm;	//The thickness of bare source is not provide so this is a made up value
 	G4Tubs* solidRing = new G4Tubs("solidRing", disk_radius, ring_radius, ring_height_half, 0.*deg, 360.*deg);
 	logicRing = new G4LogicalVolume(solidRing, matTi, "logicRing");
 	G4Translate3D trans(G4ThreeVector(0*m, 0*m, 0*cm));
@@ -518,6 +564,25 @@ void MyDetectorConstruction::ConstructSource(){
 	G4Tubs* solidBareSource = new G4Tubs("solidBareSource", 0.*nm, bare_source_radius, bare_source_height_half, 0.*deg, 360.*deg);
 	logicBareSource = new G4LogicalVolume(solidBareSource, matNaCl, "logicBareSource");
 	physBareSource = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicBareSource, "BareSource", logicWorld, false, 0, true);
+}
 
+void MyDetectorConstruction::ConstructLiquidScintillator(){
+	G4Tubs* solidContainer = new G4Tubs("LiquidContainer", 0.*nm, container_radius, container_height_half, 0.*deg, 360.*deg);
+	G4Tubs* solidLiquid = new G4Tubs("Liquid", 0.*nm, container_radius-container_thickness, container_height_half-container_thickness, 0.*deg, 360.*deg);
+
+	logiContainer_F = new G4LogicalVolume(solidContainer, matContainer, "logiContainer");
+	logiContainer_B = new G4LogicalVolume(solidContainer, matContainer, "logiContainer");
+	logicLiquid_F = new G4LogicalVolume(solidLiquid, matLiquid, "logicLiquid");
+	logicLiquid_B = new G4LogicalVolume(solidLiquid, matLiquid, "logicLiquid");
+
+	G4double container_z_shift = ring_height_half+container_height_half;
+
+	G4Translate3D transZ(G4ThreeVector(0.*m, 0.*m, container_z_shift));
+	G4Rotate3D rotY_90_2(90.*2*deg, G4ThreeVector(0.,1.,0.));
+
+	physContainer_F = new G4PVPlacement(transZ, logiContainer_F, "Container_F", logicWorld, false, 0, true);
+	physContainer_B = new G4PVPlacement(rotY_90_2*transZ, logiContainer_B, "Container_B", logicWorld, false, 0, true);
+	physLiquid_F = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicLiquid_F, "Liquid", logiContainer_F, false, 0, true);
+	physLiquid_B = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicLiquid_B, "Liquid", logiContainer_B, false, 0, true);
 }
 // End Construct source
