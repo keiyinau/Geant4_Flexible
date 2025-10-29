@@ -9,14 +9,15 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isSource=true;
 	isTPC = false;
 	isCalorimeter = true;
-    isLiquid=true;
+    isLiquid=false;
+    is3DCalorimeter=false;
 	// Set the material for each logical volume
-	matWorld = Vacuum; //Vacuum;
+	matWorld = Air; //Vacuum;
     matLiquid=matCsI;
     matContainer=matTi;
     matScintillator=matCsI;
     matSiPM=matSi;
-    matWrapping=matTeflon;
+    matWrapping=matAl;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
@@ -265,6 +266,16 @@ void MyDetectorConstruction::DefineMaterials() {
 	double temperature = 296.15*kelvin;  // [your choice]
 	matXe  = new G4Material("matXe", density, 1, kStateGas, temperature, pressure);
 	matXe->AddElement(Xe, 1);  //--> Monoatomic nature
+    // End Xenon gas
+
+    // Define water
+    matWater = nist->FindOrBuildMaterial("G4_WATER");
+    G4MaterialPropertiesTable* mptWater = new G4MaterialPropertiesTable();
+    mptWater->AddProperty("RINDEX", "Water");
+    matWater->SetMaterialPropertiesTable(mptWater);
+    // End water
+
+
 
 	//NaCl
 	matNaCl = new G4Material("NaCl", 2.16*g/cm3, 2);
@@ -296,6 +307,26 @@ void MyDetectorConstruction::DefineMaterials() {
 	matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
 
+	// Define Aluminium for wrapping and protection
+	matAl = nist->FindOrBuildMaterial("G4_Al");
+	G4MaterialPropertiesTable* mptAl = new G4MaterialPropertiesTable();
+    const G4int nEntries = 2; // Example with two points
+    G4double PhotonEnergy[nEntries] = {1.5 * eV, 3.0 * eV}; // Example energy range
+    G4double RIndex_al[nEntries] = {1.37, 0.44}; // Example refractive index values
+    // Add the properties to the table
+    mptAl->AddProperty("RINDEX", PhotonEnergy, RIndex_al, nEntries);
+    matAl->SetMaterialPropertiesTable(mptAl);
+    // End Aluminium
+
+	// Define Acrylic
+	matAcrylic = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
+	G4MaterialPropertiesTable* mptAcrylic = new G4MaterialPropertiesTable();
+    mptAcrylic->AddProperty("RINDEX", "PMMA");
+	matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
+	// End Acrylic
+
+
+
 	// Define Tapflon(teflon) for wrapping
 	matTeflon = nist->FindOrBuildMaterial("G4_TEFLON");
 	std::vector<G4double> tapflon_reflectance_Energy, tapflon_reflectance_fractions;
@@ -308,7 +339,6 @@ void MyDetectorConstruction::DefineMaterials() {
 
     matTeflon->SetMaterialPropertiesTable(mptTeflon);
     // End Tapflon
-
 
 	// Define SiPM
 	matSi = nist->FindOrBuildMaterial("G4_Si");
@@ -325,6 +355,13 @@ void MyDetectorConstruction::DefineMaterials() {
     mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
 	matSi->SetMaterialPropertiesTable(mptSi);
 
+    // CsI-Teflon (reflective surface)
+    surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
+    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
+    surfCsI_Teflon->SetModel(unified);
+    surfCsI_Teflon->SetFinish(polished);
+    //End surface
+
     // CsI-SiPM (dielectric-dielectric interface)
     surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
     surfCsI_SiPM->SetType(dielectric_dielectric);
@@ -332,11 +369,11 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_SiPM->SetFinish(polished);
 	// End SiPM
 
-    // CsI-Teflon (reflective surface)
-    surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
-    surfCsI_Teflon->SetModel(unified);
-    surfCsI_Teflon->SetFinish(polished);
+    // CsI-AlFoil (reflective surface)
+    surfCsI_AlFoil = new G4OpticalSurface("CsI_AlFoil_Surface");
+    surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
+    surfCsI_AlFoil->SetModel(unified);
+    surfCsI_AlFoil->SetFinish(polished);
     //End surface
 
 
@@ -346,8 +383,8 @@ void MyDetectorConstruction::DefineMaterials() {
     mptCsI->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of Teflon"<<std::endl;
-    mptTeflon->DumpTable();
+    std::cout<<"Printing the material properties of Al"<<std::endl;
+    mptAl->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Printing the material properties of Si"<<std::endl;
     mptSi->DumpTable();
@@ -449,6 +486,117 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
+    std::string Scintillator_name_list[] = {"CsI"};
+    std::string SiPM_name_list[] = {"SiPM0", "SiPM1", "SiPM2", "SiPM3"};
+    std::string Tapflon_name_list[] = {"AlFoil"};
+    std::string Protection_name_list[] = {"Bottom", "Left", "Right"};
+    std::string Acrylic_name_list[] = {"Acrylic"};
+
+    int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
+    int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
+    int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
+    int Size_of_Protection_name_list = sizeof(Protection_name_list)/sizeof(std::string);
+    int Size_of_Acrylic_name_list = sizeof(Acrylic_name_list)/sizeof(std::string);
+
+    std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
+    std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Tapflon_name_list);
+    std::vector<G4VPhysicalVolume*> physSiPM(Size_of_SiPM_name_list);
+    std::vector<G4VPhysicalVolume*> physProtection(Size_of_Protection_name_list);
+    std::vector<G4VPhysicalVolume*> physAcrylic(Size_of_Acrylic_name_list);
+
+    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
+        std::string name_scint = Scintillator_name_list[i];
+        G4Box* Scintillator = new G4Box(name_scint + "_solid", 2.5*cm, 2.5*cm, 25*cm);
+        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
+        logicScintillators.push_back(logicScintillator_pre);
+        physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
+    }
+
+    G4double foilThick = 0.0016*cm;
+    for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
+        std::string name_Wrapping = Tapflon_name_list[i];
+        G4Box* outerFoil = new G4Box("OuterFoil", 2.5*cm + foilThick, 2.5*cm + foilThick, 25*cm);
+        G4Box* innerFoil = new G4Box("InnerFoil", 2.5*cm, 2.5*cm, 25*cm + 0.1*cm);
+        G4SubtractionSolid* Scintillatorwrapping = new G4SubtractionSolid(name_Wrapping + "_solid", outerFoil, innerFoil);
+        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
+        logicTapflon.push_back(logicTapflon_pre);
+        physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
+    }
+
+    G4double alThick = 1.0*cm;
+    for (int i = 0; i < Size_of_Protection_name_list; i++) {
+        std::string name_Protection = Protection_name_list[i];
+        G4Box* Protection = nullptr;
+        G4ThreeVector pos(0,0,0);
+        if (i == 0) { // Bottom
+            Protection = new G4Box(name_Protection + "_solid", 2.5*cm + foilThick, alThick / 2, 25*cm);
+            pos = G4ThreeVector(0, -(2.5*cm + foilThick) - alThick / 2, 0);
+        } else if (i == 1) { // Left
+            Protection = new G4Box(name_Protection + "_solid", alThick / 2, 2.5*cm + foilThick, 25*cm);
+            pos = G4ThreeVector(-(2.5*cm + foilThick) - alThick / 2, 0, 0);
+        } else { // Right
+            Protection = new G4Box(name_Protection + "_solid", alThick / 2, 2.5*cm + foilThick, 25*cm);
+            pos = G4ThreeVector((2.5*cm + foilThick) + alThick / 2, 0, 0);
+        }
+        G4LogicalVolume* logicProtection_pre = new G4LogicalVolume(Protection, matAl, name_Protection+name + "Logic");
+        logicProtection.push_back(logicProtection_pre);
+        physProtection[i] = new G4PVPlacement(rotation, translation + (*rotation)(pos), logicProtection_pre, name_Protection+name, logicWorld, false, i, true);    
+    }
+
+    G4double acrylicThick = 0.5*cm;
+    for (int i = 0; i < Size_of_Acrylic_name_list; i++) {
+        std::string name_Acrylic = Acrylic_name_list[i];
+        G4Box* acrylicBase = new G4Box(name_Acrylic + "_base", 2.5*cm, 2.5*cm, acrylicThick / 2);
+        G4Box* hole = new G4Box("Hole", 0.209*cm, 0.209*cm, acrylicThick / 2 + 0.1*cm);
+        G4double posXY[4][2] = {
+            {-1.25*cm, 1.25*cm},
+            {1.25*cm, 1.25*cm},
+            {-1.25*cm, -1.25*cm},
+            {1.25*cm, -1.25*cm}
+        };
+        G4VSolid* Acrylic = acrylicBase;
+        for (int j = 0; j < 4; ++j) {
+            G4ThreeVector holePos(posXY[j][0], posXY[j][1], 0);
+            Acrylic = new G4SubtractionSolid(name_Acrylic + "_minus_hole" + std::to_string(j), Acrylic, hole, nullptr, holePos);
+        }
+        G4LogicalVolume* logicAcrylic_pre = new G4LogicalVolume(Acrylic, matAcrylic, name_Acrylic+name + "Logic");
+        logicAcrylic.push_back(logicAcrylic_pre);
+        G4ThreeVector acrylicPos(0, 0, -25*cm - acrylicThick / 2);
+        physAcrylic[i] = new G4PVPlacement(rotation, translation + (*rotation)(acrylicPos), logicAcrylic_pre, name_Acrylic+name, logicWorld, false, i, true);    
+    }
+
+    for (int i = 0; i < Size_of_SiPM_name_list; i++) {
+        std::string name_SiPM = SiPM_name_list[i];
+        G4Box* ScintillatorDet = new G4Box(name_SiPM + "_solid", 0.209*cm, 0.209*cm, 0.082*cm);
+        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
+		logicCalorimeter=logicSiPM_pre;
+        logicSiPM.push_back(logicCalorimeter);
+        G4double posXY[4][2] = {
+            {-1.25*cm, 1.25*cm},
+            {1.25*cm, 1.25*cm},
+            {-1.25*cm, -1.25*cm},
+            {1.25*cm, -1.25*cm}
+        };
+        G4ThreeVector sipmPos(posXY[i][0], posXY[i][1], -25*cm - acrylicThick / 2);
+        physSiPM[i] = new G4PVPlacement(rotation, translation + (*rotation)(sipmPos), logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
+    }
+
+    for (int i=0; i<Size_of_Scintillator_name_list; i++) {
+        for (int j=0; j<Size_of_SiPM_name_list; j++) {
+            new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[j], surfCsI_SiPM);
+            //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[j], physScintillators[i], surfCsI_SiPM);
+        }
+        for (int j=0; j<Size_of_Tapflon_name_list; j++) {
+            new G4LogicalBorderSurface("CsI_AlFoil_Border", physScintillators[i], physTapflon[j], surfCsI_AlFoil);
+            //new G4LogicalBorderSurface("CsI_AlFoil_Border_Reverse", physTapflon[j], physScintillators[i], surfCsI_AlFoil);
+        }
+    }
+}
+
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name){
+    G4RotationMatrix* rotation = new G4RotationMatrix();
+    rotation->rotateX(angle);
+
     std::string Scintillator_name_list[] = {"Hexagonal/Scintillator"};
     std::string SiPM_name_list[] = {"Hexagonal/SiPM"};
     std::string Tapflon_name_list[] = {"Hexagonal/Wrapping"};
@@ -493,59 +641,67 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     }
 }
 
+
+
 void MyDetectorConstruction::ConstructCalorimeter() {
-    // Generate cubic
-    //int range=0;
-    //G4double dist=0*mm;
-    //int counter=0;
-    //for(int j=0;j<=range;j++){
-    //    for(int i=-range;i<=range;i++){
-    //        for(int k=-range;k<=range;k++){
-    //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
-    //            G4double angle = 0 * deg;
-    //            if(i==0&&j==0&&k==0){
-    //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
-    //                ConstructCalorimeter_unit(translation,angle,name_);
-    //                counter+=1;
-    //            }
-    //            else{
-    //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
-    //                ConstructCalorimeter_unit(translation,angle,name_);
-    //            }       
-//
-    //        }
-    //    }
-    //}
-    // Generate hcc
-    G4double apothem = 6.94/2;  // Apothem (distance from center to flat side)
-    G4double side_length = 2.0 * apothem;  // Side length
-    G4double a1_x = side_length;  // Primitive vector 1 x-component
-    G4double a1_y = 0.0;  // Primitive vector 1 y-component
-    G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
-    G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
+    // Place a single unit at origin
+    if(is3DCalorimeter){
+        // Generate cubic
+        //int range=0;
+        //G4double dist=0*mm;
+        //int counter=0;
+        //for(int j=0;j<=range;j++){
+        //    for(int i=-range;i<=range;i++){
+        //        for(int k=-range;k<=range;k++){
+        //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
+        //            G4double angle = 0 * deg;
+        //            if(i==0&&j==0&&k==0){
+        //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
+        //                ConstructCalorimeter_unit(translation,angle,name_);
+        //                counter+=1;
+        //            }
+        //            else{
+        //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
+        //                ConstructCalorimeter_unit(translation,angle,name_);
+        //            }       
+        //
+        //        }
+        //    }
+        //}
+        // Generate hcc
+        G4double apothem = 6.94/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+        G4double side_length = 2.0 * apothem;  // Side length
+        G4double a1_x = side_length;  // Primitive vector 1 x-component
+        G4double a1_y = 0.0;  // Primitive vector 1 y-component
+        G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
+        G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
-    int min_N = 4;  // Start from ring 1 for placing source
-    int max_N = 6;  // End at ring 6
-    int count = 0;  // For unique naming
+        int min_N = 4;  // Start from ring 1 for placing source
+        int max_N = 6;  // End at ring 6
+        int count = 0;  // For unique naming
 
-    for (int n1 = -max_N; n1 <= max_N; ++n1) {
-        for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
-        // Calculate the "ring" distance from origin using the max norm
-        int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
-        if (ring >= min_N && ring <= max_N) {
-            // Calculate position using primitive vectors
-            G4double x = n1 * a1_x + n2 * a2_x;
-            G4double y = n1 * a1_y + n2 * a2_y;
-            G4double z = 0.0;  // Adjust if prisms are offset along z
+        for (int n1 = -max_N; n1 <= max_N; ++n1) {
+            for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
+            // Calculate the "ring" distance from origin using the max norm
+            int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
+            if (ring >= min_N && ring <= max_N) {
+                // Calculate position using primitive vectors
+                G4double x = n1 * a1_x + n2 * a2_x;
+                G4double y = n1 * a1_y + n2 * a2_y;
+                G4double z = 0.0;  // Adjust if prisms are offset along z
 
-            G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
-            G4double angle = 0.0;  // No rotation; adjust if needed to align with prism definition
-            G4String name = "calor_unit_" + std::to_string(count++);
+                G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+                G4double angle = 0.0;  // No rotation; adjust if needed to align with prism definition
+                G4String name = "calor_unit_" + std::to_string(count++);
 
-            // Call your function to place the unit
-            ConstructCalorimeter_unit(translation, angle, name);
+                // Call your function to place the unit
+                ConstructCalorimeter_unit_3d(translation, angle, name);
+            }
+            }
         }
-        }
+    }
+    else{
+        ConstructCalorimeter_unit(G4ThreeVector(0,2*(disk_radius+ring_radius)+2.5*cm,0), 0*deg, "");
     }
 }
 //Construct source

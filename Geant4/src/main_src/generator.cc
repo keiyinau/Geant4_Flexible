@@ -13,7 +13,7 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	ex_energy = 0.*keV;		// Excitation energy
 
 	// Select particle generator. Options: 0 = fParticleSource, 1 = fParticleGun
-	PS_or_PG = 0;
+	PS_or_PG = 1;
 
 	// Set the default parameters for the fParticleSource
 	pdParticleSource = fGeantino;								//options: fGamma, fPositron, fGeantino = fIon

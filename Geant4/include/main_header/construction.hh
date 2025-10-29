@@ -69,6 +69,7 @@ public:
 	// Calorimeter
 	void ConstructCalorimeter();
 	void ConstructCalorimeter_unit(G4ThreeVector translation, G4double angle,G4String name);
+	void ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle,G4String name);
 	// End Calorimeter
 	//Construct source
 	void ConstructSource();
@@ -100,8 +101,8 @@ private:
 	G4bool isCalorimeter;
 	G4LogicalVolume *logicCalorimeter;
 	G4VPhysicalVolume *physCalorimeter;
-	G4OpticalSurface *surfCsI_SiPM, *surfCsI_Teflon;
-	std::vector<G4LogicalVolume*> logicScintillators,logicSiPM,logicTapflon;
+	G4OpticalSurface *surfCsI_SiPM, *surfCsI_AlFoil,*surfCsI_Teflon;;
+	std::vector<G4LogicalVolume*> logicScintillators,logicSiPM,logicTapflon,logicProtection,logicAcrylic;
 	// End Ideal Detector
 	
 
@@ -117,21 +118,20 @@ private:
 
 	//Liquid Scintillator
 	G4Material *matContainer, *matLiquid;
-	G4bool isLiquid, isCupDetector;
+	G4bool isLiquid, isCupDetector, is3DCalorimeter;
 	G4double container_radius, container_height_half, container_thickness, d_pos_z;
 	G4LogicalVolume *logiContainer_F, *logiContainer_B, *logicLiquid_F, *logicLiquid_B;		// F = Front, B = Back
 	G4LogicalVolume *logicPlaneDetector_W, *logicPlaneDetector_C, *logicPlaneDetector_L;	// W = World, C = Container, L = Liquid
 	G4LogicalVolume *logicRingDetector, *logicTubeDetector;
 	G4VPhysicalVolume *physContainer_F, *physContainer_B, *physLiquid_F, *physLiquid_B, *physPlaneDetector, *physRingDetector, *physTubeDetector;
 	//End Liquid Scintillator
-
+	
 	//Materials
 	G4Material *matScintillator, *matWrapping, *matSiPM;
-	G4Material *matXe;  // Xenon gas for test
+	G4Material *matXe, *matWater;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI;
-	G4Material *matSi, *matTeflon;
-
+	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;;
 
 
 };
