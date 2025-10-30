@@ -30,7 +30,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 		datafile >> wavelength_ >> pde_;
 		if(datafile.eof()) break; // End of file reached
 		// Process the wavelength and pde values as needed
-		std::cout << "Wavelength: " << wavelength_ << ", PDE: " << pde_ << std::endl;
+		//std::cout << "Wavelength: " << wavelength_ << ", PDE: " << pde_ << std::endl;
 		wlen.push_back(wavelength_);
 		pde.push_back(pde_/100.0); // Convert percentage to fraction
 	}
@@ -60,8 +60,8 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	if(isAP==false){
 		myProperties.setApOff();
 	}
-	myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
-	myProperties.setPdeSpectrum(wlen,pde);
+	//myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
+	//myProperties.setPdeSpectrum(wlen,pde);
 	std::cout<<"Properties:"<<myProperties<<std::endl;
 	mySensor = sipm::SiPMSensor(myProperties);
 	std::cout<<"My Sensor:"<<mySensor<<"\n";
@@ -84,92 +84,92 @@ void Calorimeter::Initialize(G4HCofThisEvent* hce)
 	
 }
 
-void Calorimeter::EndOfEvent(G4HCofThisEvent*){
-	
-	mySensor.resetState();
-	mySensor.addPhotons(photonTimes, photonWavelengths);
-	mySensor.runEvent();
-	//for(int i=0; i<photonTimes.size(); i++){
-	//	//std::cout<<"Photon "<<i<<": Time = "<<photonTimes[i]<<" ns, Wavelength = "<<photonWavelengths[i]<<" nm"<<std::endl;
-	//	std::cout<<""<<photonTimes[i]<<std::endl;
-	//}
-	//std::cout<<"Debug info:"<<mySensor.debug()<<"\n";
-	//std::cout<<"Photon count from debug info:"<<mySensor.debug().nPhotons<<"\n";
-	//std::cout<<"Photonelectron count from debug info:"<<mySensor.debug().nPhotoelectrons<<"\n";
-	//std::cout<<"Number of DCR event"<<mySensor.debug().nDcr<<"\n";
-	//std::cout<<"Number of Optical Cross talk event"<<mySensor.debug().nXt<<"\n";
-	//std::cout<<"Number of After pulse event"<<mySensor.debug().nAp<<"\n";
-//
-	//std::cout<<"Signal:"<<mySensor.signal()<<"\n";
-	mySignal = mySensor.signal();
-	G4double timeofArrival= mySignal.toa(0,signalLength, threshold);
-	if(timeofArrival>=0){
-		if((double)timeofArrival+(double)gatewidth<signalLength){
-			G4double integral = mySignal.integral((double)timeofArrival,(double)timeofArrival+(double)gatewidth,threshold);
-			if(integral>0 && integral<1e10){
-				LoadData data;
-				data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-				data.Area = integral;
-				data.RealPhotonCount = mySensor.debug().nPhotons;
-				data.PEsCount = mySensor.debug().nPhotoelectrons;
-				data.NoisePEsCount = mySensor.debug().nDcr + mySensor.debug().nXt + mySensor.debug().nAp;
-				data.Time_Of_Triggering = timeofArrival;
-				CurrentData.push_back(data); // Store the data for this event
-			}	
+void Calorimeter::EndOfEvent(G4HCofThisEvent*)
+{
+    mySensor.resetState();
+
+    // Add only real optical photons (from CsI)
+    mySensor.addPhotons(photonTimes, photonWavelengths);
+    mySensor.runEvent();
+
+    const auto& debug = mySensor.debug();
+    const auto& signal = mySensor.signal();
+
+    // === Find first REAL photon time (from CsI) ===
+    G4double firstPhotonTime = -1.0;
+    if (!photonTimes.empty()) {
+        firstPhotonTime = *std::min_element(photonTimes.begin(), photonTimes.end());
+    }
+
+    // === Only process if at least one real photon ===
+    if (firstPhotonTime >= 0) {
+        G4double gateStart = firstPhotonTime;
+        G4double gateEnd   = gateStart + gatewidth;
+
+        // Ensure gate fits in signal length
+        if (gateEnd <= signalLength) {
+            G4double integral = signal.integral(gateStart, gateEnd, 0.0);  // No threshold for integration
+
+            if (integral < 1e10) {  // Removed >0 to save even if integral==0
+                LoadData data;
+                data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+                data.Area = integral;
+                data.RealPhotonCount = debug.nPhotons;
+                data.PEsCount = debug.nPhotoelectrons;
+                data.NoisePEsCount = debug.nDcr + debug.nXt + debug.nAp;
+                data.Time_Of_Triggering = firstPhotonTime;  // Real trigger time
+
+                CurrentData.push_back(data);
+            }
+        }
+		else{
+			LoadData data;
+            data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+            data.Area = -100.0; // Indicate invalid area due to gate exceeding signal length
+            data.RealPhotonCount = debug.nPhotons;
+            data.PEsCount = debug.nPhotoelectrons;
+            data.NoisePEsCount = debug.nDcr + debug.nXt + debug.nAp;
+            data.Time_Of_Triggering = firstPhotonTime;  // Real trigger time
+            CurrentData.push_back(data);
 		}
-		
-	}
+    }
 
+    // Optional: Plot waveform
+    if (isGraph) {
+        PlotWaveform(signal);
+    }
 
+    SaveToRoot();
+    ClearVectorsCounts();
+}
 
+void Calorimeter::PlotWaveform(const sipm::SiPMAnalogSignal& signal)
+{
+    std::vector<float> waveform = signal.waveform();
+    for (float& val : waveform) val *= gain;
 
+    size_t nPoints = waveform.size();
+    TGraph* graph = new TGraph(nPoints);
+    for (size_t i = 0; i < nPoints; ++i) {
+        graph->SetPoint(i, i * SampleTime, waveform[i]);
+    }
 
-	if(isGraph){
-		std::vector<float> waveform = mySignal.waveform();
-		for (float& val : waveform) {
-				val *= gain;
-		}
+    TCanvas* c = new TCanvas("c", "SiPM Signal", 800, 600);
+    graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
+    graph->Draw("AL");
+    c->SaveAs("waveform.png");
 
-
-		// Generate time points for plotting
-		size_t nPoints = static_cast<size_t>(signalLength / SampleTime);
-		std::vector<double> timePoints(nPoints);
-		for (size_t i = 0; i < nPoints; ++i) {
-			timePoints[i] = i * SampleTime;
-		}
-		// Create ROOT TGraph for plotting
-		TGraph* graph = new TGraph(nPoints);
-		for (size_t i = 0; i < nPoints && i < waveform.size(); ++i) {
-			graph->SetPoint(i, timePoints[i], waveform[i]);
-		}
-		graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
-		graph->SetMarkerStyle(20);
-		graph->SetMarkerSize(0.5);
-
-		// Create canvas and draw the graph
-		TCanvas* canvas = new TCanvas("canvas", "SiPM Waveform", 800, 600);
-		graph->Draw("APL"); // Draw with axis, points, and line
-		canvas->Update();
-
-		// Save the plot to a file
-		canvas->SaveAs("waveform.png");
-
-		// If running interactively, uncomment the next line to keep the window open
-		// app.Run();
-
-		// Clean up
-		delete graph;
-		delete canvas;
-	}
-	SaveToRoot();
-	ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
+    delete graph;
+    delete c;
 }
 
 G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
-	
+
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
+	//std::cout<<"There is an hit";
+	//std::cout<<particleName<<std::endl;
 	if (particleName == "opticalphoton")
     {
 		//std::cout<<"There is an hit";

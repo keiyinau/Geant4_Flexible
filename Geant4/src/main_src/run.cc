@@ -64,4 +64,16 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("z_momentum_MeV");
     man->FinishNtuple(1);
 
+
+    man->CreateNtuple("Tracker", "Tracker data"); 
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleDColumn("AccumatedDistance_mm");
+    man->CreateNtupleDColumn("AccumulatedTime_ns");
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV");
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleSColumn("ParticleName");
+    man->CreateNtupleSColumn("CreatorProcessName");
+    man->FinishNtuple(2);
+
 }

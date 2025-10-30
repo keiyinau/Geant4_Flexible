@@ -365,7 +365,7 @@ void MyDetectorConstruction::DefineMaterials() {
     // CsI-SiPM (dielectric-dielectric interface)
     surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
     surfCsI_SiPM->SetType(dielectric_dielectric);
-    surfCsI_SiPM->SetModel(unified); // Glisur for smooth dielectric interface
+    surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
     surfCsI_SiPM->SetFinish(polished);
 	// End SiPM
 
@@ -373,7 +373,7 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_AlFoil = new G4OpticalSurface("CsI_AlFoil_Surface");
     surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
     surfCsI_AlFoil->SetModel(unified);
-    surfCsI_AlFoil->SetFinish(polished);
+    surfCsI_AlFoil->SetFinish(ground);
     //End surface
 
 
@@ -455,6 +455,9 @@ void MyDetectorConstruction::ConstructSDandField() {
         for(int i=0; i < logicSiPM.size(); i++) {
             logicSiPM[i]->SetSensitiveDetector(calorimeter);
         }
+        //for(int i=0; i < logicScintillators.size(); i++) {
+        //    logicScintillators[i]->SetSensitiveDetector(tracker0);
+        //}
 		//logicCalorimeter->SetSensitiveDetector(calorimeter);
 	//if(logicBareSource != NULL)
 	//	logicBareSource->SetSensitiveDetector(detect_reference);
@@ -482,165 +485,218 @@ void MyDetectorConstruction::ConstructTPC() {
 	physTPC = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicTPC, "DetectorTPC", logicWorld, false, 0, true);
 }
 // End Ideal Detector
-void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation, G4double angle, G4String name) {
-    G4RotationMatrix* rotation = new G4RotationMatrix();
-    rotation->rotateX(angle);
+void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation,
+                                                       G4double angle,
+                                                       G4String name)
+{
+    // --------------------------------------------------------------
+    // 1. Rotation
+    // --------------------------------------------------------------
+    G4RotationMatrix* rot = new G4RotationMatrix();
+    rot->rotateX(angle);
 
-    // === Component Name Lists ===
-    std::string Scintillator_name_list[] = {"CsI"};
-    std::string SiPM_name_list[] = {"SiPM0", "SiPM1", "SiPM2", "SiPM3"};
-    std::string Tapflon_name_list[] = {"AlFoil"};
-    std::string Protection_name_list[] = {"Bottom", "Left", "Right", "Top"};
-    std::string Acrylic_name_list[] = {"Acrylic"};
+    // --------------------------------------------------------------
+    // 2. Name lists
+    // --------------------------------------------------------------
+    const std::string Scintillator_name_list[] = {"CsI"};
+    const std::string SiPM_name_list[]       = {"SiPM0","SiPM1","SiPM2","SiPM3"};
+    const std::string Tapflon_name_list[]    = {"AlFoil"};
+    const std::string Protection_name_list[] = {};//{"Bottom","Left","Right","Top"};
+    const std::string Acrylic_name_list[]    = {"Acrylic"};
 
-    int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
-    int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
-    int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
-    int Size_of_Protection_name_list = sizeof(Protection_name_list)/sizeof(std::string);
-    int Size_of_Acrylic_name_list = sizeof(Acrylic_name_list)/sizeof(std::string);
+    const int nScint = sizeof(Scintillator_name_list)/sizeof(std::string);
+    const int nSiPM  = sizeof(SiPM_name_list)/sizeof(std::string);
+    const int nFoil  = sizeof(Tapflon_name_list)/sizeof(std::string);
+    const int nProt  = sizeof(Protection_name_list)/sizeof(std::string);
+    const int nAcry  = sizeof(Acrylic_name_list)/sizeof(std::string);
 
-    std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Tapflon_name_list);
-    std::vector<G4VPhysicalVolume*> physSiPM(Size_of_SiPM_name_list);
-    std::vector<G4VPhysicalVolume*> physProtection(Size_of_Protection_name_list);
-    std::vector<G4VPhysicalVolume*> physAcrylic(Size_of_Acrylic_name_list);
+    std::vector<G4VPhysicalVolume*> physScint(nScint), physFoil(nFoil),
+                                    physSiPM(nSiPM),   physProt(nProt),
+                                    physAcry(nAcry);
 
-    // === 1. CsI Crystal ===
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
-        std::string name_scint = Scintillator_name_list[i];
-        G4Box* Scintillator = new G4Box(name_scint + "_solid", 2.5*cm, 2.5*cm, 25.0*cm);
-        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint + name + "Logic");
-        logicScintillators.push_back(logicScintillator_pre);
-        physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint + name, logicWorld, false, i, true);
+    // --------------------------------------------------------------
+    // 3. CsI crystal (5×5×50 cm³)
+    // --------------------------------------------------------------
+    for (int i=0;i<nScint;i++) {
+        G4Box* box = new G4Box(Scintillator_name_list[i]+"_solid",
+                               2.5*cm, 2.5*cm, 25.0*cm);               // half-lengths
+        G4LogicalVolume* log = new G4LogicalVolume(box, matScintillator,
+                               Scintillator_name_list[i]+name+"Logic");
+        logicScintillators.push_back(log);
+        physScint[i] = new G4PVPlacement(rot, translation, log,
+                       Scintillator_name_list[i]+name, logicWorld, false, i, true);
     }
 
-    // === 2. Al Foil Wrapping (Open at SiPM End) ===
-    G4double foilThick = 0.0016*cm;
-    for (int i = 0; i < Size_of_Tapflon_name_list; i++) {
-        std::string name_Wrapping = Tapflon_name_list[i];
+    // --------------------------------------------------------------
+    // 4. Al foil – open at the SiPM face (z = -25 cm)
+    // --------------------------------------------------------------
+    const G4double foilThick = 0.0016*cm;               // 0.016 mm
+    for (int i=0;i<nFoil;i++) {
+        G4Box* outer = new G4Box("outerFoil",
+                                 2.5*cm+foilThick, 2.5*cm+foilThick, 25.0*cm);
+        G4Box* inner = new G4Box("innerFoil",
+                                 2.5*cm, 2.5*cm, 25.0*cm-0.1*cm);   // shortened 1 mm
+        G4ThreeVector shift(0,0,+0.1*cm);                  // open at -z
+        G4SubtractionSolid* foil = new G4SubtractionSolid(
+                Tapflon_name_list[i]+"_solid", outer, inner, nullptr, shift);
 
-        G4Box* outerFoil = new G4Box("OuterFoil", 
-                                     2.5*cm + foilThick, 
-                                     2.5*cm + foilThick, 
-                                     25.0*cm);
-
-        // Inner cavity: shortened to leave ~1 mm gap at SiPM end
-        G4Box* innerFoil = new G4Box("InnerFoil", 
-                                     2.5*cm, 
-                                     2.5*cm, 
-                                     25.0*cm - 0.1*cm);
-
-        G4ThreeVector innerShift(0, 0, +0.1*cm);  // Open at z = -25 cm
-        G4SubtractionSolid* foilSolid = new G4SubtractionSolid(
-            name_Wrapping + "_solid", outerFoil, innerFoil, nullptr, innerShift);
-
-        G4LogicalVolume* logicFoil = new G4LogicalVolume(foilSolid, matWrapping, name_Wrapping + name + "Logic");
-        logicTapflon.push_back(logicFoil);
-        physTapflon[i] = new G4PVPlacement(rotation, translation, logicFoil, name_Wrapping + name, logicWorld, false, i, true);
+        G4LogicalVolume* log = new G4LogicalVolume(foil, matWrapping,
+                               Tapflon_name_list[i]+name+"Logic");
+        logicTapflon.push_back(log);
+        physFoil[i] = new G4PVPlacement(rot, translation, log,
+                       Tapflon_name_list[i]+name, logicWorld, false, i, true);
     }
 
-    // === 3. U-Shape + Top Aluminum Protection (4 sides) ===
-    G4double alThick = 1.0*cm;
-    for (int i = 0; i < Size_of_Protection_name_list; i++) {
-        std::string name_Protection = Protection_name_list[i];
-        G4Box* Protection = nullptr;
-        G4ThreeVector localPos(0, 0, 0);
+    // --------------------------------------------------------------
+    // 5. 4-sided Al protection (Bottom/Left/Right/Top)
+    // --------------------------------------------------------------
+    const G4double alThick = 1.0*cm;
+    for (int i=0;i<nProt;i++) {
+        G4Box* box = nullptr;
+        G4ThreeVector localPos(0,0,0);
 
-        if (i == 0) { // Bottom
-            Protection = new G4Box(name_Protection + "_solid", 2.5*cm + foilThick, alThick/2, 25.0*cm);
-            localPos = G4ThreeVector(0, -(2.5*cm + foilThick + alThick/2), 0);
-
-        } else if (i == 1) { // Left
-            Protection = new G4Box(name_Protection + "_solid", alThick/2, 2.5*cm + foilThick, 25.0*cm);
-            localPos = G4ThreeVector(-(2.5*cm + foilThick + alThick/2), 0, 0);
-
-        } else if (i == 2) { // Right
-            Protection = new G4Box(name_Protection + "_solid", alThick/2, 2.5*cm + foilThick, 25.0*cm);
-            localPos = G4ThreeVector(+(2.5*cm + foilThick + alThick/2), 0, 0);
-
-        } else if (i == 3) { // Top
-            Protection = new G4Box(name_Protection + "_solid", 2.5*cm + foilThick, alThick/2, 25.0*cm);
-            localPos = G4ThreeVector(0, +(2.5*cm + foilThick + alThick/2), 0);
+        if (i==0) {                                   // Bottom
+            box = new G4Box(Protection_name_list[i]+"_solid",
+                            2.5*cm+foilThick, alThick/2, 25.0*cm);
+            localPos = G4ThreeVector(0,
+                     -(2.5*cm+foilThick+alThick/2), 0);
+        }
+        else if (i==1) {                              // Left
+            box = new G4Box(Protection_name_list[i]+"_solid",
+                            alThick/2, 2.5*cm+foilThick, 25.0*cm);
+            localPos = G4ThreeVector(-(2.5*cm+foilThick+alThick/2),0,0);
+        }
+        else if (i==2) {                              // Right
+            box = new G4Box(Protection_name_list[i]+"_solid",
+                            alThick/2, 2.5*cm+foilThick, 25.0*cm);
+            localPos = G4ThreeVector(+(2.5*cm+foilThick+alThick/2),0,0);
+        }
+        else {                                        // Top
+            box = new G4Box(Protection_name_list[i]+"_solid",
+                            2.5*cm+foilThick, alThick/2, 25.0*cm);
+            localPos = G4ThreeVector(0,
+                     +(2.5*cm+foilThick+alThick/2), 0);
         }
 
-        G4LogicalVolume* logicProtection_pre = new G4LogicalVolume(Protection, matAl, name_Protection + name + "Logic");
-        logicProtection.push_back(logicProtection_pre);
-        physProtection[i] = new G4PVPlacement(rotation, translation + (*rotation)(localPos), 
-                                             logicProtection_pre, name_Protection + name, logicWorld, false, i, true);
+        G4LogicalVolume* log = new G4LogicalVolume(box, matAl,
+                               Protection_name_list[i]+name+"Logic");
+        logicProtection.push_back(log);
+        physProt[i] = new G4PVPlacement(rot,
+                       translation + (*rot)(localPos),
+                       log, Protection_name_list[i]+name,
+                       logicWorld, false, i, true);
     }
 
-    // === 4. Acrylic Cover (1.64 mm thick, same as SiPM) ===
-    G4double coverThick = 0.164*cm;  // 1.64 mm = SiPM thickness
-    for (int i = 0; i < Size_of_Acrylic_name_list; i++) {
-        std::string name_Acrylic = Acrylic_name_list[i];
+    // --------------------------------------------------------------
+    // 6. Acrylic plate – **same thickness as SiPM** (1.64 mm)
+    // --------------------------------------------------------------
+    const G4double plateThick = 0.164*cm;               // 1.64 mm
+    for (int i=0;i<nAcry;i++) {
+        // ---- base plate -------------------------------------------------
+        G4Box* base = new G4Box(Acrylic_name_list[i]+"_base",
+                                2.5*cm, 2.5*cm, plateThick/2);
 
-        // Base acrylic plate
-        G4Box* acrylicBase = new G4Box(name_Acrylic + "_base", 2.5*cm, 2.5*cm, coverThick/2);
+        // ---- holes exactly the size of the SiPMs -----------------------
+        G4Box* hole = new G4Box("hole",
+                                0.209*cm, 0.209*cm, plateThick/2 + 0.01*mm); // tiny overlap for subtraction
 
-        // Holes for SiPMs (exact size, no gap)
-        G4Box* hole = new G4Box("Hole", 0.209*cm, 0.209*cm, coverThick/2 + 0.01*mm);  // +0.1 mm for clean subtraction
-
-        G4double holeXY[4][2] = {
-            {-1.25*cm,  1.25*cm},
-            { 1.25*cm,  1.25*cm},
-            {-1.25*cm, -1.25*cm},
-            { 1.25*cm, -1.25*cm}
+        const G4double holeXY[4][2] = {
+            {-1.25*cm, 1.25*cm},
+            { 1.25*cm, 1.25*cm},
+            {-1.25*cm,-1.25*cm},
+            { 1.25*cm,-1.25*cm}
         };
 
-        G4VSolid* Acrylic = acrylicBase;
-        for (int j = 0; j < 4; ++j) {
-            G4ThreeVector holePos(holeXY[j][0], holeXY[j][1], 0);
-            Acrylic = new G4SubtractionSolid(name_Acrylic + "_hole" + std::to_string(j), Acrylic, hole, nullptr, holePos);
+        G4VSolid* acry = base;
+        for (int j=0;j<4;j++) {
+            G4ThreeVector hp(holeXY[j][0], holeXY[j][1], 0);
+            acry = new G4SubtractionSolid(
+                       Acrylic_name_list[i]+"_h"+std::to_string(j),
+                       acry, hole, nullptr, hp);
         }
 
-        G4LogicalVolume* logicAcrylic_pre = new G4LogicalVolume(Acrylic, matAcrylic, name_Acrylic + name + "Logic");
-        logicAcrylic.push_back(logicAcrylic_pre);
+        G4LogicalVolume* log = new G4LogicalVolume(acry, matAcrylic,
+                               Acrylic_name_list[i]+name+"Logic");
+        logicAcrylic.push_back(log);
 
-        // Place acrylic directly against CsI end face
-        G4ThreeVector acrylicPos(0, 0, -25.0*cm - coverThick/2);
-        physAcrylic[i] = new G4PVPlacement(rotation, translation + (*rotation)(acrylicPos), 
-                                          logicAcrylic_pre, name_Acrylic + name, logicWorld, false, i, true);
+        // ---- place **exactly on the CsI face** (no air) ----------------
+        G4ThreeVector posAcry(0,0,-25.0*cm - plateThick/2);
+        physAcry[i] = new G4PVPlacement(rot,
+                       translation + (*rot)(posAcry),
+                       log, Acrylic_name_list[i]+name,
+                       logicWorld, false, i, true);
     }
 
-    // === 5. 4 SiPMs (1.64 mm thick, embedded in acrylic) ===
-    for (int i = 0; i < Size_of_SiPM_name_list; i++) {
-        std::string name_SiPM = SiPM_name_list[i];
-        G4Box* sipmBox = new G4Box(name_SiPM + "_solid", 0.209*cm, 0.209*cm, 0.082*cm);  // Half: 0.82 mm
+    // --------------------------------------------------------------
+    // 7. 4 SiPMs – **embedded in the acrylic holes** (same thickness)
+    // --------------------------------------------------------------
+    for (int i=0;i<nSiPM;i++) {
+        // half-length = 0.82 mm  → full thickness = 1.64 mm
+        G4Box* box = new G4Box(SiPM_name_list[i]+"_solid",
+                               0.209*cm, 0.209*cm, 0.082*cm);
 
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(sipmBox, matSiPM, name_SiPM + name + "Logic");
-        logicCalorimeter = logicSiPM_pre;
-        logicSiPM.push_back(logicCalorimeter);
+        G4LogicalVolume* log = new G4LogicalVolume(box, matSiPM,
+                               SiPM_name_list[i]+name+"Logic");
+        logicCalorimeter = log;                 // for SD
+        logicSiPM.push_back(log);
 
-        G4double holeXY[4][2] = {
-            {-1.25*cm,  1.25*cm},
-            { 1.25*cm,  1.25*cm},
-            {-1.25*cm, -1.25*cm},
-            { 1.25*cm, -1.25*cm}
+        const G4double holeXY[4][2] = {
+            {-1.25*cm, 1.25*cm},
+            { 1.25*cm, 1.25*cm},
+            {-1.25*cm,-1.25*cm},
+            { 1.25*cm,-1.25*cm}
         };
+        // centre of the hole = centre of the SiPM
+        G4ThreeVector posSiPM(holeXY[i][0], holeXY[i][1],
+                              -25.0*cm - plateThick/2);
 
-        // SiPM centered in acrylic hole
-        G4ThreeVector sipmPos(holeXY[i][0], holeXY[i][1], -25.0*cm - coverThick/2);
-        physSiPM[i] = new G4PVPlacement(rotation, translation + (*rotation)(sipmPos), 
-                                       logicSiPM_pre, name_SiPM + name, logicWorld, false, i, true);
+        physSiPM[i] = new G4PVPlacement(rot,
+                       translation + (*rot)(posSiPM),
+                       log, SiPM_name_list[i]+name,
+                       logicWorld, false, i, true);
     }
 
-    // === 6. Optical Border Surfaces (No Air Gap) ===
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
+    // --------------------------------------------------------------
+    // 8. Back Al Foil (behind Acrylic + SiPM layer)
+    // --------------------------------------------------------------
+    const G4double backFoilThick = 0.0016*cm;  // 0.016 mm
+    G4Box* backFoilBox = new G4Box("BackFoil_solid",
+                                   2.5*cm, 2.5*cm, backFoilThick/2);
+
+    G4LogicalVolume* logicBackFoil = new G4LogicalVolume(backFoilBox, matWrapping,
+                                                        "BackFoil" + name + "Logic");
+
+    // Place it directly behind the acrylic layer (no gap)
+    G4ThreeVector backFoilPos(0, 0, -25.0*cm - plateThick - backFoilThick/2);
+    G4VPhysicalVolume* physBackFoil = new G4PVPlacement(
+        rot, translation + (*rot)(backFoilPos),
+        logicBackFoil, "BackFoil" + name, logicWorld, false, 0, true);
+
+    // --------------------------------------------------------------
+    // 9. Optical border surfaces (direction matters!)
+    // --------------------------------------------------------------
+    for (int i=0;i<nScint;i++) {
         // CsI → Acrylic (direct contact)
-        new G4LogicalBorderSurface("CsI_Acrylic_Border", physScintillators[i], physAcrylic[0], surfCsI_SiPM);
+        new G4LogicalBorderSurface("CsI_Acrylic",
+                                   physScint[i], physAcry[0], surfCsI_SiPM);
 
-        // Acrylic → SiPM (direct contact)
-        for (int j = 0; j < Size_of_SiPM_name_list; j++) {
-            new G4LogicalBorderSurface("Acrylic_SiPM_Border", physAcrylic[0], physSiPM[j], surfCsI_SiPM);
+        // Acrylic → each SiPM (direct contact)
+        for (int j=0;j<nSiPM;j++) {
+            new G4LogicalBorderSurface("Acrylic_SiPM",
+                                       physAcry[0], physSiPM[j], surfCsI_SiPM);
         }
 
-        // CsI → Al Foil (reflective)
-        for (int j = 0; j < Size_of_Tapflon_name_list; j++) {
-            new G4LogicalBorderSurface("CsI_AlFoil_Border", physScintillators[i], physTapflon[j], surfCsI_AlFoil);
+        // CsI → Al foil (reflective)
+        for (int j=0;j<nFoil;j++) {
+            new G4LogicalBorderSurface("CsI_AlFoil",
+                                       physScint[i], physFoil[j], surfCsI_AlFoil);
         }
+        
+        // Acrylic → Back Foil (reflects stray light back into SiPMs)
+        new G4LogicalBorderSurface("Acrylic_BackFoil",
+                                   physAcry[0], physBackFoil, surfCsI_AlFoil);
     }
 }
-
 void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name){
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
@@ -749,7 +805,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         }
     }
     else{
-        ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");
+        ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");
     }
 }
 //Construct source

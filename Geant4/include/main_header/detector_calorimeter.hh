@@ -48,6 +48,7 @@ public:
 	sipm::SiPMProperties myProperties ;
 	sipm::SiPMSensor mySensor;
 	sipm::SiPMAnalogSignal mySignal;
+	void PlotWaveform(const sipm::SiPMAnalogSignal& signal);
 	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size,gain;
 	int nCells;
 	double gatewidth, threshold;

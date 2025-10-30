@@ -32,6 +32,7 @@ G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 	if(track->GetParentID() == 0) {
 		SaveToStepData(aStep,ROhist,track);
 	}
+	
 	return 0;
 }
 
@@ -85,14 +86,10 @@ void Tracker::SaveToRoot(){
 		analysisManager->FillNtupleDColumn(0, 2, data.AccumatedDistance / mm);
 		analysisManager->FillNtupleDColumn(0, 3, data.AccumulatedTime / ns);
 		analysisManager->FillNtupleDColumn(0, 4, data.AccumulatedEnergy / MeV);
-		analysisManager->FillNtupleDColumn(0, 5, data.postPositionX / mm);
-		analysisManager->FillNtupleDColumn(0, 6, data.postPositionY / mm);
-		analysisManager->FillNtupleDColumn(0, 7, data.postPositionZ / mm);
-		analysisManager->FillNtupleDColumn(0, 8, data.preKE / MeV);
-		analysisManager->FillNtupleSColumn(0, 9, data.detectorName);
-		analysisManager->FillNtupleSColumn(0, 10, data.particleName);
-		analysisManager->FillNtupleSColumn(0, 11, data.creatorProcessName);
-		analysisManager->AddNtupleRow(0);
+		analysisManager->FillNtupleSColumn(0, 5, data.detectorName);
+		analysisManager->FillNtupleSColumn(0, 6, data.particleName);
+		analysisManager->FillNtupleSColumn(0, 7, data.creatorProcessName);
+		analysisManager->AddNtupleRow(2);
 	}
 }
 
