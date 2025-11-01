@@ -7,7 +7,10 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	fParticleGun = new G4ParticleGun(1);
 	fParticleSource = new G4GeneralParticleSource();
 
-	// Define fIon to be Ground state Na-22
+	// Define fIon to be Ground state Na-22 (Z=11, A=22)
+	// Co-60 (Z=27, A=60) can also be used for testing
+	// Cs-137 (Z=55, A=137) can also be used for testing
+	
 	Z = 11;					// Atomic number (Proton Number)
 	A = 22;					// Mass number
 	ex_energy = 0.*keV;		// Excitation energy
