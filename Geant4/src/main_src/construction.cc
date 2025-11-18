@@ -449,9 +449,10 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Hexagonal/Scintillator"};
-    std::string SiPM_name_list[] = {"Hexagonal/SiPM"};
-    std::string Tapflon_name_list[] = {"Hexagonal/Wrapping"};
+    std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism13.26mm"};
+    std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_13.26mm", "Hexagonal/UntitledSiPM2_13.26mm",
+                                    "Hexagonal/UntitledSiPM3_13.26mm", "Hexagonal/UntitledSiPM4_13.26mm"};
+    std::string Tapflon_name_list[] = {"Hexagonal/UntitledTape13.26mm"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -517,7 +518,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     //    }
     //}
     // Generate hcc
-    G4double apothem = 6.94/2;  // Apothem (distance from center to flat side)
+    G4double apothem = 13.26/2;  // Apothem (distance from center to flat side)
     G4double side_length = 2.0 * apothem;  // Side length
     G4double a1_x = side_length;  // Primitive vector 1 x-component
     G4double a1_y = 0.0;  // Primitive vector 1 y-component
