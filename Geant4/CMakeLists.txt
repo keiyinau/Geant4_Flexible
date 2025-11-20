@@ -16,6 +16,7 @@ file(GLOB headers_main ${PROJECT_SOURCE_DIR}/include/main_header/*.hh)
 
 file(GLOB MACRO_FILES
 	"macro/*.mac",
+	"macro/*",
 )
 file(GLOB DATA_FILES
 	"src/DataFile/CsI/*",
