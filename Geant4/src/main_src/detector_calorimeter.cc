@@ -60,8 +60,8 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	if(isAP==false){
 		myProperties.setApOff();
 	}
-	//myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
-	//myProperties.setPdeSpectrum(wlen,pde);
+	myProperties.setPdeType(sipm::SiPMProperties::PdeType::kSpectrumPde);
+	myProperties.setPdeSpectrum(wlen,pde);
 	std::cout<<"Properties:"<<myProperties<<std::endl;
 	mySensor = sipm::SiPMSensor(myProperties);
 	std::cout<<"My Sensor:"<<mySensor<<"\n";
@@ -86,10 +86,24 @@ void Calorimeter::Initialize(G4HCofThisEvent* hce)
 
 void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 {
+	if (photonTimes.empty()) {
+        ClearVectorsCounts();
+        return;
+    }
+
+    // --- CORRECT WAY: subtract the EARLIEST photon time ---
+    double tDecay_ns = *std::min_element(photonTimes.begin(), photonTimes.end());
+
+    std::vector<double> shiftedTimes;
+    shiftedTimes.reserve(photonTimes.size());
+    for (double t : photonTimes) {
+        double t_rel = t - tDecay_ns;   // now all >= 0, typically 0–300 ns
+        shiftedTimes.push_back(t_rel);
+    }
     mySensor.resetState();
 
     // Add only real optical photons (from CsI)
-    mySensor.addPhotons(photonTimes, photonWavelengths);
+    mySensor.addPhotons(shiftedTimes, photonWavelengths);
     mySensor.runEvent();
 
     const auto& debug = mySensor.debug();
@@ -97,8 +111,8 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 
     // === Find first REAL photon time (from CsI) ===
     G4double firstPhotonTime = -1.0;
-    if (!photonTimes.empty()) {
-        firstPhotonTime = *std::min_element(photonTimes.begin(), photonTimes.end());
+    if (!shiftedTimes.empty()) {
+        firstPhotonTime = *std::min_element(shiftedTimes.begin(), shiftedTimes.end());
     }
 
     // === Only process if at least one real photon ===
