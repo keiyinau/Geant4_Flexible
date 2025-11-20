@@ -11,8 +11,8 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	// Co-60 (Z=27, A=60) can also be used for testing
 	// Cs-137 (Z=55, A=137) can also be used for testing
 	
-	Z = 55;					// Atomic number (Proton Number)
-	A = 137;					// Mass number
+	Z = 11;					// Atomic number (Proton Number)
+	A = 22;					// Mass number
 	ex_energy = 0.*keV;		// Excitation energy
 
 	// Select particle generator. Options: 0 = fParticleSource, 1 = fParticleGun
