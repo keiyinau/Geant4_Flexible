@@ -98,6 +98,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
     shiftedTimes.reserve(photonTimes.size());
     for (double t : photonTimes) {
         double t_rel = t - tDecay_ns;   // now all >= 0, typically 0–300 ns
+		std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
         shiftedTimes.push_back(t_rel);
     }
     mySensor.resetState();
@@ -182,11 +183,9 @@ G4bool Calorimeter::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
-	//std::cout<<"There is an hit";
-	//std::cout<<particleName<<std::endl;
+
 	if (particleName == "opticalphoton")
     {
-		//std::cout<<"There is an hit";
 		track->SetTrackStatus(fStopAndKill); // Stop the optical photon track
 		SaveToStepData(aStep, ROhist, track); // Save step data for optical photons;
         return true;

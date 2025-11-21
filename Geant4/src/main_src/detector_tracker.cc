@@ -29,10 +29,14 @@ G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName(); //Consider only Positron
-	if(track->GetParentID() == 0) {
-		SaveToStepData(aStep,ROhist,track);
-	}
-	
+
+    if (particleName == "opticalphoton") {
+        return false;
+    }
+    if (track->GetParentID() == 0 || particleName == "gamma") {
+        SaveToStepData(aStep, ROhist, track);
+        return true;
+    }
 	return 0;
 }
 
@@ -81,14 +85,14 @@ void Tracker::SaveToRoot(){
 	for (const auto& pair : StepData_count) {
 		const auto& data = pair.second; // Access the StepData object
 		G4cout<<data.AccumatedDistance / mm;
-		analysisManager->FillNtupleIColumn(0, 0, data.eventID);
-		analysisManager->FillNtupleIColumn(0, 1, data.trackID);
-		analysisManager->FillNtupleDColumn(0, 2, data.AccumatedDistance / mm);
-		analysisManager->FillNtupleDColumn(0, 3, data.AccumulatedTime / ns);
-		analysisManager->FillNtupleDColumn(0, 4, data.AccumulatedEnergy / MeV);
-		analysisManager->FillNtupleSColumn(0, 5, data.detectorName);
-		analysisManager->FillNtupleSColumn(0, 6, data.particleName);
-		analysisManager->FillNtupleSColumn(0, 7, data.creatorProcessName);
+		analysisManager->FillNtupleIColumn(2, 0, data.eventID);
+		analysisManager->FillNtupleIColumn(2, 1, data.trackID);
+		analysisManager->FillNtupleDColumn(2, 2, data.AccumatedDistance / mm);
+		analysisManager->FillNtupleDColumn(2, 3, data.AccumulatedTime / ns);
+		analysisManager->FillNtupleDColumn(2, 4, data.AccumulatedEnergy / MeV);
+		analysisManager->FillNtupleSColumn(2, 5, data.detectorName);
+		analysisManager->FillNtupleSColumn(2, 6, data.particleName);
+		analysisManager->FillNtupleSColumn(2, 7, data.creatorProcessName);
 		analysisManager->AddNtupleRow(2);
 	}
 }
