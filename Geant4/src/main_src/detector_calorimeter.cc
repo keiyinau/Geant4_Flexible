@@ -5,9 +5,9 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=true;
-	isXT=true;
-	isAP=true;
+	isDCR=false;
+	isXT=false;
+	isAP=false;
 	signalLength=500; //ns
 	SampleTime=1; //ns
 	DarkCountRate=1.7*1000*1000; //Hz
