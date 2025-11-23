@@ -15,7 +15,7 @@
 
 /gps/ang/type user
 /gps/hist/type theta
-/control/execute cosmic_muon_angular.mac
+#/control/execute cosmic_muon_angular.mac
 /gps/ang/rot1 1 0 0
 /gps/ang/rot2 0 0 1
 /gps/ang/user_coor True

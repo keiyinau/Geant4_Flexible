@@ -5,9 +5,9 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=false;
-	isXT=false;
-	isAP=false;
+	isDCR=true;
+	isXT=true;
+	isAP=true;
 	signalLength=500; //ns
 	SampleTime=1; //ns
 	DarkCountRate=1.7*1000*1000; //Hz
@@ -98,7 +98,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
     shiftedTimes.reserve(photonTimes.size());
     for (double t : photonTimes) {
         double t_rel = t - tDecay_ns;   // now all >= 0, typically 0–300 ns
-		std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
+		//std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
         shiftedTimes.push_back(t_rel);
     }
     mySensor.resetState();
