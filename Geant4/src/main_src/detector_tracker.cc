@@ -84,7 +84,7 @@ void Tracker::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 	for (const auto& pair : StepData_count) {
 		const auto& data = pair.second; // Access the StepData object
-		G4cout<<data.AccumatedDistance / mm;
+		//G4cout<<data.AccumatedDistance / mm;
 		analysisManager->FillNtupleIColumn(2, 0, data.eventID);
 		analysisManager->FillNtupleIColumn(2, 1, data.trackID);
 		analysisManager->FillNtupleDColumn(2, 2, data.AccumatedDistance / mm);

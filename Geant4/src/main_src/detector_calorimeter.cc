@@ -74,7 +74,6 @@ Calorimeter::~Calorimeter()
 void Calorimeter::Initialize(G4HCofThisEvent* hce)
 {
     G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-    //G4cout << "MySensitiveDetector::Initialize called for Event=" << eventID << G4endl;
     if (fHitsCollectionID < 0) {
         fHitsCollectionID = GetCollectionID(0);
     }
@@ -91,7 +90,6 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
         return;
     }
 
-    // --- CORRECT WAY: subtract the EARLIEST photon time ---
     double tDecay_ns = *std::min_element(photonTimes.begin(), photonTimes.end());
 
     std::vector<double> shiftedTimes;

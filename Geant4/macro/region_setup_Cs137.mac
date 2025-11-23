@@ -1,7 +1,7 @@
 #/gps/verbose 2
 #Set the General Particle Source to be Co60
-#/gps/particle ion
-#/gps/ion 55 137
+/gps/particle ion
+/gps/ion 55 137
 
 #Position region of generated gps, should equal to the active region
 /gps/pos/type Volume

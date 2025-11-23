@@ -3,4 +3,4 @@
 /run/initialize
 
 /gun/particle gamma
-/control/loop EnergySetting.mac eKin 1. 1300 30.
+/control/loop EnergySetting.mac eKin 700. 1300 100.
