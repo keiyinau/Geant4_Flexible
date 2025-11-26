@@ -96,7 +96,12 @@ private:
 
 
 	//Materials
+	G4Material *matTest;
+    std::map<G4String, G4Material*> materialMap;
+    G4String testMaterialName = "LSO";
+    G4Material* GetTestMaterial(const G4String& name);
 	G4Material *matXe;  // Xenon gas for test
+	G4Material *matLSO,*matLYSO,*matLaBr3,*matGAGG,*matBGO,*matNaI; // LSO for calorimeter
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI;
 

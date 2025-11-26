@@ -1,17 +1,17 @@
 #include "construction.hh"
 #include "CADMesh.hh"
-MyDetectorConstruction::MyDetectorConstruction() {
+MyDetectorConstruction::MyDetectorConstruction() 
+{
 	// Define required materials
 
 	DefineMaterials();
-
+	testMaterialName = "LSO";
 	isDetector_Shell = true;
-	isSource=true;
-	isTPC = true;
-	isCalorimeter = true;
+	isSource=false;
+	isTPC = false;
+	isCalorimeter = false;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
-
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
@@ -46,12 +46,83 @@ void MyDetectorConstruction::DefineMaterials() {
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
 	// End CsI
+	//LSO
+	matLSO = new G4Material("Lu2SiO5", 7.4*g/cm3, 3);
+	G4Element* Lu = nist->FindOrBuildElement("Lu");
+	G4Element* Si = nist->FindOrBuildElement("Si");
+	G4Element* O = nist->FindOrBuildElement("O");
+	matLSO->AddElement(Lu, 2);
+	matLSO->AddElement(Si, 1);
+	matLSO->AddElement(O, 5);
+	// End LSO
+	//LYSO
+	matLYSO = new G4Material("Lu2(1-x)Y2xSiO5", 7.2*g/cm3, 4);
+	matLYSO->AddElement(Lu, 2);
+	G4Element* Y = nist->FindOrBuildElement("Y");
+	matLYSO->AddElement(Y, 2);
+	matLYSO->AddElement(Si, 1);
+	matLYSO->AddElement(O, 5);
+	// End LYSO
+	//LaBr3
+	matLaBr3 = new G4Material("LaBr3", 5.3*g/cm3, 2);
+	G4Element* La = nist->FindOrBuildElement("La");
+	G4Element* Br = nist->FindOrBuildElement("Br");
+	matLaBr3->AddElement(La, 1);
+	matLaBr3->AddElement(Br, 3);
+	// End LaBr3
+	//GAGG
+	matGAGG = new G4Material("GAGG", 6.63*g/cm3, 4);
+	G4Element* Gd = nist->FindOrBuildElement("Gd");
+	G4Element* Al = nist->FindOrBuildElement("Al");
+	G4Element* Ga = nist->FindOrBuildElement("Ga");
+	matGAGG->AddElement(Gd, 3);
+	matGAGG->AddElement(Al, 5);
+	matGAGG->AddElement(Ga, 5);
+	matGAGG->AddElement(O, 12);
+	// End GAGG
 
+	//BGO
+	matBGO = new G4Material("BGO", 7.13*g/cm3, 3);
+	G4Element* Bi = nist->FindOrBuildElement("Bi");
+	G4Element* Ge = nist->FindOrBuildElement("Ge");
+	matBGO->AddElement(Bi, 4);
+	matBGO->AddElement(Ge, 1);
+	matBGO->AddElement(O, 12);
+	// End BGO
+	//NaI
+	matNaI = new G4Material("NaI", 3.67*g/cm3, 2);
+	G4Element* Na = nist->FindOrBuildElement("Na");
+	G4Element* I = nist->FindOrBuildElement("I");
+	matNaI->AddElement(Na, 1);
+	matNaI->AddElement(I, 1);	
+	// End NaI
 	// Ti_
 	G4Element* Ti = nist->FindOrBuildElement("Ti");
 	matTi = new G4Material("Ti_", 4.507*g/cm3, 1);	//The density of G4_Ti is 4.54*g/cm3
 	matTi->AddElement(Ti, 1.);
 	//end Ti
+
+
+
+	materialMap["LSO"] = matLSO;
+    materialMap["LYSO"] = matLYSO;
+    materialMap["LaBr3"] = matLaBr3;
+    materialMap["GAGG"] = matGAGG;
+    materialMap["BGO"] = matBGO;
+    materialMap["NaI"] = matNaI;
+    materialMap["NaCl"] = matNaCl;
+    materialMap["CsI"] = matCsI;
+    materialMap["Ti"] = matTi;
+    materialMap["Xe"] = matXe;
+}
+G4Material* MyDetectorConstruction::GetTestMaterial(const G4String& name) {
+    auto it = materialMap.find(name);
+    if (it != materialMap.end()) {
+        return it->second;
+    } else {
+        G4cerr << "Unknown material name: " << name << ". Defaulting to LSO." << G4endl;
+        return matLSO;
+    }
 }
 
 void MyDetectorConstruction::DefineMessenger() {
@@ -63,7 +134,7 @@ void MyDetectorConstruction::DefineMessenger() {
 	fMessenger->DeclareProperty("control/execute rebuild.mac",placeHolder,"Rebuild Selected Physical Volume inside a 1.5*1.5*1.5 m^3 Cubic World contains Air, its center is the origin");
 	fMessenger->DeclareProperty("isDetector_Shell", isDetector_Shell, "Construct Shell Detector (spherical shell locate at origin, inner radius = 3*cm, thickness = 1*nm)");
 	fMessenger->DeclareProperty("setFileName", file_name, "Set the name of output root file");
-}
+	fMessenger->DeclareProperty("TestMaterial", testMaterialName, "Set the material name for Shell Detector (valid: LSO, LYSO, LaBr3, GAGG, BGO, NaI, NaCl, CsI, Ti, Xe)");}
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 	G4double xWorld = 2*m;
@@ -105,11 +176,12 @@ void MyDetectorConstruction::ConstructSDandField() {
 }
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
-	G4double shell_thickness = 1.*nm;
-	G4double inner_radius = 25.*cm+80.*cm;
+	matTest = GetTestMaterial(testMaterialName);
+	G4double shell_thickness = 1.*m;
+	G4double inner_radius = 0.*cm; //25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
-	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matCsI, "logicDetector_Shell");
+	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matTest, "logicDetector_Shell");
 	physDetector_Shell = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicDetector_Shell, "Detector_Shell", logicWorld, false, 0, true);
 }
 // End Ideal Detector

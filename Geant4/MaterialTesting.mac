@@ -1,0 +1,5 @@
+/run/numberOfThreads 20
+/run/initialize
+
+# List of materials to test
+/control/foreach run_one_material.mac mat CsI LSO LYSO LaBr3 GAGG BGO NaI
