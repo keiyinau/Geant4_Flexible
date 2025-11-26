@@ -38,33 +38,33 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
 {
     man->CreateNtuple("Tracker", "Tracker Data"); // In practice, only X,Y,Z,Edep,time,track is available
     man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
+    //man->CreateNtupleIColumn("TrackID");
     man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
-    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
-    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
-    man->CreateNtupleDColumn("PositionX_mm"); // Position X in
-    man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
+    //man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    //man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
+    //man->CreateNtupleDColumn("PositionX_mm"); // Position X in
+    //man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
-    man->CreateNtupleDColumn("KineticEnergy_MeV"); // Kinetic Energy
-    man->CreateNtupleSColumn("DetectorName"); // Detector Name
-    man->CreateNtupleSColumn("ParticleName"); // Particle Name
-    man->CreateNtupleSColumn("CreatorProcess"); // Creator Process
+    //man->CreateNtupleDColumn("KineticEnergy_MeV"); // Kinetic Energy
+    //man->CreateNtupleSColumn("DetectorName"); // Detector Name
+    //man->CreateNtupleSColumn("ParticleName"); // Particle Name
+    //man->CreateNtupleSColumn("CreatorProcess"); // Creator Process
     man->FinishNtuple(0);
-
-    man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
-    man->CreateNtupleIColumn("StepID");
-    man->CreateNtupleIColumn("ParentID");
-    man->CreateNtupleSColumn("DetectorName");
-    man->CreateNtupleSColumn("ParticleName");
-    man->CreateNtupleSColumn("CreatorProcess");
-    man->CreateNtupleSColumn("ProcessName");
-    man->CreateNtupleDColumn("KineticEnergy_MeV");
-    man->CreateNtupleDColumn("PositionX_mm"); // Position X in
-    man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
-    man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
-    man->FinishNtuple(1);
+//
+    //man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
+    //man->CreateNtupleIColumn("EventID");
+    //man->CreateNtupleIColumn("TrackID");
+    //man->CreateNtupleIColumn("StepID");
+    //man->CreateNtupleIColumn("ParentID");
+    //man->CreateNtupleSColumn("DetectorName");
+    //man->CreateNtupleSColumn("ParticleName");
+    //man->CreateNtupleSColumn("CreatorProcess");
+    //man->CreateNtupleSColumn("ProcessName");
+    //man->CreateNtupleDColumn("KineticEnergy_MeV");
+    //man->CreateNtupleDColumn("PositionX_mm"); // Position X in
+    //man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
+    //man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
+    //man->FinishNtuple(1);
 
 
 }

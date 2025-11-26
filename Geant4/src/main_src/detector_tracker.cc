@@ -81,17 +81,20 @@ void Tracker::SaveToRoot(){
 		const auto& data = pair.second; // Access the StepData object
 		G4cout<<data.AccumatedDistance / mm;
 		analysisManager->FillNtupleIColumn(0, 0, data.eventID);
-		analysisManager->FillNtupleIColumn(0, 1, data.trackID);
-		analysisManager->FillNtupleDColumn(0, 2, data.AccumatedDistance / mm);
-		analysisManager->FillNtupleDColumn(0, 3, data.AccumulatedTime / ns);
-		analysisManager->FillNtupleDColumn(0, 4, data.AccumulatedEnergy / MeV);
-		analysisManager->FillNtupleDColumn(0, 5, data.postPositionX / mm);
-		analysisManager->FillNtupleDColumn(0, 6, data.postPositionY / mm);
-		analysisManager->FillNtupleDColumn(0, 7, data.postPositionZ / mm);
-		analysisManager->FillNtupleDColumn(0, 8, data.preKE / MeV);
-		analysisManager->FillNtupleSColumn(0, 9, data.detectorName);
-		analysisManager->FillNtupleSColumn(0, 10, data.particleName);
-		analysisManager->FillNtupleSColumn(0, 11, data.creatorProcessName);
+		//analysisManager->FillNtupleIColumn(0, 1, data.trackID);
+		//analysisManager->FillNtupleDColumn(0, 2, data.AccumatedDistance / mm);
+		analysisManager->FillNtupleDColumn(0, 1, data.AccumatedDistance / mm);
+		//analysisManager->FillNtupleDColumn(0, 3, data.AccumulatedTime / ns);
+		//analysisManager->FillNtupleDColumn(0, 4, data.AccumulatedEnergy / MeV);
+		//analysisManager->FillNtupleDColumn(0, 5, data.postPositionX / mm);
+		//analysisManager->FillNtupleDColumn(0, 6, data.postPositionY / mm);
+		//analysisManager->FillNtupleDColumn(0, 7, data.postPositionZ / mm);
+		analysisManager->FillNtupleDColumn(0, 2, data.postPositionZ / mm);
+		//std::cout<<data.particleName<<std::endl;
+		//analysisManager->FillNtupleDColumn(0, 8, data.preKE / MeV);
+		//analysisManager->FillNtupleSColumn(0, 9, data.detectorName);
+		//analysisManager->FillNtupleSColumn(0, 10, data.particleName);
+		//analysisManager->FillNtupleSColumn(0, 11, data.creatorProcessName);
 		analysisManager->AddNtupleRow(0);
 	}
 }

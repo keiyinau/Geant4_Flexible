@@ -22,7 +22,7 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	fParticleSource->SetParticleDefinition(pdParticleSource);
 
 	// Set the default parameters for the fParticleGun
-	pdParticleGun = fPositron;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
+	pdParticleGun = fGamma;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
