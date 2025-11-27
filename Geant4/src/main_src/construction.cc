@@ -57,9 +57,9 @@ void MyDetectorConstruction::DefineMaterials() {
 	// End LSO
 	//LYSO
 	matLYSO = new G4Material("Lu2(1-x)Y2xSiO5", 7.2*g/cm3, 4);
-	matLYSO->AddElement(Lu, 2);
+	matLYSO->AddElement(Lu, 1);
 	G4Element* Y = nist->FindOrBuildElement("Y");
-	matLYSO->AddElement(Y, 2);
+	matLYSO->AddElement(Y, 1);
 	matLYSO->AddElement(Si, 1);
 	matLYSO->AddElement(O, 5);
 	// End LYSO
@@ -76,8 +76,8 @@ void MyDetectorConstruction::DefineMaterials() {
 	G4Element* Al = nist->FindOrBuildElement("Al");
 	G4Element* Ga = nist->FindOrBuildElement("Ga");
 	matGAGG->AddElement(Gd, 3);
-	matGAGG->AddElement(Al, 5);
-	matGAGG->AddElement(Ga, 5);
+	matGAGG->AddElement(Al, 2);
+	matGAGG->AddElement(Ga, 3);
 	matGAGG->AddElement(O, 12);
 	// End GAGG
 
