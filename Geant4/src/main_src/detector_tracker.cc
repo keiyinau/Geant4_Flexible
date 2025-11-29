@@ -27,10 +27,48 @@ void Tracker::EndOfEvent(G4HCofThisEvent*){
 
 G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
+	G4String CurrentSearch="full"; //attenuation/absorption/full/scatter
 	G4Track* track = aStep->GetTrack();
-	G4String particleName = track->GetParticleDefinition()->GetParticleName(); //Consider only Positron
-	if(track->GetParentID() == 0) {
-		SaveToStepData(aStep,ROhist,track);
+	G4String particleName = track->GetParticleDefinition()->GetParticleName();
+	//G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+	//if (track->GetParentID() == 0 && track->GetCurrentStepNumber() == 1) {
+	//	G4String processName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+	//	G4cout << "Event " << evt << " - First step process: " << processName << ", Step length: " << aStep->GetStepLength() / mm << " mm" << G4endl;
+	//}
+	if(CurrentSearch=="full") {
+		if(track->GetParentID() == 0) {
+			SaveToStepData(aStep,ROhist,track);
+		}
+	}
+	if(CurrentSearch=="attenuation" && track->GetParentID() == 0) {
+		G4int trackID = track->GetTrackID();
+		if (hasInteracted[trackID]) return false;
+		G4String processName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+		if (processName != "Transportation") {
+			SaveToStepData(aStep, ROhist, track);
+			hasInteracted[trackID] = true;
+		}
+	}
+	if(CurrentSearch=="absorption" && particleName=="gamma" ) {
+		if (track->GetParentID() == 0 && particleName == "gamma") {
+			G4String processName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+			G4int stepID = track->GetCurrentStepNumber();
+			
+			if (processName == "phot" && stepID == 1) {
+				//G4cout << "Saving absorption for event at step " << stepID << G4endl;
+				//G4cout << "Saving absorption for event at process " << processName << G4endl;
+				SaveToStepData(aStep, ROhist, track);
+			}
+		}
+	}
+	if(CurrentSearch=="scatter" && particleName=="gamma" ) {
+		if (track->GetParentID() == 0 && particleName == "gamma") {
+			G4String processName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+			G4int stepID = track->GetCurrentStepNumber();
+			if (processName != "phot" && stepID == 1 && processName != "Transportation") {
+				SaveToStepData(aStep, ROhist, track);
+			}
+		}
 	}
 	return 0;
 }
@@ -139,5 +177,6 @@ void Tracker::ClearVectorsCounts()
     AccumulatedTime_count.clear();
     AccumulatedEnergy_count.clear();
 	CurrentData.clear();
-
+	hasInteracted.clear();
+	StepData_count.clear();
 }

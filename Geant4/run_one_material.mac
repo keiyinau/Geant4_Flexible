@@ -1,4 +1,4 @@
 /MyDetector/setFileName {mat}
 /MyDetector/TestMaterial {mat}
 /run/reinitializeGeometry
-/run/beamOn 100000        # or 10, 100, whatever you want
+/run/beamOn 100000       # or 10, 100, whatever you want

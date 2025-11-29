@@ -42,8 +42,10 @@ private:
     std::map<G4int, G4double> AccumulatedTime_count; // Map of TrackID to PMT name
 	std::map<G4int, G4double> AccumulatedEnergy_count; // Map of TrackID to PMT name
 	std::map<G4int,StepData> StepData_count; // Map of TrackID to StepData
+	std::map<G4int, G4bool> hasInteracted; // Map to track if interaction has occurred
 	virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 	G4int fHitsCollectionID; // Declare fHitsCollectionID
 };
+
 
 #endif
