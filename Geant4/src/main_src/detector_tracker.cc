@@ -27,7 +27,7 @@ void Tracker::EndOfEvent(G4HCofThisEvent*){
 
 G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
-	G4String CurrentSearch="full"; //attenuation/absorption/full/scatter
+	G4String CurrentSearch="EdepB0"; //attenuation/absorption/full/scatter/EdepB0
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	//G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
@@ -57,6 +57,18 @@ G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 			if (processName == "phot" && stepID == 1) {
 				//G4cout << "Saving absorption for event at step " << stepID << G4endl;
 				//G4cout << "Saving absorption for event at process " << processName << G4endl;
+				SaveToStepData(aStep, ROhist, track);
+			}
+		}
+	}
+	if(CurrentSearch=="EdepB0" && particleName=="gamma" ) {
+		if (track->GetParentID() == 0 && particleName == "gamma") {
+			G4String processName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+			G4int stepID = track->GetCurrentStepNumber();
+			
+			if (processName != "phot" && processName!="compt" && stepID == 1) {
+				//G4cout << "Saving absorption for event at step " << stepID << G4endl;
+				G4cout << "Saving absorption for event at process " << processName << G4endl;
 				SaveToStepData(aStep, ROhist, track);
 			}
 		}
