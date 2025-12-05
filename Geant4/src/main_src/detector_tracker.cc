@@ -27,7 +27,7 @@ void Tracker::EndOfEvent(G4HCofThisEvent*){
 
 G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
-	G4String CurrentSearch="EdepB0"; //attenuation/absorption/full/scatter/EdepB0
+	G4String CurrentSearch="attenuation"; //attenuation/absorption/full/scatter/EdepB0
 	G4Track* track = aStep->GetTrack();
 	G4String particleName = track->GetParticleDefinition()->GetParticleName();
 	//G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
@@ -141,6 +141,7 @@ void Tracker::SaveToRoot(){
 		//analysisManager->FillNtupleDColumn(0, 7, data.postPositionZ / mm);
 		analysisManager->FillNtupleDColumn(0, 2, data.postPositionZ / mm);
 		//std::cout<<data.particleName<<std::endl;
+		analysisManager->FillNtupleDColumn(0, 3, data.preKE / MeV);
 		//analysisManager->FillNtupleDColumn(0, 8, data.preKE / MeV);
 		//analysisManager->FillNtupleSColumn(0, 9, data.detectorName);
 		//analysisManager->FillNtupleSColumn(0, 10, data.particleName);

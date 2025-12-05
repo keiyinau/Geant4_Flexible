@@ -114,6 +114,8 @@ void MyDetectorConstruction::DefineMaterials() {
     materialMap["CsI"] = matCsI;
     materialMap["Ti"] = matTi;
     materialMap["Xe"] = matXe;
+    materialMap["Air"] = Air;
+    materialMap["Vacuum"] = Vacuum;
 }
 G4Material* MyDetectorConstruction::GetTestMaterial(const G4String& name) {
     auto it = materialMap.find(name);
@@ -137,9 +139,9 @@ void MyDetectorConstruction::DefineMessenger() {
 	fMessenger->DeclareProperty("TestMaterial", testMaterialName, "Set the material name for Shell Detector (valid: LSO, LYSO, LaBr3, GAGG, BGO, NaI, NaCl, CsI, Ti, Xe)");}
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 2*m;
-	G4double yWorld = 2*m;
-	G4double zWorld = 2*m;
+	G4double xWorld = 600*m;
+	G4double yWorld = 600*m;
+	G4double zWorld = 600*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -177,7 +179,7 @@ void MyDetectorConstruction::ConstructSDandField() {
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
 	matTest = GetTestMaterial(testMaterialName);
-	G4double shell_thickness = 1.*m;
+	G4double shell_thickness = 500.*m;
 	G4double inner_radius = 0.*cm; //25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);

@@ -45,7 +45,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     //man->CreateNtupleDColumn("PositionX_mm"); // Position X in
     //man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
     man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
-    //man->CreateNtupleDColumn("KineticEnergy_MeV"); // Kinetic Energy
+    man->CreateNtupleDColumn("KineticEnergy_MeV"); // Kinetic Energy
     //man->CreateNtupleSColumn("DetectorName"); // Detector Name
     //man->CreateNtupleSColumn("ParticleName"); // Particle Name
     //man->CreateNtupleSColumn("CreatorProcess"); // Creator Process
