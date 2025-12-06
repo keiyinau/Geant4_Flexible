@@ -95,7 +95,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
     std::vector<double> shiftedTimes;
     shiftedTimes.reserve(photonTimes.size());
     for (double t : photonTimes) {
-        double t_rel = t - tDecay_ns;   // now all >= 0, typically 0–300 ns
+        double t_rel = t;  //- tDecay_ns;   //#############!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! now all >= 0, typically 0–300 ns
 		//std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
         shiftedTimes.push_back(t_rel);
     }

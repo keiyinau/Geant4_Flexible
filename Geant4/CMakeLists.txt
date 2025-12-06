@@ -22,7 +22,8 @@ file(GLOB DATA_FILES
 	"src/DataFile/CsI/*",
 	"src/DataFile/CsI(Ti)/*",
 	"src/DataFile/SiPMAFBR/*",
-	"src/DataFile/Tapflon/*"
+	"src/DataFile/Tapflon/*",
+	"src/DataFile/LSO/*",
 )
 file(GLOB 3D_MODELS
 	"src/3DModel/*"

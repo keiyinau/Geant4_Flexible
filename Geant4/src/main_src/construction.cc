@@ -6,18 +6,18 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = false;
-	isSource=true;
+	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
     isLiquid=false;
-    is3DCalorimeter=false;
+    is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
     matLiquid=matCsI;
     matContainer=matTi;
-    matScintillator=matCsI;
+    matScintillator=matLSO;
     matSiPM=matSi;
-    matWrapping=matAl;
+    matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
@@ -282,6 +282,32 @@ void MyDetectorConstruction::DefineMaterials() {
 	matNaCl->AddElement(nist->FindOrBuildElement("Na"), 1);
 	matNaCl->AddElement(nist->FindOrBuildElement("Cl"), 4);
 	// End NaCl
+    matLSO = new G4Material("Lu2SiO5", 7.4*g/cm3, 3);
+	G4Element* Lu = nist->FindOrBuildElement("Lu");
+	G4Element* Si = nist->FindOrBuildElement("Si");
+	G4Element* O = nist->FindOrBuildElement("O");
+	matLSO->AddElement(Lu, 2);
+	matLSO->AddElement(Si, 1);
+	matLSO->AddElement(O, 5);
+    G4MaterialPropertiesTable* mptLSO = new G4MaterialPropertiesTable();
+    //LSO Emssion spectrum
+    std::vector<G4double> LSO_emission_Energy, LSO_emission_fractions;
+    readAndProcessData_Energy("EmissionSpectrum_LSO_Ce_295K.csv", LSO_emission_Energy, LSO_emission_fractions);
+    std::vector<G4double> LSO_refraction_Energy, LSO_refraction_Index;
+    readAndProcessData_txt("RefractiveIndex_LSO_Ce.txt", LSO_refraction_Energy, LSO_refraction_Index);
+    std::vector<G4double> LSO_absorption_Energy, LSO_absorption_Index;
+    readAndProcessData_Energy_cm_txt("AbsorptionLength_LSO_Ce.txt", LSO_absorption_Energy, LSO_absorption_Index);
+    mptLSO->AddConstProperty("RESOLUTIONSCALE", 1.);
+    mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
+    mptLSO->AddProperty("RINDEX", LSO_refraction_Energy, LSO_refraction_Index,LSO_refraction_Index.size());
+    mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
+    mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
+    mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
+    matLSO->SetMaterialPropertiesTable(mptLSO);
+    // End LSO
+
+
+
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
 	G4MaterialPropertiesTable* mptCsI = new G4MaterialPropertiesTable();
@@ -701,9 +727,10 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Hexagonal/Scintillator"};
-    std::string SiPM_name_list[] = {"Hexagonal/SiPM"};
-    std::string Tapflon_name_list[] = {"Hexagonal/Wrapping"};
+    std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism12.2mm"};
+    std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_12.2mm", "Hexagonal/UntitledSiPM2_12.2mm",
+                                    "Hexagonal/UntitledSiPM3_12.2mm", "Hexagonal/UntitledSiPM4_12.2mm"};
+    std::string Tapflon_name_list[] = {"Hexagonal/UntitledTape12.2mm"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -780,8 +807,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
         G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
-        int min_N = 4;  // Start from ring 1 for placing source
-        int max_N = 6;  // End at ring 6
+        int min_N = 0;  // Start from ring 1 for placing source
+        int max_N = 0;  // End at ring 6
         int count = 0;  // For unique naming
 
         for (int n1 = -max_N; n1 <= max_N; ++n1) {
@@ -794,8 +821,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
                 G4double y = n1 * a1_y + n2 * a2_y;
                 G4double z = 0.0;  // Adjust if prisms are offset along z
 
-                G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
-                G4double angle = 0.0;  // No rotation; adjust if needed to align with prism definition
+                G4ThreeVector translation(x, y, z+12.2/2*mm);  // Units: assume bare numbers match your radius units
+                G4double angle = 90.0*deg;  // No rotation; adjust if needed to align with prism definition
                 G4String name = "calor_unit_" + std::to_string(count++);
 
                 // Call your function to place the unit
