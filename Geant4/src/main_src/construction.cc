@@ -469,21 +469,20 @@ void MyDetectorConstruction::ConstructSDandField() {
     Tracker* tracker0 = new Tracker("Detector_Real");
     Detect_reference* detect_reference = new Detect_reference("Detect_reference");
 	Calorimeter* calorimeter = new Calorimeter("Calorimeter");
-    
-	//Detect_reference *detect_reference = new Detect_reference("Detect_reference");
+    Detect_edep* detect_edep = new Detect_edep("Detector_edep");
 	sdManager->AddNewDetector(tracker0);
 	sdManager->AddNewDetector(calorimeter);
     sdManager->AddNewDetector(detect_reference);
-	//sdManager->AddNewDetector(detect_reference);
+	sdManager->AddNewDetector(detect_edep);
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(detect_reference);
 	if(logicCalorimeter!=NULL)
         for(int i=0; i < logicSiPM.size(); i++) {
             logicSiPM[i]->SetSensitiveDetector(calorimeter);
         }
-        //for(int i=0; i < logicScintillators.size(); i++) {
-        //    logicScintillators[i]->SetSensitiveDetector(tracker0);
-        //}
+        for(int i=0; i < logicScintillators.size(); i++) {
+            logicScintillators[i]->SetSensitiveDetector(detect_edep);
+        }
 		//logicCalorimeter->SetSensitiveDetector(calorimeter);
 	//if(logicBareSource != NULL)
 	//	logicBareSource->SetSensitiveDetector(detect_reference);

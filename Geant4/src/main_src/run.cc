@@ -46,6 +46,14 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     //man->CreateNtupleSColumn("SiPMName");
     man->FinishNtuple(0);
 
+    man->CreateNtuple("EdepCounter", "EdepCounter Data");
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleDColumn("Edep_MeV");
+    man->FinishNtuple(1);
+
+
+
     man->CreateNtuple("Ideal", "Ideal data"); 
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleIColumn("TrackID");
@@ -62,7 +70,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("x_momentum_MeV");
     man->CreateNtupleDColumn("y_momentum_MeV");
     man->CreateNtupleDColumn("z_momentum_MeV");
-    man->FinishNtuple(1);
+    man->FinishNtuple(2);
 
 
     man->CreateNtuple("Tracker", "Tracker data"); 
@@ -74,6 +82,6 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleSColumn("ParticleName");
     man->CreateNtupleSColumn("CreatorProcessName");
-    man->FinishNtuple(2);
+    man->FinishNtuple(3);
 
 }
