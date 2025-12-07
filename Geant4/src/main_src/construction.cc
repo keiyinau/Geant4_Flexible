@@ -6,15 +6,15 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = false;
-	isSource=false;
+	isSource=true;
 	isTPC = false;
 	isCalorimeter = true;
-    isLiquid=false;
+    isLiquid=true;
     is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
-    matLiquid=matCsI;
-    matContainer=matTi;
+    matLiquid=matWater;
+    matContainer=matAcrylic;
     matScintillator=matLSO;
     matSiPM=matSi;
     matWrapping=matTeflon;
@@ -725,7 +725,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
 void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name){
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
-
+    rotation->rotateZ(30.0*deg); //Remove this line if no self rotation
     std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism12.2mm"};
     std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_12.2mm", "Hexagonal/UntitledSiPM2_12.2mm",
                                     "Hexagonal/UntitledSiPM3_12.2mm", "Hexagonal/UntitledSiPM4_12.2mm"};
@@ -799,15 +799,15 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         //    }
         //}
         // Generate hcc
-        G4double apothem = 6.94/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+        G4double apothem = (12.2+0.1)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
         G4double side_length = 2.0 * apothem;  // Side length
         G4double a1_x = side_length;  // Primitive vector 1 x-component
         G4double a1_y = 0.0;  // Primitive vector 1 y-component
         G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
         G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
-        int min_N = 0;  // Start from ring 1 for placing source
-        int max_N = 0;  // End at ring 6
+        int min_N = 13;  // Start from ring 1 for placing source
+        int max_N = 13+3;  // End at ring 6
         int count = 0;  // For unique naming
 
         for (int n1 = -max_N; n1 <= max_N; ++n1) {
@@ -820,8 +820,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
                 G4double y = n1 * a1_y + n2 * a2_y;
                 G4double z = 0.0;  // Adjust if prisms are offset along z
 
-                G4ThreeVector translation(x, y, z+12.2/2*mm);  // Units: assume bare numbers match your radius units
-                G4double angle = 90.0*deg;  // No rotation; adjust if needed to align with prism definition
+                G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+                G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
                 G4String name = "calor_unit_" + std::to_string(count++);
 
                 // Call your function to place the unit
