@@ -297,7 +297,7 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_txt("RefractiveIndex_LSO_Ce.txt", LSO_refraction_Energy, LSO_refraction_Index);
     std::vector<G4double> LSO_absorption_Energy, LSO_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LSO_Ce.txt", LSO_absorption_Energy, LSO_absorption_Index);
-    mptLSO->AddConstProperty("RESOLUTIONSCALE", 1.);
+    mptLSO->AddConstProperty("RESOLUTIONSCALE", 0.);
     mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
     mptLSO->AddProperty("RINDEX", LSO_refraction_Energy, LSO_refraction_Index,LSO_refraction_Index.size());
     mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
