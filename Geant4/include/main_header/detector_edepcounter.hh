@@ -27,6 +27,7 @@ public:
         G4double edep_accumulated;
     };
     std::map<G4String, G4double> edep_per_detector; // Map to accumulate edep per detector name
+    std::map<G4String, G4double> first_time_per_detector; // New: Map for earliest time per detector (in seconds)
     std::vector<StepData> CurrentData; // Store exit data for each track (if needed)
 private:
     virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);

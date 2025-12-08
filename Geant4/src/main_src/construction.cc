@@ -252,9 +252,12 @@ void MyDetectorConstruction::DefineMaterials() {
 	G4NistManager* nist = G4NistManager::Instance();
 	//Define the world material as Air
 	Air = nist->FindOrBuildMaterial("G4_AIR");
+    std::vector<G4double> Air_absorption_Energy, Air_absorption_Index;
+    readAndProcessData_Energy_cm_txt("AbsorptionLength_Air.txt", Air_absorption_Energy, Air_absorption_Index);
     G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
     mptAir->AddProperty("RINDEX", "Air");
-    Air->SetMaterialPropertiesTable(mptAir);
+    mptAir->AddProperty("ABSLENGTH", Air_absorption_Energy, Air_absorption_Index,Air_absorption_Index.size());
+    //Air->SetMaterialPropertiesTable(mptAir);
 
     // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
@@ -271,8 +274,11 @@ void MyDetectorConstruction::DefineMaterials() {
     // Define water
     matWater = nist->FindOrBuildMaterial("G4_WATER");
     G4MaterialPropertiesTable* mptWater = new G4MaterialPropertiesTable();
+    std::vector<G4double> Water_absorption_Energy, Water_absorption_Index;
+    readAndProcessData_Energy_cm_txt("AbsorptionLength_Water.txt", Water_absorption_Energy, Water_absorption_Index);
     mptWater->AddProperty("RINDEX", "Water");
-    matWater->SetMaterialPropertiesTable(mptWater);
+    mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index,Water_absorption_Index.size());
+    //matWater->SetMaterialPropertiesTable(mptWater);
     // End water
 
 
@@ -303,7 +309,7 @@ void MyDetectorConstruction::DefineMaterials() {
     mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
     mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
     mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
-    matLSO->SetMaterialPropertiesTable(mptLSO);
+    //matLSO->SetMaterialPropertiesTable(mptLSO);
     // End LSO
 
 
@@ -330,7 +336,7 @@ void MyDetectorConstruction::DefineMaterials() {
     mptCsI->AddProperty("ABSLENGTH", CsI_absorption_Energy, CsI_absorption_Index,CsI_absorption_Index.size());
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 3./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
-	matCsI->SetMaterialPropertiesTable(mptCsI);
+	//matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
 
 	// Define Aluminium for wrapping and protection
@@ -341,14 +347,14 @@ void MyDetectorConstruction::DefineMaterials() {
     G4double RIndex_al[nEntries] = {1.37, 0.44}; // Example refractive index values
     // Add the properties to the table
     mptAl->AddProperty("RINDEX", PhotonEnergy, RIndex_al, nEntries);
-    matAl->SetMaterialPropertiesTable(mptAl);
+    //matAl->SetMaterialPropertiesTable(mptAl);
     // End Aluminium
 
 	// Define Acrylic
 	matAcrylic = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
 	G4MaterialPropertiesTable* mptAcrylic = new G4MaterialPropertiesTable();
     mptAcrylic->AddProperty("RINDEX", "PMMA");
-	matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
+	//matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
 	// End Acrylic
 
 
@@ -362,8 +368,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
 	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
     mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
-
-    matTeflon->SetMaterialPropertiesTable(mptTeflon);
+    //matTeflon->SetMaterialPropertiesTable(mptTeflon);
     // End Tapflon
 
 	// Define SiPM
@@ -379,7 +384,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
     mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
     mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
-	matSi->SetMaterialPropertiesTable(mptSi);
+	//matSi->SetMaterialPropertiesTable(mptSi);
 
     // CsI-Teflon (reflective surface)
     surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
@@ -437,9 +442,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 1*m;
-	G4double yWorld = 1*m;
-	G4double zWorld = 1*m;
+	G4double xWorld = 0.22*m;
+	G4double yWorld = 0.22*m;
+	G4double zWorld = 0.22*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -799,7 +804,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         //    }
         //}
         // Generate hcc
-        G4double apothem = (12.2+0.1)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+        G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
         G4double side_length = 2.0 * apothem;  // Side length
         G4double a1_x = side_length;  // Primitive vector 1 x-component
         G4double a1_y = 0.0;  // Primitive vector 1 y-component
@@ -807,7 +812,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
         int min_N = 13;  // Start from ring 1 for placing source
-        int max_N = 13+3;  // End at ring 6
+        int max_N = 13+(3-1);  // End at ring 6
         int count = 0;  // For unique naming
 
         for (int n1 = -max_N; n1 <= max_N; ++n1) {

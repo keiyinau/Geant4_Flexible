@@ -24,6 +24,8 @@ file(GLOB DATA_FILES
 	"src/DataFile/SiPMAFBR/*",
 	"src/DataFile/Tapflon/*",
 	"src/DataFile/LSO/*",
+	"src/DataFile/Water/*",
+	"src/DataFile/Air/*",
 )
 file(GLOB 3D_MODELS
 	"src/3DModel/*"

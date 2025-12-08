@@ -50,6 +50,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleDColumn("Edep_MeV");
+    man->CreateNtupleDColumn("FirstTime_ns");
     man->FinishNtuple(1);
 
 

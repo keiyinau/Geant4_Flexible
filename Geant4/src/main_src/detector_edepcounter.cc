@@ -12,6 +12,7 @@ Detect_edep::~Detect_edep()
 void Detect_edep::Initialize(G4HCofThisEvent* hce)
 {
     edep_per_detector.clear(); // Clear the map at the start of each event
+    first_time_per_detector.clear(); // New: Clear the time map
     G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
     //G4cout << "MySensitiveDetector::Initialize called for Event=" << eventID << G4endl;
     if (fHitsCollectionID < 0) {
@@ -31,7 +32,19 @@ G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
     G4Track* track = aStep->GetTrack();
     G4String detector_Name = track->GetTouchable()->GetVolume()->GetName();
-    edep_per_detector[detector_Name] += aStep->GetTotalEnergyDeposit();
+    G4String particle = track->GetParticleDefinition()->GetParticleName();
+    G4double edep_step = aStep->GetTotalEnergyDeposit();
+
+    if (particle != "opticalphoton" && edep_step > 0.) { // Skip optical photons and zero-edep steps
+        edep_per_detector[detector_Name] += edep_step;
+
+        // New: Record the earliest global time for the first interaction (min time of depositing steps)
+        G4double time = aStep->GetPreStepPoint()->GetGlobalTime();
+        auto it = first_time_per_detector.find(detector_Name);
+        if (it == first_time_per_detector.end() || time < it->second) {
+            first_time_per_detector[detector_Name] = time;
+        }
+    }
     // Optionally call ReadOut(aStep, track) for debugging
     return true;
 }
@@ -46,15 +59,29 @@ void Detect_edep::SaveToRoot()
 {
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
     G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-    for (const auto& pair : edep_per_detector) {
-		if(pair.second >= 500.*eV) 
-		{
-			analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
-			analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
-			analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
-			analysisManager->AddNtupleRow(1);
-		}
 
+
+    G4double min_time = DBL_MAX; // Use a large initial value
+    for (const auto& pair : first_time_per_detector) {
+        if (pair.second < min_time) {
+            min_time = pair.second;
+        }
+    }
+    // If no times recorded (no deposits), set min_time to 0
+    if (min_time == DBL_MAX) {
+        min_time = 0.;
+    }
+
+    for (const auto& pair : edep_per_detector) {
+        if (pair.second >= 500. * eV) {
+            analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
+            analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
+            analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
+            // New: Fill the first time (in ns; adjust unit if needed)
+            G4double rel_time = (first_time_per_detector[pair.first] - min_time) / ns;
+            analysisManager->FillNtupleDColumn(1, 3, rel_time);
+            analysisManager->AddNtupleRow(1);
+        }
     }
 }
 
@@ -96,4 +123,5 @@ void Detect_edep::ClearVectorsCounts()
     //       << ", exitData size=" << exitData.size() << G4endl;
     CurrentData.clear();
     edep_per_detector.clear();
+    first_time_per_detector.clear(); // New: Clear the time map
 }
