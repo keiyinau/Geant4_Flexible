@@ -85,4 +85,52 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("CreatorProcessName");
     man->FinishNtuple(3);
 
+    man->CreateNtuple("TruthPs", "Positronium Truth Data");
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleIColumn("ParentID"); // Positron track ID
+    man->CreateNtupleSColumn("Type"); // "o-Ps" or "p-Ps"
+    man->CreateNtupleDColumn("PosX_mm");
+    man->CreateNtupleDColumn("PosY_mm");
+    man->CreateNtupleDColumn("PosZ_mm");
+    man->CreateNtupleDColumn("MomX_MeV");
+    man->CreateNtupleDColumn("MomY_MeV");
+    man->CreateNtupleDColumn("MomZ_MeV");
+    man->CreateNtupleDColumn("PolX");
+    man->CreateNtupleDColumn("PolY");
+    man->CreateNtupleDColumn("PolZ");
+    man->FinishNtuple(4);
+
+    man->CreateNtuple("TruthGamma", "Gamma Truth Data");
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleIColumn("ParentID"); // Ps or nucleus track ID
+    man->CreateNtupleSColumn("Type"); // "PsDecay" or "NaGamma"
+    man->CreateNtupleDColumn("Energy_MeV");
+    man->CreateNtupleDColumn("PosX_mm");
+    man->CreateNtupleDColumn("PosY_mm");
+    man->CreateNtupleDColumn("PosZ_mm");
+    man->CreateNtupleDColumn("MomX_MeV");
+    man->CreateNtupleDColumn("MomY_MeV");
+    man->CreateNtupleDColumn("MomZ_MeV");
+    man->CreateNtupleDColumn("PolX");
+    man->CreateNtupleDColumn("PolY");
+    man->CreateNtupleDColumn("PolZ");
+    man->CreateNtupleSColumn("FirstDetector");
+    man->FinishNtuple(5);
+
+    man->CreateNtuple("TruthPositron", "Positron Truth Data");
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleDColumn("PosX_mm");
+    man->CreateNtupleDColumn("PosY_mm");
+    man->CreateNtupleDColumn("PosZ_mm");
+    man->CreateNtupleDColumn("MomX_MeV");
+    man->CreateNtupleDColumn("MomY_MeV");
+    man->CreateNtupleDColumn("MomZ_MeV");
+    man->CreateNtupleDColumn("PolX");
+    man->CreateNtupleDColumn("PolY");
+    man->CreateNtupleDColumn("PolZ");
+    man->FinishNtuple(6);
+
 }

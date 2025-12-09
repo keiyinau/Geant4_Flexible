@@ -75,7 +75,7 @@ void MyPhysicsList::ConstructProcess()
 	//positronManager->AddProcess(new G4eMultipleScattering, -1, 1, 1);
 	//positronManager->AddProcess(new G4eIonisation,         -1, 2, 2);
 	//positronManager->AddProcess(new G4eBremsstrahlung,     -1, 3, 3);
-	positronManager->AddProcess(new G4eeToPositronium,      0,-1, 4);
+	positronManager->AddProcess(new G4eeToPositronium("eeToPositronium"),      0,-1, 4);
 	//positronManager->DumpInfo();		// Output to check the process list of Positron
 }
 
