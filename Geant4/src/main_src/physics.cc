@@ -46,10 +46,8 @@ void MyPhysicsList::ConstructProcess()
 
 	// Add all physics processes in TFTFP_BERT
 	G4int ver = 1;
-	//G4EmStandardPhysics pEM_Opt0(ver);						// EmPhysics_Opt0, including ParaPositronium, OrthoPositronium
-	//pEM_Opt0.ConstructProcess();
-	G4EmLivermorePolarizedPhysics pEM_Pol(ver);
-	pEM_Pol.ConstructProcess();
+	G4EmStandardPhysics pEM_Opt0(ver);						// EmPhysics_Opt0, including ParaPositronium, OrthoPositronium
+	pEM_Opt0.ConstructProcess();
 	G4EmExtraPhysics pEmExtraPhysics(ver);					// Synchroton Radiation & GN Physics
 	pEmExtraPhysics.ConstructProcess();
 	G4DecayPhysics pDecayPhysics(ver);						// Decays, including ParaPositronium, OrthoPositronium
@@ -77,26 +75,13 @@ void MyPhysicsList::ConstructProcess()
 	//positronManager->AddProcess(new G4eMultipleScattering, -1, 1, 1);
 	//positronManager->AddProcess(new G4eIonisation,         -1, 2, 2);
 	//positronManager->AddProcess(new G4eBremsstrahlung,     -1, 3, 3);
-	G4VProcess* annihilProc = positronManager->GetProcess("annihil");
-	if (!annihilProc) {
-		annihilProc = positronManager->GetProcess("Polar-annihil");  // Fallback for polarized lists
-	}
-	if (annihilProc) {
-		positronManager->RemoveProcess(annihilProc);
-		G4cout << "Removed default annihilation process: " << annihilProc->GetProcessName() << G4endl;
-	} else {
-		G4cout << "Error: No annihilation process found to remove! Check physics list." << G4endl;
-	}
-
-	// Add your custom process (with explicit name for clarity)
-	G4eeToPositronium* customAnnihil = new G4eeToPositronium("eeToPositronium");
-	positronManager->AddProcess(customAnnihil, 0, -1, 4);  // At-rest and post-step
+	positronManager->AddProcess(new G4eeToPositronium,      0,-1, 4);
 	//positronManager->DumpInfo();		// Output to check the process list of Positron
 }
 
 void MyPhysicsList::SetCuts()
 {
-	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1e-1*eV, 100.*GeV);
+	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1*eV, 100.*GeV);
 	
 	//SetCutsWithDefault();		// default cut value  (1.0mm)
 }

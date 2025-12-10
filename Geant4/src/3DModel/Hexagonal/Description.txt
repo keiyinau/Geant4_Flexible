@@ -1,9 +1,0 @@
-Each SiPM is 4.18 x 4.18 x 1.64 mm3.
-
-The diameters of each scintillator hexagonal prism (radii of circumscribed circles in xy-plane) are 7.00 mm, 12.2 mm, and 13.4 mm; their lengths are all 250 mm.
-
-There are 1, 3, and 4 SiPMs on the end faces of each prism.
-
-Tapes corresponding to each prism are 0.05 mm thick; the thickness is uniform.
-
-The air gap between each SiPM (on 12.2 mm and 13.4 mm prism) is 0.05 mm.

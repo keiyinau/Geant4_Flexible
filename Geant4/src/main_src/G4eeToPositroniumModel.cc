@@ -96,7 +96,6 @@ void G4eeToPositroniumModel::SampleSecondaries(
     CLHEP::HepRandomEngine* rndmEngine = G4Random::getTheEngine();  // "rndmEngine->flat()" returns in range [0, 1)
 
     // Case 1: less than & equal to 6.8*eV, binding energy of positronium at ground state
-    G4ThreeVector posiPol = dp->GetPolarization();
     if (posiKinEnergy <= 6.8*eV) {
         G4double Br_p_Ps = 0.25;        // branching ratio of para-positronium in vacuum
         // momemtum direction for positronium at rest
@@ -105,12 +104,9 @@ void G4eeToPositroniumModel::SampleSecondaries(
         // the branching ratio should vary in different material, not complete yet.
         if (rndmEngine->flat() < Br_p_Ps) {
             aPositronium = new G4DynamicParticle(theParaPositronium, momentum);
-            aPositronium->SetPolarization(0., 0., 0.);  // p-Ps: spin-0, always unpolarized
         }
         else {
             aPositronium = new G4DynamicParticle(theOrthoPositronium, momentum);
-            G4ThreeVector oPsPol = posiPol.unit(); // o-Ps: Inherit longitudinal pol from positron (full transfer assumption), https://indico.jlab.org/event/206/contributions/1963/attachments/1701/2168/JPos2017_Kawasuso.pdf and 
-            aPositronium->SetPolarization(oPsPol);
         }
         vdp->push_back(aPositronium);
     }

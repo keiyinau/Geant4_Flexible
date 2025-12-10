@@ -24,24 +24,26 @@ public:
 	struct StepData {
 		G4int eventID;
 		G4int trackID;
+		G4int stepID;
+		G4int parentID; // Parent ID of the track
+		G4String detectorName;
+		G4String particleName;
+		G4String creatorProcessName; // Process that created the track
+		G4String ProcessName;
+		G4double kineticEnergy;
+		G4double edep;
 		G4double AccumatedDistance;
 		G4double AccumulatedTime;
 		G4double AccumulatedEnergy;
-		G4double postPositionX;
-		G4double postPositionY;
-		G4double postPositionZ;
-		G4double preKE;
-		G4String detectorName;
-		G4String particleName;
-		G4String creatorProcessName;
-
+		G4double x_distance;
+		G4double y_distance;
+		G4double z_distance;
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
 private:
     std::map<G4int, G4double> AccumatedDistance_count; // Map of TrackID to photon count
     std::map<G4int, G4double> AccumulatedTime_count; // Map of TrackID to PMT name
 	std::map<G4int, G4double> AccumulatedEnergy_count; // Map of TrackID to PMT name
-	std::map<G4int,StepData> StepData_count; // Map of TrackID to StepData
 	virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 	G4int fHitsCollectionID; // Declare fHitsCollectionID
 };

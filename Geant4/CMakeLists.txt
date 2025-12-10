@@ -15,22 +15,11 @@ file(GLOB sources_main ${PROJECT_SOURCE_DIR}/src/main_src/*.cc)
 file(GLOB headers_main ${PROJECT_SOURCE_DIR}/include/main_header/*.hh)
 
 file(GLOB MACRO_FILES
-	"macro/*.mac",
-	"macro/*",
+	"*.mac",
+	"*.STL",
+	"HodoscopeParts/*.STL"
 )
-file(GLOB DATA_FILES
-	"src/DataFile/CsI/*",
-	"src/DataFile/CsI(Ti)/*",
-	"src/DataFile/SiPMAFBR/*",
-	"src/DataFile/Tapflon/*",
-	"src/DataFile/LSO/*",
-	"src/DataFile/Water/*",
-	"src/DataFile/Air/*",
-)
-file(GLOB 3D_MODELS
-	"src/3DModel/*"
-)
-file(COPY ${MACRO_FILES} ${DATA_FILES} ${3D_MODELS} DESTINATION ${PROJECT_BINARY_DIR})
+file(COPY ${MACRO_FILES} DESTINATION ${PROJECT_BINARY_DIR})
 
 
 #tell Cmake to create executable, sim is the name (output sim.exe), sim.cc is the main file, 
@@ -38,25 +27,7 @@ file(COPY ${MACRO_FILES} ${DATA_FILES} ${3D_MODELS} DESTINATION ${PROJECT_BINARY
 add_executable(sim sim.cc ${headers_main} ${sources_main})
 
 #tell Cmake use the library in "sim" and path ${Geant4_LIBRARIES}
-#target_link_libraries(sim ${Geant4_LIBRARIES})
-
-# Define paths for SimSiPM
-set(SimSiPM_DIR "/home/eltisau/software/SimSiPM")
-set(SimSiPM_INCLUDE_DIR "${SimSiPM_DIR}/include")
-set(SimSiPM_LIBRARY_DIR "${SimSiPM_DIR}/install/lib")
-# Find ROOT
-find_package(ROOT REQUIRED COMPONENTS Graf Gpad)
-if(NOT ROOT_FOUND)
-    message(FATAL_ERROR "ROOT not found. Please install ROOT or set ROOT_DIR.")
-endif()
-# Find the SimSiPM library
-find_library(SimSiPM_LIB NAMES sipm PATHS ${SimSiPM_LIBRARY_DIR})
-target_link_libraries(sim ${Geant4_LIBRARIES} ${SimSiPM_LIB} ${ROOT_LIBRARIES})
-
-
-
-# Add include directories
-include_directories(${SimSiPM_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})  
+target_link_libraries(sim ${Geant4_LIBRARIES})
 include_directories(sim ${PROJECT_SOURCE_DIR}/include/main_header)
 #tell Cmake the custom target is this project (Simulation), and run all the commands that is needed
 #(This function is not well understood, learn CMake for more information)

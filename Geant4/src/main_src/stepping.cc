@@ -10,87 +10,15 @@ MySteppingAction::~MySteppingAction()
 
 void MySteppingAction::UserSteppingAction(const G4Step* step)
 {
-    
-
-    G4Track* track = step->GetTrack();
-    G4String particleName = track->GetDefinition()->GetParticleName();
-    G4int trackID = track->GetTrackID();
-    G4int parentID = track->GetParentID();
-    G4int stepID = track->GetCurrentStepNumber();
-    G4String processName = "";
-    if (step->GetPostStepPoint()->GetProcessDefinedStep() != nullptr) {
-        processName = step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
-    }
-    G4TrackStatus status = track->GetTrackStatus();
-    G4StepPoint* preStepPoint = step->GetPreStepPoint();
-    G4StepPoint* postStepPoint = step->GetPostStepPoint();
-    G4String detectorName = track->GetTouchable()->GetVolume()->GetName();
-
-
-
-    // Set longitudinal polarization for positrons from Na-22 decay, this is a brute force and an assumption!!!!!!!
-    ////////////////////////////////////
-    G4String creator_process_name = "NULL";
-    if (track->GetCreatorProcess()) {
-        creator_process_name = track->GetCreatorProcess()->GetProcessName();
-    }
-
-
-
-    if (stepID == 1 && particleName == "e+" && creator_process_name == "RadioactiveDecay") {
-        G4ThreeVector momDir = track->GetMomentumDirection();
-        G4ThreeVector pol = momDir.unit();  // Longitudinal pol +1
-        track->SetPolarization(pol);
-    }
-    /////////////////////////
-    // Capture forming positron (at formation point)
-    if (particleName == "e+" && processName == "eeToPositronium" && status == fStopAndKill) {
-        G4ThreeVector pos = postStepPoint->GetPosition();
-        G4ThreeVector mom = postStepPoint->GetMomentum();
-        G4ThreeVector pol = track->GetPolarization();
-        fEventAction->AddPositronTruth(trackID, pos, mom, pol);
-    }
-
-    // Capture Ps at creation (first step; position/mom/pol at creation)
-    if (stepID == 1 && (particleName == "o-Ps" || particleName == "p-Ps")) {
-        G4ThreeVector pos = preStepPoint->GetPosition(); // Creation vertex
-        G4ThreeVector mom = preStepPoint->GetMomentum();
-        G4ThreeVector pol = track->GetPolarization();
-        G4String type = particleName;
-        fEventAction->AddPsTruth(trackID, parentID, type, pos, mom, pol);
-    }
-
-    // Capture gamma at creation (first step)
-    if (stepID == 1 && particleName == "gamma") {
-        G4String creator = "";
-        if (track->GetCreatorProcess() != nullptr) {
-            creator = track->GetCreatorProcess()->GetProcessName();
-        }
-        G4double energy = track->GetKineticEnergy();
-        G4ThreeVector pos = preStepPoint->GetPosition(); // Creation position (decay vertex)
-        G4ThreeVector mom = preStepPoint->GetMomentum();
-        G4ThreeVector pol = track->GetPolarization();
-        G4String type = "";
-        if (creator == "Decay" && fEventAction->HasPs(parentID)) {
-            type = "PsDecay";
-        } else if (creator == "RadioactiveDecay" && std::abs(energy - 1.275 * MeV) < 1.0 * keV) {
-            type = "NaGamma";
-        }
-        if (!type.empty()) {
-            fEventAction->AddGammaTruth(trackID, parentID, type, energy, pos, mom, pol);
-        }
-    }
-
-    // Capture first detector hit for gamma (on boundary entry to detector)
-    if (particleName == "gamma" && preStepPoint->GetStepStatus() == fGeomBoundary) {    
-        std::string detNameStd = detectorName;  // Convert to std::string for easier manipulation
-        size_t unitPos = detNameStd.find("calor_unit_");
-        if (unitPos != std::string::npos) {
-            std::string classifiedName = detNameStd;//.substr(unitPos);  // Extracts "calor_unit_164" onward
-            fEventAction->SetGammaFirstDetector(trackID, classifiedName);
-        } else if (detectorName == "Detector_Shell" || detectorName == "preDetector" || detectorName == "EdepCounter") {  // Fallback for other detectors
-            fEventAction->SetGammaFirstDetector(trackID, detectorName);
-        }
+    G4String detector_Name = step->GetTrack()->GetTouchable()->GetVolume()->GetName();
+    //ReadOut(step);
+    //SaveToDataFile(step);
+    //if (detector_Name == "Detector_Shell") {
+        //ReadOut(step);
+        //SaveToDataFile(step);
+    //}
+    if (detector_Name=="preDetector"){
+        //SaveToDataFile(step);
     }
 }
 

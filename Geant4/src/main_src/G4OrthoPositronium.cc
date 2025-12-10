@@ -1,5 +1,4 @@
 #include "G4OrthoPositronium.hh"
-#include "G4CustomThreeGammaDecayChannel.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ParticleTable.hh"
 #include "G4DecayTable.hh"
@@ -39,8 +38,7 @@ G4OrthoPositronium* G4OrthoPositronium::Definition() {
 	G4VDecayChannel* mode;
 	
 	// o-Ps -> gamma + gamma + gamma
-	//mode = new G4PhaseSpaceDecayChannel(name, 1.0, 3, "gamma", "gamma", "gamma");
-	mode = new G4CustomThreeGammaDecayChannel(name, 1.0,false);
+	mode = new G4PhaseSpaceDecayChannel(name, 1.0, 3, "gamma", "gamma", "gamma");
 	table->Insert(mode);
 	
 	anInstance->SetDecayTable(table);

@@ -36,101 +36,67 @@ void MyRunAction::EndOfRunAction(const G4Run* run){
 
 void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
 {
-    man->CreateNtuple("SiPM", "SiPM Data"); // In practice, only X,Y,Z,Edep,time,track is available
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleDColumn("Area"); // Accumulated distance in mm
-    man->CreateNtupleIColumn("#RealPhoton"); // Accumulated
-    man->CreateNtupleIColumn("#PE"); // Accumulated
-    man->CreateNtupleIColumn("#NoisePE"); // Position X in
-    man->CreateNtupleDColumn("Time_Of_Triggering_ns"); // Position Y in
-    //man->CreateNtupleSColumn("SiPMName");
-    man->FinishNtuple(0);
-
-    man->CreateNtuple("EdepCounter", "EdepCounter Data");
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleSColumn("DetectorName");
-    man->CreateNtupleDColumn("Edep_MeV");
-    man->CreateNtupleDColumn("FirstTime_ns");
-    man->FinishNtuple(1);
-
-
-
-    man->CreateNtuple("Ideal", "Ideal data"); 
+    man->CreateNtuple("Tracker", "Tracker Data"); // In practice, only X,Y,Z,Edep,time,track is available
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleIColumn("TrackID");
     man->CreateNtupleIColumn("StepID");
+    man->CreateNtupleIColumn("ParentID"); // Parent ID of the track
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleSColumn("ParticleName");
+    man->CreateNtupleSColumn("ProcessName"); // Process that defined the step
+    man->CreateNtupleSColumn("CreatorProcess");
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
+    man->CreateNtupleDColumn("Energy_Deposit_MeV"); // Total energy deposited
+    man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
+    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
+    man->CreateNtupleDColumn("PositionX_mm"); // Position X in
+    man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
+    man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
+    man->FinishNtuple(0);
+
+    man->CreateNtuple("Calorimeter", "Calorimeter Data"); //Here, HitTime  cames from the last edep from First generation particles, 
+                                                          //scintillatorCount is the number of scintillators hit by the optical photon
+                                                          //  This is just mimic SiPMs
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleDColumn("HitTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("ScintillatorCount"); // Accumulated
+    man->FinishNtuple(1);
+
+    man->CreateNtuple("Calorimeter_IDEAL", "Ideal Calorimeter Data"); // In practice, only Edep,time,track is available
+    // This is for counting particle other than optical photons
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleIColumn("StepID");
+    man->CreateNtupleIColumn("ParentID"); // Parent ID of the track
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleSColumn("ParticleName");
+    man->CreateNtupleSColumn("ProcessName"); // Process that defined the step
+    man->CreateNtupleSColumn("CreatorProcess");
+    man->CreateNtupleDColumn("Kinetic Energy_MeV"); // Total energy deposited
+    man->CreateNtupleDColumn("AccumulatedDistance_mm"); // Accumulated distance in mm
+    man->CreateNtupleDColumn("AccumulatedTime_ns"); // Accumulated
+    man->CreateNtupleDColumn("AccumulatedEnergy_MeV"); // Accumulated
+    man->CreateNtupleDColumn("PositionX_mm"); // Position X in
+    man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
+    man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
+    man->FinishNtuple(2);
+
+    man->CreateNtuple("Reference", "Reference"); // Only record the enter, leaving datas
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
     man->CreateNtupleIColumn("ParentID");
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleSColumn("ParticleName");
-    man->CreateNtupleSColumn("CreatorProcessName");
+    man->CreateNtupleSColumn("CreatorProcess");
     man->CreateNtupleSColumn("ProcessName");
-    man->CreateNtupleDColumn("KineticEnergy_MeV"); // in Me
-    man->CreateNtupleDColumn("x_distance_mm");
-    man->CreateNtupleDColumn("y_distance_mm");
-    man->CreateNtupleDColumn("z_distance_mm");
-    man->CreateNtupleDColumn("x_momentum_MeV");
-    man->CreateNtupleDColumn("y_momentum_MeV");
-    man->CreateNtupleDColumn("z_momentum_MeV");
-    man->FinishNtuple(2);
-
-
-    man->CreateNtuple("Tracker", "Tracker data"); 
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
-    man->CreateNtupleDColumn("AccumatedDistance_mm");
-    man->CreateNtupleDColumn("AccumulatedTime_ns");
-    man->CreateNtupleDColumn("AccumulatedEnergy_MeV");
-    man->CreateNtupleSColumn("DetectorName");
-    man->CreateNtupleSColumn("ParticleName");
-    man->CreateNtupleSColumn("CreatorProcessName");
+    man->CreateNtupleDColumn("KineticEnergy_MeV");
+    man->CreateNtupleDColumn("PositionX_mm"); // Position X in
+    man->CreateNtupleDColumn("PositionY_mm"); // Position Y in
+    man->CreateNtupleDColumn("PositionZ_mm"); // Position Z in
     man->FinishNtuple(3);
 
-    man->CreateNtuple("TruthPs", "Positronium Truth Data");
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
-    man->CreateNtupleIColumn("ParentID"); // Positron track ID
-    man->CreateNtupleSColumn("Type"); // "o-Ps" or "p-Ps"
-    man->CreateNtupleDColumn("PosX_mm");
-    man->CreateNtupleDColumn("PosY_mm");
-    man->CreateNtupleDColumn("PosZ_mm");
-    man->CreateNtupleDColumn("MomX_MeV");
-    man->CreateNtupleDColumn("MomY_MeV");
-    man->CreateNtupleDColumn("MomZ_MeV");
-    man->CreateNtupleDColumn("PolX");
-    man->CreateNtupleDColumn("PolY");
-    man->CreateNtupleDColumn("PolZ");
-    man->FinishNtuple(4);
-
-    man->CreateNtuple("TruthGamma", "Gamma Truth Data");
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
-    man->CreateNtupleIColumn("ParentID"); // Ps or nucleus track ID
-    man->CreateNtupleSColumn("Type"); // "PsDecay" or "NaGamma"
-    man->CreateNtupleDColumn("Energy_MeV");
-    man->CreateNtupleDColumn("PosX_mm");
-    man->CreateNtupleDColumn("PosY_mm");
-    man->CreateNtupleDColumn("PosZ_mm");
-    man->CreateNtupleDColumn("MomX_MeV");
-    man->CreateNtupleDColumn("MomY_MeV");
-    man->CreateNtupleDColumn("MomZ_MeV");
-    man->CreateNtupleDColumn("PolX");
-    man->CreateNtupleDColumn("PolY");
-    man->CreateNtupleDColumn("PolZ");
-    man->CreateNtupleSColumn("FirstDetector");
-    man->FinishNtuple(5);
-
-    man->CreateNtuple("TruthPositron", "Positron Truth Data");
-    man->CreateNtupleIColumn("EventID");
-    man->CreateNtupleIColumn("TrackID");
-    man->CreateNtupleDColumn("PosX_mm");
-    man->CreateNtupleDColumn("PosY_mm");
-    man->CreateNtupleDColumn("PosZ_mm");
-    man->CreateNtupleDColumn("MomX_MeV");
-    man->CreateNtupleDColumn("MomY_MeV");
-    man->CreateNtupleDColumn("MomZ_MeV");
-    man->CreateNtupleDColumn("PolX");
-    man->CreateNtupleDColumn("PolY");
-    man->CreateNtupleDColumn("PolZ");
-    man->FinishNtuple(6);
 
 }

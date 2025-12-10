@@ -1,8 +1,0 @@
-/MyDetector/setFileName Energy_{eKin}_Position{x}{y}{z}
-
-/gun/energy {eKin} keV
-/gun/position x y z mm
-
-
-/run/beamOn 50000
-
