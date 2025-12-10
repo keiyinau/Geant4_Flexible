@@ -1,0 +1,6 @@
+/MyDetector/setFileName Energy_{eKin}
+
+/gun/energy {eKin} keV
+
+/run/beamOn 50000
+

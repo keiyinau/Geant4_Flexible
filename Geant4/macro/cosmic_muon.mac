@@ -1,0 +1,38 @@
+#/run/numberOfThreads 20
+/run/initialize
+
+/control/verbose 0
+
+#/gps/source/add 10
+
+
+
+/gps/particle mu+
+
+#/gps/ang/type iso
+#/gps/ang/minphi 90 deg
+#/gps/ang/maxphi 180 deg
+
+/gps/ang/type user
+/gps/hist/type theta
+#/control/execute cosmic_muon_angular.mac
+/gps/ang/rot1 1 0 0
+/gps/ang/rot2 0 0 1
+/gps/ang/user_coor True
+
+/gps/pos/type Plane
+/gps/pos/centre 0. 10. 0. cm
+/gps/pos/shape Square
+/gps/pos/halfx 2.5 cm
+/gps/pos/halfy 25 cm
+/gps/pos/rot1 1 0 0
+/gps/pos/rot2 0 0 1
+#/gps/ene/type Mono
+#/gps/ene/mono 4 GeV
+/gps/ene/type User
+/gps/hist/type energy
+/control/execute cosmic_muon_energy.mac
+
+
+
+/run/beamOn 10

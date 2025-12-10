@@ -24,6 +24,7 @@ public:
 	struct StepData {
 		G4int eventID;
 		G4int trackID;
+		G4int stepID;
 		G4int parentID; // Parent ID of the track
 		G4String detectorName;
 		G4String particleName;
@@ -33,6 +34,9 @@ public:
 		G4double x_distance;
 		G4double y_distance;
 		G4double z_distance;
+		G4double x_momentum;
+		G4double y_momentum;
+		G4double z_momentum;
 	};
 	std::vector<StepData> CurrentData; // Store exit data for each track
 private:

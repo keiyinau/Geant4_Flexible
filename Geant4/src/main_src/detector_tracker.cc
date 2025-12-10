@@ -27,9 +27,16 @@ void Tracker::EndOfEvent(G4HCofThisEvent*){
 
 G4bool Tracker::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
-	
 	G4Track* track = aStep->GetTrack();
-	SaveToStepData(aStep,ROhist,track);
+	G4String particleName = track->GetParticleDefinition()->GetParticleName(); //Consider only Positron
+
+    if (particleName == "opticalphoton") {
+        return false;
+    }
+    if (track->GetParentID() == 0 || particleName == "gamma") {
+        SaveToStepData(aStep, ROhist, track);
+        return true;
+    }
 	return 0;
 }
 
@@ -50,51 +57,43 @@ void Tracker::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track*
 	G4double ldep= aStep->GetStepLength(); // Length of the step
 	G4double tdep= aStep->GetDeltaTime(); // Time difference for this step
 	G4double ekin = track->GetKineticEnergy();	
+	G4String particlename = track->GetDefinition()->GetParticleName(); // Get the particle name
 	AccumatedDistance_count[trackID]+=ldep;
     AccumulatedTime_count[trackID]+=tdep;
     AccumulatedEnergy_count[trackID]+=edep;
 	StepData data;
     data.eventID = evt;
     data.trackID = trackID;
-	data.stepID = stepID;
-	data.parentID = parentID; // Store the parent ID of the track
-	data.detectorName = detector_Name;
-	data.particleName = particle_name;
-	data.ProcessName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName(); // Get the process name of the step
-	data.creatorProcessName = creator_process_name;
-	data.kineticEnergy = ekin;
-	data.edep = edep; // Store the energy deposited in this step
 	data.AccumatedDistance = AccumatedDistance_count[trackID];
 	data.AccumulatedTime = AccumulatedTime_count[trackID];
 	data.AccumulatedEnergy = AccumulatedEnergy_count[trackID];
-	data.x_distance = aStep->GetPreStepPoint()->GetPosition().x();
-	data.y_distance = aStep->GetPreStepPoint()->GetPosition().y();
-	data.z_distance = aStep->GetPreStepPoint()->GetPosition().z();
-	CurrentData.push_back(data); // Store the data for this step
-
-	
+	data.postPositionX = aStep->GetPostStepPoint()->GetPosition().x();
+	data.postPositionY = aStep->GetPostStepPoint()->GetPosition().y();
+	data.postPositionZ = aStep->GetPostStepPoint()->GetPosition().z();
+	if(StepData_count[trackID].preKE<aStep->GetPreStepPoint()->GetKineticEnergy()){ // Get the kinetic energy at the pre-step point) { // If this is the first step for this track
+		data.preKE = aStep->GetPreStepPoint()->GetKineticEnergy(); // Set the event ID
+	} else {
+		data.preKE = StepData_count[trackID].preKE; // Use the existing event ID
+	}
+	data.detectorName = detector_Name; // Store the detector name
+	data.particleName = particle_name; // Store the particle name
+	data.creatorProcessName = creator_process_name; // Store the creator process name
+	StepData_count[trackID] = data; // Store the data in the map
 }
 void Tracker::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-	for(const auto&data:CurrentData){
-		// Fill the ntuple with the data
-		analysisManager->FillNtupleIColumn(0,0, data.eventID);
-		analysisManager->FillNtupleIColumn(0,1, data.trackID);
-		analysisManager->FillNtupleIColumn(0,2, data.stepID);
-		analysisManager->FillNtupleIColumn(0,3, data.parentID); // Fill the parent ID
-		analysisManager->FillNtupleSColumn(0,4, data.detectorName);
-		analysisManager->FillNtupleSColumn(0,5,data.particleName);
-		analysisManager->FillNtupleSColumn(0,6,data.ProcessName); // Fill the process name
-		analysisManager->FillNtupleSColumn(0,7,data.creatorProcessName);
-		analysisManager->FillNtupleDColumn(0,8, data.kineticEnergy/MeV);
-		analysisManager->FillNtupleDColumn(0,9, data.edep/MeV); // Fill the energy deposited
-		analysisManager->FillNtupleDColumn(0,10, data.AccumatedDistance/mm); // Fill the accumulated distance
-		analysisManager->FillNtupleDColumn(0,11, data.AccumulatedTime/ns); // Fill the accumulated time
-		analysisManager->FillNtupleDColumn(0,12, data.AccumulatedEnergy/MeV); // Fill the accumulated energy
-		analysisManager->FillNtupleDColumn(0,13, data.x_distance/mm); // Fill the x position
-		analysisManager->FillNtupleDColumn(0,14, data.y_distance/mm); // Fill the y position
-		analysisManager->FillNtupleDColumn(0,15, data.z_distance/mm); // Fill the z position
-		analysisManager->AddNtupleRow(0);
+	for (const auto& pair : StepData_count) {
+		const auto& data = pair.second; // Access the StepData object
+		//G4cout<<data.AccumatedDistance / mm;
+		analysisManager->FillNtupleIColumn(2, 0, data.eventID);
+		analysisManager->FillNtupleIColumn(2, 1, data.trackID);
+		analysisManager->FillNtupleDColumn(2, 2, data.AccumatedDistance / mm);
+		analysisManager->FillNtupleDColumn(2, 3, data.AccumulatedTime / ns);
+		analysisManager->FillNtupleDColumn(2, 4, data.AccumulatedEnergy / MeV);
+		analysisManager->FillNtupleSColumn(2, 5, data.detectorName);
+		analysisManager->FillNtupleSColumn(2, 6, data.particleName);
+		analysisManager->FillNtupleSColumn(2, 7, data.creatorProcessName);
+		analysisManager->AddNtupleRow(2);
 	}
 }
 

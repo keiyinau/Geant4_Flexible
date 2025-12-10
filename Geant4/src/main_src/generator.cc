@@ -7,7 +7,10 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	fParticleGun = new G4ParticleGun(1);
 	fParticleSource = new G4GeneralParticleSource();
 
-	// Define fIon to be Ground state Na-22
+	// Define fIon to be Ground state Na-22 (Z=11, A=22)
+	// Co-60 (Z=27, A=60) can also be used for testing
+	// Cs-137 (Z=55, A=137) can also be used for testing
+	
 	Z = 11;					// Atomic number (Proton Number)
 	A = 22;					// Mass number
 	ex_energy = 0.*keV;		// Excitation energy
@@ -22,12 +25,32 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	fParticleSource->SetParticleDefinition(pdParticleSource);
 
 	// Set the default parameters for the fParticleGun
-	pdParticleGun = fPositron;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
+	pdParticleGun = fGamma;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
-	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm-1*mm);
+	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 0.6*MeV; 
+	kinParticleGun = 100*keV; 
 	chargeParticleGun = 0.*eplus;
+	//if (pdParticleGun == fPositron){
+	//	G4double maxEnergy = 600. * keV;  // Na-22 beta+ endpoint
+	//	G4double energy = maxEnergy * G4UniformRand();  // Simple uniform for demo; use Fermi function for accurate spectrum
+//
+	//	// Direction: isotropic or along a beam
+	//	G4double theta = std::acos(2 * G4UniformRand() - 1);
+	//	G4double phi = 2 * CLHEP::pi * G4UniformRand();
+	//	G4ThreeVector direction(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
+//
+	//	fParticleGun->SetParticleDefinition(pdParticleGun);
+	//	fParticleGun->SetParticleEnergy(energy);
+	//	fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));  // At source position
+	//	fParticleGun->SetParticleMomentumDirection(direction);
+//
+	//	// Set longitudinal polarization: +1 along momentum (for positrons)
+	//	G4ThreeVector pol = direction.unit();  // Helicity +1
+	//	fParticleGun->SetParticlePolarization(pol);
+//
+	//	fParticleGun->GeneratePrimaryVertex(anEvent);
+	//}
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);
 	//fParticleGun->SetParticleMomentum(momParticleGun);
@@ -45,7 +68,9 @@ MyPrimaryGenerator::~MyPrimaryGenerator(){
 void MyPrimaryGenerator::ParticleDefinition(){
 	fGamma = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
 	fPositron = G4ParticleTable::GetParticleTable()->FindParticle("e+");
+	fElectron=G4ParticleTable::GetParticleTable()->FindParticle("e-");
 	fGeantino = G4ParticleTable::GetParticleTable()->FindParticle("geantino");
+	fOpticalPhoton = G4ParticleTable::GetParticleTable()->FindParticle("opticalphoton");
 	fo_Ps = G4OrthoPositronium::Definition();
 	fp_Ps = G4ParaPositronium::Definition();
 }

@@ -4,6 +4,7 @@
 #include "G4VUserPhysicsList.hh"
 #include "G4VModularPhysicsList.hh"
 #include "G4EmStandardPhysics.hh"
+#include "G4EmLivermorePolarizedPhysics.hh"
 #include "G4OpticalPhysics.hh"
 #include "G4DecayPhysics.hh"
 #include "G4RadioactiveDecayPhysics.hh"
