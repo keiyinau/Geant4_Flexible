@@ -10,7 +10,9 @@ MySteppingAction::~MySteppingAction()
 
 void MySteppingAction::UserSteppingAction(const G4Step* step)
 {
-G4Track* track = step->GetTrack();
+    
+
+    G4Track* track = step->GetTrack();
     G4String particleName = track->GetDefinition()->GetParticleName();
     G4int trackID = track->GetTrackID();
     G4int parentID = track->GetParentID();
@@ -24,6 +26,26 @@ G4Track* track = step->GetTrack();
     G4StepPoint* postStepPoint = step->GetPostStepPoint();
     G4String detectorName = track->GetTouchable()->GetVolume()->GetName();
 
+
+
+    // Set longitudinal polarization for positrons from Na-22 decay, this is a brute force and an assumption!!!!!!!
+    ////////////////////////////////////
+    G4String creator_process_name = "NULL";
+    if (track->GetCreatorProcess()) {
+        creator_process_name = track->GetCreatorProcess()->GetProcessName();
+    }
+
+
+    if (stepID == 1 && particleName == "e+" && creator_process_name == "RadioactiveDecay") {
+        G4cout << "Primary positron from decay: Event=" << 1 << ", Energy=" << track->GetKineticEnergy() / keV << " keV" << G4endl;
+    }
+
+    if (stepID == 1 && particleName == "e+" && creator_process_name == "RadioactiveDecay") {
+        G4ThreeVector momDir = track->GetMomentumDirection();
+        G4ThreeVector pol = momDir.unit();  // Longitudinal pol +1
+        track->SetPolarization(pol);
+    }
+    /////////////////////////
     // Capture forming positron (at formation point)
     if (particleName == "e+" && processName == "eeToPositronium" && status == fStopAndKill) {
         G4ThreeVector pos = postStepPoint->GetPosition();

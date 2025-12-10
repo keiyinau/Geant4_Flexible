@@ -94,7 +94,12 @@ void G4eeToPositroniumModel::SampleSecondaries(
     G4DynamicParticle *aPositronium, *aGamma1, *aGamma2;
 
     CLHEP::HepRandomEngine* rndmEngine = G4Random::getTheEngine();  // "rndmEngine->flat()" returns in range [0, 1)
-
+    G4cout << "Positron energy: " << posiKinEnergy / keV << " keV" << G4endl;
+    if (posiKinEnergy <= 6.8 * eV) {
+        G4cout << "Forming Ps at rest" << G4endl;
+    } else {
+        G4cout << "In-flight annihilation to 2 gammas" << G4endl;
+    }
     // Case 1: less than & equal to 6.8*eV, binding energy of positronium at ground state
     if (posiKinEnergy <= 6.8*eV) {
         G4double Br_p_Ps = 0.25;        // branching ratio of para-positronium in vacuum

@@ -31,6 +31,26 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
 	kinParticleGun = 100*keV; 
 	chargeParticleGun = 0.*eplus;
+	//if (pdParticleGun == fPositron){
+	//	G4double maxEnergy = 600. * keV;  // Na-22 beta+ endpoint
+	//	G4double energy = maxEnergy * G4UniformRand();  // Simple uniform for demo; use Fermi function for accurate spectrum
+//
+	//	// Direction: isotropic or along a beam
+	//	G4double theta = std::acos(2 * G4UniformRand() - 1);
+	//	G4double phi = 2 * CLHEP::pi * G4UniformRand();
+	//	G4ThreeVector direction(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
+//
+	//	fParticleGun->SetParticleDefinition(pdParticleGun);
+	//	fParticleGun->SetParticleEnergy(energy);
+	//	fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));  // At source position
+	//	fParticleGun->SetParticleMomentumDirection(direction);
+//
+	//	// Set longitudinal polarization: +1 along momentum (for positrons)
+	//	G4ThreeVector pol = direction.unit();  // Helicity +1
+	//	fParticleGun->SetParticlePolarization(pol);
+//
+	//	fParticleGun->GeneratePrimaryVertex(anEvent);
+	//}
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);
 	//fParticleGun->SetParticleMomentum(momParticleGun);
