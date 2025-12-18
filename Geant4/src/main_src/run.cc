@@ -38,6 +38,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
 {
     man->CreateNtuple("SiPM", "SiPM Data"); // In practice, only X,Y,Z,Edep,time,track is available
     man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleDColumn("Area"); // Accumulated distance in mm
     man->CreateNtupleIColumn("#RealPhoton"); // Accumulated
     man->CreateNtupleIColumn("#PE"); // Accumulated
@@ -50,6 +51,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleDColumn("Edep_MeV");
+    man->CreateNtupleDColumn("FirstTime_ns");
     man->FinishNtuple(1);
 
 

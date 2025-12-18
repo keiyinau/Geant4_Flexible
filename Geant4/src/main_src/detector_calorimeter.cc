@@ -5,7 +5,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=true;
+	isDCR=false;
 	isXT=true;
 	isAP=true;
 	signalLength=500; //ns
@@ -85,78 +85,97 @@ void Calorimeter::Initialize(G4HCofThisEvent* hce)
 
 void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 {
-	if (photonTimes.empty()) {
+	if (photonTimes_per_detector.empty()) {
         ClearVectorsCounts();
         return;
     }
 
-    double tDecay_ns = *std::min_element(photonTimes.begin(), photonTimes.end());
-
-    std::vector<double> shiftedTimes;
-    shiftedTimes.reserve(photonTimes.size());
-    for (double t : photonTimes) {
-        double t_rel = t;  //- tDecay_ns;   //#############!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! now all >= 0, typically 0–300 ns
-		//std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
-        shiftedTimes.push_back(t_rel);
+    // Compute global minimum time across all detectors with photons
+    G4double global_min_time = DBL_MAX;
+    for (const auto& pair : photonTimes_per_detector) {
+        const auto& times = pair.second;
+        if (!times.empty()) {
+            double min_t = *std::min_element(times.begin(), times.end());
+            if (min_t < global_min_time) {
+                global_min_time = min_t;
+            }
+        }
     }
-    mySensor.resetState();
-
-    // Add only real optical photons (from CsI)
-    mySensor.addPhotons(shiftedTimes, photonWavelengths);
-    mySensor.runEvent();
-
-    const auto& debug = mySensor.debug();
-    const auto& signal = mySensor.signal();
-
-    // === Find first REAL photon time (from CsI) ===
-    G4double firstPhotonTime = -1.0;
-    if (!shiftedTimes.empty()) {
-        firstPhotonTime = *std::min_element(shiftedTimes.begin(), shiftedTimes.end());
+    if (global_min_time == DBL_MAX) {
+        global_min_time = 0.;
     }
 
-    // === Only process if at least one real photon ===
-    if (firstPhotonTime >= 0) {
-        G4double gateStart = firstPhotonTime;
-        G4double gateEnd   = gateStart + gatewidth;
+    // Process each detector separately
+    for (const auto& pair : photonTimes_per_detector) {
+        G4String det_name = pair.first;
+        const auto& times = pair.second;
+        const auto& wlens = photonWavelengths_per_detector[det_name];
 
-        // Ensure gate fits in signal length
+        if (times.empty()) continue;
+
+        // Compute per-detector min time for relative triggering
+        double det_min_time = *std::min_element(times.begin(), times.end());
+
+        // Shift times relative to det_min_time for sensor processing
+        std::vector<double> shiftedTimes;
+        shiftedTimes.reserve(times.size());
+        for (double t : times) {
+            double t_rel = t - det_min_time;
+            shiftedTimes.push_back(t_rel);
+        }
+
+        mySensor.resetState();
+        mySensor.addPhotons(shiftedTimes, wlens);
+        mySensor.runEvent();
+
+        const auto& debug = mySensor.debug();
+        const auto& signal = mySensor.signal();
+
+        // Relative triggering time: det_min_time - global_min_time
+        G4double rel_trigger_time = (det_min_time - global_min_time) / ns;  // in ns
+
+        // Gate starts at 0 in relative time (first photon in this det)
+        G4double gateStart = 0.0;
+        G4double gateEnd = gateStart + gatewidth;
+
         if (gateEnd <= signalLength) {
-            G4double integral = signal.integral(gateStart, gateEnd, 0.0);  // No threshold for integration
+            G4double integral = signal.integral(gateStart, gateEnd, 0.0);
 
-            if (integral < 1e10) {  // Removed >0 to save even if integral==0
+            if (integral < 1e10) {
                 LoadData data;
                 data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+                data.detectorName = det_name;  // New: store detector name
                 data.Area = integral;
                 data.RealPhotonCount = debug.nPhotons;
                 data.PEsCount = debug.nPhotoelectrons;
                 data.NoisePEsCount = debug.nDcr + debug.nXt + debug.nAp;
-                data.Time_Of_Triggering = firstPhotonTime;  // Real trigger time
+                data.Time_Of_Triggering = rel_trigger_time;  // Relative time in ns
 
                 CurrentData.push_back(data);
             }
-        }
-		else{
-			LoadData data;
+        } else {
+            LoadData data;
             data.eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-            data.Area = -100.0; // Indicate invalid area due to gate exceeding signal length
+            data.detectorName = det_name;  // New: store detector name
+            data.Area = -100.0;
             data.RealPhotonCount = debug.nPhotons;
             data.PEsCount = debug.nPhotoelectrons;
             data.NoisePEsCount = debug.nDcr + debug.nXt + debug.nAp;
-            data.Time_Of_Triggering = firstPhotonTime;  // Real trigger time
+            data.Time_Of_Triggering = rel_trigger_time;
             CurrentData.push_back(data);
-		}
-    }
+        }
 
-    // Optional: Plot waveform
-    if (isGraph) {
-        PlotWaveform(signal);
+        // Optional: Plot waveform per detector
+        if (isGraph) {
+            PlotWaveform(signal, det_name);  // Modify PlotWaveform to take det_name for unique filename
+        }
     }
 
     SaveToRoot();
     ClearVectorsCounts();
 }
 
-void Calorimeter::PlotWaveform(const sipm::SiPMAnalogSignal& signal)
+void Calorimeter::PlotWaveform(const sipm::SiPMAnalogSignal& signal, const G4String& det_name)
 {
     std::vector<float> waveform = signal.waveform();
     for (float& val : waveform) val *= gain;
@@ -168,9 +187,9 @@ void Calorimeter::PlotWaveform(const sipm::SiPMAnalogSignal& signal)
     }
 
     TCanvas* c = new TCanvas("c", "SiPM Signal", 800, 600);
-    graph->SetTitle("SiPM Waveform;Time (ns);Amplitude (mV)");
+    graph->SetTitle(("SiPM Waveform - " + det_name + ";Time (ns);Amplitude (mV)").c_str());
     graph->Draw("AL");
-    c->SaveAs("waveform.png");
+    c->SaveAs(("waveform_" + det_name + ".png").c_str());
 
     delete graph;
     delete c;
@@ -200,12 +219,12 @@ void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Tr
 	G4double time=preStepPoint->GetGlobalTime();
 	G4ThreeVector momPhoton = preStepPoint->GetMomentum();
 	G4double wlen= (1239.841939/(track->GetDynamicParticle()->GetTotalEnergy()/eV));
-	StepData data;
-	data.detector_Name = detector_Name;
-	data.wavelength = (double)wlen;
-	data.Hittime = (double)time;
-	photonTimes.push_back(data.Hittime); // Store the data for this step
-	photonWavelengths.push_back(data.wavelength); // Store the wavelength for this step
+	//StepData data;  // No longer needed
+	//data.detector_Name = detector_Name;
+	//data.wavelength = (double)wlen;
+	//data.Hittime = (double)time;
+	photonTimes_per_detector[detector_Name].push_back(time); // Store per detector
+	photonWavelengths_per_detector[detector_Name].push_back(wlen); // Store per detector
 	//G4cout<<"Photon Hit at"<<data.Hittime/ns<<std::endl;
 	//std::cout<<wlen<<std::endl;
 }
@@ -213,12 +232,12 @@ void Calorimeter::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 	for(const auto&data:CurrentData){
 		analysisManager->FillNtupleIColumn(0,0, data.eventID);
-		//analysisManager->FillNtupleSColumn(0,1, data.SiPMName);
-		analysisManager->FillNtupleDColumn(0,1, data.Area);
-		analysisManager->FillNtupleIColumn(0,2, data.RealPhotonCount);
-		analysisManager->FillNtupleIColumn(0,3, data.PEsCount);
-		analysisManager->FillNtupleIColumn(0,4, data.NoisePEsCount);
-		analysisManager->FillNtupleDColumn(0,5, data.Time_Of_Triggering);
+		analysisManager->FillNtupleSColumn(0,1, data.detectorName); // Uncommented and using detectorName
+		analysisManager->FillNtupleDColumn(0,2, data.Area);
+		analysisManager->FillNtupleIColumn(0,3, data.RealPhotonCount);
+		analysisManager->FillNtupleIColumn(0,4, data.PEsCount);
+		analysisManager->FillNtupleIColumn(0,5, data.NoisePEsCount);
+		analysisManager->FillNtupleDColumn(0,6, data.Time_Of_Triggering);
 		// Fill the ntuple with the data
 		analysisManager->AddNtupleRow(0);
 	}
@@ -258,8 +277,8 @@ void Calorimeter::ReadOut(G4Step* step, G4Track* track) {
 
 void Calorimeter::ClearVectorsCounts()
 {
-	photonTimes.clear(); // Clear the vector that stores photon times
-	photonWavelengths.clear(); // Clear the vector that stores photon wavelengths
+	photonTimes_per_detector.clear(); // Clear the map that stores photon times per detector
+	photonWavelengths_per_detector.clear(); // Clear the map that stores photon wavelengths per detector
 	detectorname.clear();
 	// Clear the vector that stores the current data
 	CurrentData.clear();

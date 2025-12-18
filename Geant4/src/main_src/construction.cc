@@ -477,12 +477,27 @@ void MyDetectorConstruction::ConstructSDandField() {
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(detect_reference);
 	if(logicCalorimeter!=NULL)
-        for(int i=0; i < logicSiPM.size(); i++) {
-            logicSiPM[i]->SetSensitiveDetector(calorimeter);
+        if (!logicSiPM.empty()) {
+            G4SDManager* sdManager = G4SDManager::GetSDMpointer();
+            Calorimeter* sd = new Calorimeter("Calorimeter");
+            sdManager->AddNewDetector(sd);
+            for (auto& log : logicSiPM) {
+                log->SetSensitiveDetector(sd);
+            }
         }
+
+        //if (!logicSiPM.empty()) {
+        //    G4SDManager* sdManager = G4SDManager::GetSDMpointer();
+        //    for (size_t k = 0; k < logicSiPM.size(); ++k) {
+        //        Calorimeter* sd = new Calorimeter("Calorimeter" + std::to_string(k));
+        //        sdManager->AddNewDetector(sd);
+        //        logicSiPM[k]->SetSensitiveDetector(sd);
+        //        }
+        //}
         for(int i=0; i < logicScintillators.size(); i++) {
             logicScintillators[i]->SetSensitiveDetector(detect_edep);
         }
+    
 		//logicCalorimeter->SetSensitiveDetector(calorimeter);
 	//if(logicBareSource != NULL)
 	//	logicBareSource->SetSensitiveDetector(detect_reference);
@@ -726,10 +741,10 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism12.2mm"};
-    std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_12.2mm", "Hexagonal/UntitledSiPM2_12.2mm",
-                                    "Hexagonal/UntitledSiPM3_12.2mm", "Hexagonal/UntitledSiPM4_12.2mm"};
-    std::string Tapflon_name_list[] = {"Hexagonal/UntitledTape12.2mm"};
+    std::string Scintillator_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_Crystal15.0mm"};
+    std::string SiPM_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_SiPM1_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM2_15.00mm",
+                                    "Hexagonal/Crystal_15_Crystal_15_SiPM3_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM4_15.00mm"};
+    std::string Tapflon_name_list[] = {"Hexagonal/Tape_15mm0.05mm2"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -745,16 +760,17 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
-
-        std::string name_SiPM = SiPM_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(1.0);
-        auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
-		logicCalorimeter=logicSiPM_pre;
-        logicSiPM.push_back(logicCalorimeter);
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
-
+        for(int j=0; j<Size_of_SiPM_name_list; j++){
+            std::string name_SiPM = SiPM_name_list[j];
+            auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
+            scintillatorDet->SetScale(1.0);
+            auto ScintillatorDet = scintillatorDet->GetSolid();
+            G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
+            logicCalorimeter=logicSiPM_pre;
+            logicSiPM.push_back(logicSiPM_pre);
+            physSiPM[j] = new G4PVPlacement(rotation, translation, logicSiPM_pre, name_SiPM+name, logicWorld, false, j, true);    
+        }
+        
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
         scintillatorwrapping->SetScale(1.0);
@@ -799,7 +815,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         //    }
         //}
         // Generate hcc
-        G4double apothem = 6.94/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+        G4double apothem = 15.2/2*std::sqrt(3.0)/2.0*mm;  // Apothem (distance from center to flat side)
         G4double side_length = 2.0 * apothem;  // Side length
         G4double a1_x = side_length;  // Primitive vector 1 x-component
         G4double a1_y = 0.0;  // Primitive vector 1 y-component
@@ -821,7 +837,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
                 G4double z = 0.0;  // Adjust if prisms are offset along z
 
                 G4ThreeVector translation(x, y, z+12.2/2*mm);  // Units: assume bare numbers match your radius units
-                G4double angle = 90.0*deg;  // No rotation; adjust if needed to align with prism definition
+                G4double angle = 0.*deg;//90.0*deg;  // No rotation; adjust if needed to align with prism definition
                 G4String name = "calor_unit_" + std::to_string(count++);
 
                 // Call your function to place the unit
