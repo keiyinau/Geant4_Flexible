@@ -1,4 +1,0 @@
-/home/eltisau/Documents/Positronium_Experiment/Simulation_SecondVersion/CurrentGeant4/Geant4_Flexible/Geant4/build/CMakeFiles/sim.dir
-/home/eltisau/Documents/Positronium_Experiment/Simulation_SecondVersion/CurrentGeant4/Geant4_Flexible/Geant4/build/CMakeFiles/Simulation.dir
-/home/eltisau/Documents/Positronium_Experiment/Simulation_SecondVersion/CurrentGeant4/Geant4_Flexible/Geant4/build/CMakeFiles/edit_cache.dir
-/home/eltisau/Documents/Positronium_Experiment/Simulation_SecondVersion/CurrentGeant4/Geant4_Flexible/Geant4/build/CMakeFiles/rebuild_cache.dir
