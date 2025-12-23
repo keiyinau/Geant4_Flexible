@@ -26,6 +26,7 @@ public:
         G4String detectorName;
         G4double edep_accumulated;
     };
+    std::map<G4String, G4int> optical_per_detector;
     std::map<G4String, G4double> edep_per_detector; // Map to accumulate edep per detector name
     std::map<G4String, G4double> first_time_per_detector; // New: Map for earliest time per detector (in seconds)
     std::vector<StepData> CurrentData; // Store exit data for each track (if needed)

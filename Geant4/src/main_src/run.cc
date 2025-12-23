@@ -52,6 +52,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleDColumn("Edep_MeV");
     man->CreateNtupleDColumn("FirstTime_ns");
+    man->CreateNtupleIColumn("NumOpticalPhotons");
     man->FinishNtuple(1);
 
 

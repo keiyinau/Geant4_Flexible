@@ -2,4 +2,4 @@
 
 /gun/energy {eKin} keV
 
-/run/beamOn 50000
+/run/beamOn 12500

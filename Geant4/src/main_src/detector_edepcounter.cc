@@ -13,6 +13,7 @@ void Detect_edep::Initialize(G4HCofThisEvent* hce)
 {
     edep_per_detector.clear(); // Clear the map at the start of each event
     first_time_per_detector.clear(); // New: Clear the time map
+    optical_per_detector.clear();
     G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
     //G4cout << "MySensitiveDetector::Initialize called for Event=" << eventID << G4endl;
     if (fHitsCollectionID < 0) {
@@ -34,7 +35,9 @@ G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
     G4String detector_Name = track->GetTouchable()->GetVolume()->GetName();
     G4String particle = track->GetParticleDefinition()->GetParticleName();
     G4double edep_step = aStep->GetTotalEnergyDeposit();
-
+    if (particle == "opticalphoton" && track->GetCurrentStepNumber() == 1) {
+        optical_per_detector[detector_Name]++;
+    }
     if (particle != "opticalphoton" && edep_step > 0.) { // Skip optical photons and zero-edep steps
         edep_per_detector[detector_Name] += edep_step;
 
@@ -81,6 +84,7 @@ void Detect_edep::SaveToRoot()
             // New: Fill the first time (in ns; adjust unit if needed)
             G4double rel_time = (first_time_per_detector[pair.first] - min_time) / ns;
             analysisManager->FillNtupleDColumn(1, 3, rel_time);
+            analysisManager->FillNtupleIColumn(1, 4, optical_per_detector[pair.first]);
             analysisManager->AddNtupleRow(1);
         }
     }

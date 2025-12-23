@@ -1,6 +1,6 @@
-/run/numberOfThreads 10
+/run/numberOfThreads 20
 
 /run/initialize
 
 /gun/particle gamma
-/control/loop EnergySetting.mac eKin 0. 1300 100.
+/control/loop EnergySetting.mac eKin 100. 1300 100.

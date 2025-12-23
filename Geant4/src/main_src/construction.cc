@@ -744,7 +744,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     std::string Scintillator_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_Crystal15.0mm"};
     std::string SiPM_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_SiPM1_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM2_15.00mm",
                                     "Hexagonal/Crystal_15_Crystal_15_SiPM3_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM4_15.00mm"};
-    std::string Tapflon_name_list[] = {"Hexagonal/Tape_15.00mm_0.05mm"};
+    std::string Tapflon_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_Tape_15.00mm_0.05mm"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -836,8 +836,8 @@ void MyDetectorConstruction::ConstructCalorimeter() {
                 G4double y = n1 * a1_y + n2 * a2_y;
                 G4double z = 0.0;  // Adjust if prisms are offset along z
 
-                G4ThreeVector translation(x, y, z+12.2/2*mm);  // Units: assume bare numbers match your radius units
-                G4double angle = 0.*deg;//90.0*deg;  // No rotation; adjust if needed to align with prism definition
+                G4ThreeVector translation(x, y, z+40.2/2*mm);  // Units: assume bare numbers match your radius units
+                G4double angle = 90.*deg;//90.0*deg;  // No rotation; adjust if needed to align with prism definition
                 G4String name = "calor_unit_" + std::to_string(count++);
 
                 // Call your function to place the unit
