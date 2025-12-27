@@ -1,0 +1,9 @@
+/run/numberOfThreads 20
+
+/run/initialize
+
+/gun/particle gamma
+
+/control/alias eKin 662.
+
+/control/loop EnergySetting.mac eKin 662 662 1

@@ -741,10 +741,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_Crystal15.0mm"};
-    std::string SiPM_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_SiPM1_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM2_15.00mm",
-                                    "Hexagonal/Crystal_15_Crystal_15_SiPM3_15.00mm", "Hexagonal/Crystal_15_Crystal_15_SiPM4_15.00mm"};
-    std::string Tapflon_name_list[] = {"Hexagonal/Crystal_15_Crystal_15_Tape_15.00mm_0.05mm"};
+    std::string Scintillator_name_list[] = {"Square/SquareCrystal_SquareCrystal_Crystal_4x4x10"};
+    std::string SiPM_name_list[] = {"Square/SquareCrystal_SquareCrystal_SurfaceCover_4x4"};
+    std::string Tapflon_name_list[] = {"Square/SquareCrystal_SquareCrystal_OpenTape_4x4x10"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);

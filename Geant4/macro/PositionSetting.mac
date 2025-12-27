@@ -4,5 +4,5 @@
 /gun/position x y z mm
 
 
-/run/beamOn 50000
+/run/beamOn 12500
 

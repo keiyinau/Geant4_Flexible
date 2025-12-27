@@ -1,0 +1,13 @@
+/run/numberOfThreads 20
+
+/run/initialize
+
+/gun/particle gamma
+
+/control/alias eKin 500.
+
+/control/alias z 0
+
+/control/alias x 0
+
+/control/loop PositionSetting.mac y -7.5 7.5 2.0
