@@ -6,4 +6,8 @@
 
 /control/alias eKin 662.
 
-/control/loop EnergySetting.mac eKin 662 662 1
+/MyDetector/setFileName Energy_{eKin}
+
+/gun/energy {eKin} keV
+
+/run/beamOn 100000

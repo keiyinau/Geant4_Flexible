@@ -5,7 +5,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = false;
+	isDetector_Shell = true;
 	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
@@ -297,10 +297,16 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_txt("RefractiveIndex_LSO_Ce.txt", LSO_refraction_Energy, LSO_refraction_Index);
     std::vector<G4double> LSO_absorption_Energy, LSO_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LSO_Ce.txt", LSO_absorption_Energy, LSO_absorption_Index);
-    mptLSO->AddConstProperty("RESOLUTIONSCALE", 0.);
+    std::vector<G4double> LSO_reflectance_Energy, LSO_reflectance_fractions;
+    readAndProcessData_Energy_txt("Reflectance_LSO_Ce.txt", LSO_reflectance_Energy, LSO_reflectance_fractions);
+	std::vector<G4double> LSO_transmission_Energy, LSO_rtransmission_Index;
+	readAndProcessData_txt("Transmittance_LSO_Ce.txt", LSO_transmission_Energy, LSO_rtransmission_Index);
+    mptLSO->AddConstProperty("RESOLUTIONSCALE", 2.);
     mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
     mptLSO->AddProperty("RINDEX", LSO_refraction_Energy, LSO_refraction_Index,LSO_refraction_Index.size());
     mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
+    mptLSO->AddProperty("REFLECTIVITY", LSO_reflectance_Energy, LSO_reflectance_fractions,LSO_reflectance_fractions.size());
+    mptLSO->AddProperty("TRANSMITTANCE", LSO_transmission_Energy, LSO_rtransmission_Index,LSO_rtransmission_Index.size());	
     mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
     mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
     matLSO->SetMaterialPropertiesTable(mptLSO);
@@ -320,9 +326,6 @@ void MyDetectorConstruction::DefineMaterials() {
 	readAndProcessData_txt("transmittance_CsI.txt", CsI_transmission_Energy, CsI_rtransmission_Index);
 	std::vector<G4double> CsI_absorption_Energy, CsI_absorption_Index;
 	readAndProcessData_Energy_cm_txt("Absorption_CsITi.txt", CsI_absorption_Energy, CsI_absorption_Index);
-
-
-
 	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
 	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions,CsI_emission_fractions.size());
 	mptCsI->AddProperty("RINDEX", CsI_refraction_Energy, CsI_refraction_Index,CsI_refraction_Index.size());	
@@ -362,7 +365,11 @@ void MyDetectorConstruction::DefineMaterials() {
 	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
 	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
     mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
-
+    // Unified model constants (sum <=1.0; increase diffuse for rough)
+    //mptTeflonSurface->AddConstProperty("SPECULARSPIKECONSTANT", 0.1);  // Mirror-like (low for rough)
+    //mptTeflonSurface->AddConstProperty("SPECULARLOBECONSTANT", 0.2);  // Near-specular
+    //mptTeflonSurface->AddConstProperty("DIFFUSELOBECONSTANT", 0.7);   // Diffuse scattering (high for rough)
+    //mptTeflonSurface->AddConstProperty("BACKSCATTERCONSTANT", 0.0);   // Usually low
     matTeflon->SetMaterialPropertiesTable(mptTeflon);
     // End Tapflon
 
@@ -386,6 +393,7 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
     surfCsI_Teflon->SetModel(unified);
     surfCsI_Teflon->SetFinish(polished);
+    surfCsI_Teflon->SetSigmaAlpha(0.0);  // Moderate roughness (in radians; adjust 0.1-0.5 for desired scattering)
     //End surface
 
     // CsI-SiPM (dielectric-dielectric interface)
@@ -393,6 +401,7 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_SiPM->SetType(dielectric_dielectric);
     surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
     surfCsI_SiPM->SetFinish(polished);
+    surfCsI_SiPM->SetSigmaAlpha(0.0);  // 0 for perfectly smooth; increase for rough
 	// End SiPM
 
     // CsI-AlFoil (reflective surface)
@@ -474,8 +483,8 @@ void MyDetectorConstruction::ConstructSDandField() {
 	sdManager->AddNewDetector(calorimeter);
     sdManager->AddNewDetector(detect_reference);
 	sdManager->AddNewDetector(detect_edep);
-	if(logicDetector_Shell != NULL)
-		logicDetector_Shell->SetSensitiveDetector(detect_reference);
+	//if(logicDetector_Shell != NULL)
+	//	logicDetector_Shell->SetSensitiveDetector(detect_reference);
 	if(logicCalorimeter!=NULL)
         if (!logicSiPM.empty()) {
             G4SDManager* sdManager = G4SDManager::GetSDMpointer();
@@ -484,7 +493,9 @@ void MyDetectorConstruction::ConstructSDandField() {
             for (auto& log : logicSiPM) {
                 log->SetSensitiveDetector(sd);
             }
-        }
+            if(logicDetector_Shell != NULL)
+                logicDetector_Shell->SetSensitiveDetector(sd);
+            }
 
         //if (!logicSiPM.empty()) {
         //    G4SDManager* sdManager = G4SDManager::GetSDMpointer();
@@ -510,7 +521,7 @@ void MyDetectorConstruction::ConstructSDandField() {
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
 	G4double shell_thickness = 1.*nm;//1.*nm;
-	G4double inner_radius =50.0*cm;// 25.*cm+80.*cm;
+	G4double inner_radius =80.0*cm;// 25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
 	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matWorld, "logicDetector_Shell");
