@@ -1,0 +1,19 @@
+/run/numberOfThreads 20
+/run/initialize
+
+# Enable command echo
+/control/verbose 0
+
+# Set the active region of Na-22
+/gps/particle gamma
+/gps/pos/type Volume
+/gps/pos/shape Cylinder
+/gps/pos/centre 0 0 0 mm
+/gps/pos/radius 4.765 mm
+/gps/pos/halfz 0.0001 mm
+/gps/ene/type Mono 
+/gps/ang/type iso
+/gps/ene/mono 0.5 MeV
+
+# Run commands
+/run/beamOn 1000000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806

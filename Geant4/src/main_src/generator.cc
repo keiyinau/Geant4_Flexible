@@ -19,11 +19,11 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	PS_or_PG = 0;
 
 	// Set the default parameters for the fParticleSource
-	pdParticleSource = fGeantino;								//options: fGamma, fPositron, fGeantino = fIon
+	pdParticleSource = fGamma;								//options: fGamma, fPositron, fGeantino = fIon
 	chargeParticleSource = 0.*eplus;
 	fParticleSource->SetParticleCharge(chargeParticleSource);
 	fParticleSource->SetParticleDefinition(pdParticleSource);
-
+	//fParticleSource->SetParticleEnergy(1.*MeV);
 	// Set the default parameters for the fParticleGun
 	pdParticleGun = fGamma;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);

@@ -24,27 +24,18 @@ void Detect_edep::Initialize(G4HCofThisEvent* hce)
 
 void Detect_edep::EndOfEvent(G4HCofThisEvent*)
 {
-    SaveToRoot();
+    //SaveToRoot();
     ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
 }
 
 G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 {
     G4Track* track = aStep->GetTrack();
-    G4String detector_Name = track->GetTouchable()->GetVolume()->GetName();
-    G4String particle = track->GetParticleDefinition()->GetParticleName();
-    G4double edep_step = aStep->GetTotalEnergyDeposit();
-
-    if (particle != "opticalphoton" && edep_step > 0.) { // Skip optical photons and zero-edep steps
-        edep_per_detector[detector_Name] += edep_step;
-
-        // New: Record the earliest global time for the first interaction (min time of depositing steps)
-        G4double time = aStep->GetPreStepPoint()->GetGlobalTime();
-        auto it = first_time_per_detector.find(detector_Name);
-        if (it == first_time_per_detector.end() || time < it->second) {
-            first_time_per_detector[detector_Name] = time;
-        }
-    }
+	track->SetTrackStatus(fStopAndKill);
+    G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+    G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+    analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
+    analysisManager->AddNtupleRow(1);
     // Optionally call ReadOut(aStep, track) for debugging
     return true;
 }
@@ -59,8 +50,8 @@ void Detect_edep::SaveToRoot()
 {
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
     G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-
-
+    analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
+    
     G4double min_time = DBL_MAX; // Use a large initial value
     for (const auto& pair : first_time_per_detector) {
         if (pair.second < min_time) {
@@ -74,7 +65,7 @@ void Detect_edep::SaveToRoot()
 
     for (const auto& pair : edep_per_detector) {
         if (pair.second >= 500. * eV) {
-            analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
+            
             analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
             analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
             // New: Fill the first time (in ns; adjust unit if needed)

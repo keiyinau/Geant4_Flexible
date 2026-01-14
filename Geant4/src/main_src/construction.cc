@@ -6,13 +6,13 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 	isDetector_Shell = false;
-	isSource=true;
+	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
-    isLiquid=true;
+    isLiquid=false;
     is3DCalorimeter=true;
 	// Set the material for each logical volume
-	matWorld = Air; //Vacuum;
+	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;
     matContainer=matAcrylic;
     matScintillator=matLSO;
@@ -482,9 +482,9 @@ void MyDetectorConstruction::ConstructSDandField() {
 	if(logicDetector_Shell != NULL)
 		logicDetector_Shell->SetSensitiveDetector(detect_reference);
 	if(logicCalorimeter!=NULL)
-        for(int i=0; i < logicSiPM.size(); i++) {
-            logicSiPM[i]->SetSensitiveDetector(calorimeter);
-        }
+        //for(int i=0; i < logicSiPM.size(); i++) {
+        //    logicSiPM[i]->SetSensitiveDetector(calorimeter);
+        //}
         for(int i=0; i < logicScintillators.size(); i++) {
             logicScintillators[i]->SetSensitiveDetector(detect_edep);
         }
@@ -748,7 +748,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         scintillator->SetScale(1.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
-        logicScintillators.push_back(logicScintillator_pre);
+        
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
@@ -766,6 +766,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);
+        logicScintillators.push_back(logicTapflon_pre);
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
     for (int i=0; i<Size_of_Scintillator_name_list; i++) {
