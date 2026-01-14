@@ -1,0 +1,16 @@
+/run/numberOfThreads 20
+/run/initialize
+# Enable command echo
+/control/verbose 0
+# Set up the optical photon source
+/gps/particle opticalphoton
+/gps/number 1
+/gps/pos/shape Circle
+/gps/pos/centre 0 0 0 mm
+/gps/pos/radius 1.07179677 mm
+/gps/pos/rot1 1 0 0
+/gps/pos/rot2 0 0 1
+/gps/ang/type iso
+/gps/ene/mono 2.952 eV
+#Run commands
+/run/beamOn 10000000

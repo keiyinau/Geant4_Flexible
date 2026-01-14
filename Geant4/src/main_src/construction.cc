@@ -5,7 +5,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = true;
+	isDetector_Shell = false;
 	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
@@ -14,8 +14,8 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
     matLiquid=matCsI;
-    matContainer=matTi;
-    matScintillator=matLSO;
+    matContainer=matAcrylic;
+    matScintillator=matWater;
     matSiPM=matSi;
     matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
@@ -272,6 +272,13 @@ void MyDetectorConstruction::DefineMaterials() {
     matWater = nist->FindOrBuildMaterial("G4_WATER");
     G4MaterialPropertiesTable* mptWater = new G4MaterialPropertiesTable();
     mptWater->AddProperty("RINDEX", "Water");
+    std::vector<G4double> Water_absorption_Energy, Water_absorption_Index;
+	readAndProcessData_Energy_cm_txt("Absorption_Water.txt", Water_absorption_Energy, Water_absorption_Index);
+    mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index,Water_absorption_Index.size());
+    mptWater->AddConstProperty("SCINTILLATIONYIELD", 2/eV);
+    mptWater->AddConstProperty("RESOLUTIONSCALE", 0.0);
+    mptWater->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1*ns);
+    mptWater->AddProperty("SCINTILLATIONCOMPONENT1", {2.9520045952380953*eV}, {1.},1);
     matWater->SetMaterialPropertiesTable(mptWater);
     // End water
 
@@ -351,6 +358,8 @@ void MyDetectorConstruction::DefineMaterials() {
 	matAcrylic = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
 	G4MaterialPropertiesTable* mptAcrylic = new G4MaterialPropertiesTable();
     mptAcrylic->AddProperty("RINDEX", "PMMA");
+    std::vector<G4double> BorosilicateGlass_absorption_Energy, BorosilicateGlass_absorption_Index;
+	readAndProcessData_Energy_cm_txt("Absorption_BorosilicateGlass.txt", BorosilicateGlass_absorption_Energy, BorosilicateGlass_absorption_Index);
 	matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
 	// End Acrylic
 
@@ -390,18 +399,18 @@ void MyDetectorConstruction::DefineMaterials() {
 
     // CsI-Teflon (reflective surface)
     surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
+    surfCsI_Teflon->SetType(dielectric_dielectric); // Teflon as reflective surface
     surfCsI_Teflon->SetModel(unified);
     surfCsI_Teflon->SetFinish(polished);
-    surfCsI_Teflon->SetSigmaAlpha(0.0);  // Moderate roughness (in radians; adjust 0.1-0.5 for desired scattering)
+    //surfCsI_Teflon->SetSigmaAlpha(0.0);  // Moderate roughness (in radians; adjust 0.1-0.5 for desired scattering)
     //End surface
 
     // CsI-SiPM (dielectric-dielectric interface)
     surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
     surfCsI_SiPM->SetType(dielectric_dielectric);
-    surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
+    surfCsI_SiPM->SetModel(unified); // Glisur for smooth dielectric interface
     surfCsI_SiPM->SetFinish(polished);
-    surfCsI_SiPM->SetSigmaAlpha(0.0);  // 0 for perfectly smooth; increase for rough
+    //surfCsI_SiPM->SetSigmaAlpha(0.0);  // 0 for perfectly smooth; increase for rough
 	// End SiPM
 
     // CsI-AlFoil (reflective surface)
@@ -752,9 +761,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
 
-    std::string Scintillator_name_list[] = {"Square/SquareCrystal_SquareCrystal_Crystal_4x4x10"};
-    std::string SiPM_name_list[] = {"Square/SquareCrystal_SquareCrystal_SurfaceCover_4x4"};
-    std::string Tapflon_name_list[] = {"Square/SquareCrystal_SquareCrystal_OpenTape_4x4x10"};
+    std::string Scintillator_name_list[] = {"LED_Setup/Full_Setup_Full_Setup_SimSetupLiquid"};
+    std::string SiPM_name_list[] = {"LED_Setup/Full_Setup_Full_Setup_SiPM1"};
+    std::string Tapflon_name_list[] = {"LED_Setup/Full_Setup_Full_Setup_SimBottle"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -802,59 +811,16 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 void MyDetectorConstruction::ConstructCalorimeter() {
     // Place a single unit at origin
     if(is3DCalorimeter){
-        // Generate cubic
-        //int range=0;
-        //G4double dist=0*mm;
-        //int counter=0;
-        //for(int j=0;j<=range;j++){
-        //    for(int i=-range;i<=range;i++){
-        //        for(int k=-range;k<=range;k++){
-        //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
-        //            G4double angle = 0 * deg;
-        //            if(i==0&&j==0&&k==0){
-        //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //                counter+=1;
-        //            }
-        //            else{
-        //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //            }       
-        //
-        //        }
-        //    }
-        //}
-        // Generate hcc
-        G4double apothem = 15.2/2*std::sqrt(3.0)/2.0*mm;  // Apothem (distance from center to flat side)
-        G4double side_length = 2.0 * apothem;  // Side length
-        G4double a1_x = side_length;  // Primitive vector 1 x-component
-        G4double a1_y = 0.0;  // Primitive vector 1 y-component
-        G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
-        G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
+        G4double x = 0.0;
+        G4double y = 0.0-21.*mm;
+        G4double z = 0.0;  // Adjust if prisms are offset along z
 
-        int min_N = 0;  // Start from ring 1 for placing source
-        int max_N = 0;  // End at ring 6
-        int count = 0;  // For unique naming
+        G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+        G4double angle = 90.*deg;//90.0*deg;  // No rotation; adjust if needed to align with prism definition
+        G4String name = "calor_unit_" + std::to_string(0);
 
-        for (int n1 = -max_N; n1 <= max_N; ++n1) {
-            for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
-            // Calculate the "ring" distance from origin using the max norm
-            int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
-            if (ring >= min_N && ring <= max_N) {
-                // Calculate position using primitive vectors
-                G4double x = n1 * a1_x + n2 * a2_x;
-                G4double y = n1 * a1_y + n2 * a2_y;
-                G4double z = 0.0;  // Adjust if prisms are offset along z
-
-                G4ThreeVector translation(x, y, z+40.2/2*mm);  // Units: assume bare numbers match your radius units
-                G4double angle = 90.*deg;//90.0*deg;  // No rotation; adjust if needed to align with prism definition
-                G4String name = "calor_unit_" + std::to_string(count++);
-
-                // Call your function to place the unit
-                ConstructCalorimeter_unit_3d(translation, angle, name);
-            }
-            }
-        }
+        // Call your function to place the unit
+        ConstructCalorimeter_unit_3d(translation, angle, name);
     }
     else{
         ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");

@@ -52,6 +52,7 @@ int main(int argc, char** argv)	// argc = argument count, argv = argument vector
 
 		G4TrajectoryDrawByParticleID* model = new G4TrajectoryDrawByParticleID; 
 		model->Set("nu_e", "yellow");
+		model->Set("opticalphoton", "cyan");
 		visManager->RegisterModel(model);
 
 		G4UImanager* UImanager = G4UImanager::GetUIpointer();

@@ -5,12 +5,12 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=false;
+	isDCR=true;
 	isXT=true;
 	isAP=true;
 	signalLength=500; //ns
 	SampleTime=1; //ns
-	DarkCountRate=1.7*1000*1000; //Hz
+	DarkCountRate=1.9*1000*1000; //Hz
 	RiseTime=10; //ns
 	FallTimeFast=55; //ns
 	RecoveryTime=55; //ns
@@ -36,7 +36,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	}
 	datafile.close();
 	// Electronic parameters
-	gatewidth=40; //ns
+	gatewidth=200; //ns
 	threshold=0.5; //mV
 	gain=-2.5;
 

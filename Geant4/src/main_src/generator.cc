@@ -16,20 +16,28 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	ex_energy = 0.*keV;		// Excitation energy
 
 	// Select particle generator. Options: 0 = fParticleSource, 1 = fParticleGun
-	PS_or_PG = 1;
+	PS_or_PG = 0;
 
 	// Set the default parameters for the fParticleSource
-	pdParticleSource = fGeantino;								//options: fGamma, fPositron, fGeantino = fIon
+	pdParticleSource = fOpticalPhoton;								//options: fGamma, fPositron, fGeantino = fIon
 	chargeParticleSource = 0.*eplus;
 	fParticleSource->SetParticleCharge(chargeParticleSource);
+	G4double phi = 2. * M_PI * G4UniformRand();
+	G4double costheta = 2. * G4UniformRand() - 1.0;
+	G4double sintheta = std::sqrt(1. - costheta*costheta);
+	G4double px = sintheta * std::cos(phi);
+	G4double py = sintheta * std::sin(phi);
+	G4double pz = costheta;
+	G4ThreeVector randomPolarization(px, py, pz);
+	fParticleSource->SetParticlePolarization(randomPolarization);
 	fParticleSource->SetParticleDefinition(pdParticleSource);
 
 	// Set the default parameters for the fParticleGun
 	pdParticleGun = fGamma;									//options: fGamma, fPositron, fGeantino = fIon, fo_Ps, fp_Ps
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
-	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
-	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 100*keV; 
+	posParticleGun = G4ThreeVector(0.*cm, 0.5*cm, 0.*cm);
+	momDirectionParticleGun = G4ThreeVector(0., 1., 0.);
+	kinParticleGun = 4.768622807692308*eV; 
 	chargeParticleGun = 0.*eplus;
 	fParticleGun->SetParticlePosition(posParticleGun);
 	fParticleGun->SetParticleMomentumDirection(momDirectionParticleGun);
