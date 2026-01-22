@@ -19,10 +19,9 @@ public:
     virtual void BeginOfEventAction(const G4Event*);
     virtual void EndOfEventAction(const G4Event*);
 
-    // New methods for truth collection
     void AddPsTruth(G4int trackID, G4int parentID, G4String type, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol);
     void AddGammaTruth(G4int trackID, G4int parentID, G4String type, G4double energy, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol);
-    void AddPositronTruth(G4int trackID, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol, G4String creatorProcess);
+    void AddPositronTruth(G4int trackID, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol, G4String creatorProcess, G4double time);
     void SetGammaFirstDetector(G4int trackID, G4String detName);
     G4bool HasPs(G4int id) { return psPositions.count(id) > 0; }
     struct GammaEdep {
@@ -33,15 +32,18 @@ public:
     void AddGammaEdep(G4int trackID, G4double deltaE, G4String detName, G4double time);
     std::map<G4int, std::vector<GammaEdep>> gammaEdeps; // trackID -> list of energy depositions
     void SetPrimaryDecayTime(G4double t);
-
     G4double GetPrimaryDecayTime() const { return primaryDecayTime; }
+
+    void AddPsDestroyTime(G4int trackID, G4double time);
 private:
 	G4double fEdep;
     G4double primaryDecayTime;
+    G4double positronTime;
 	std::map<G4int, G4ThreeVector> psPositions, psMomenta, psPols;
     std::map<G4int, G4String> psTypes;
     std::map<G4int, G4int> psParents;
     std::map<G4int, G4double> pscreationtime, pslifetimes;
+    std::map<G4int, G4double> psDestroyTimes;
 
     std::map<G4int, G4ThreeVector> gammaPositions, gammaMomenta, gammaPols;
     std::map<G4int, G4double> gammaEnergies;
@@ -51,6 +53,7 @@ private:
     
     std::map<G4int, G4ThreeVector> positronPositions, positronMomenta, positronPols;
     std::map<G4int, G4String> positronCreators;
-    
+    std::map<G4int, G4double> positronTimes;
+
 };
 #endif

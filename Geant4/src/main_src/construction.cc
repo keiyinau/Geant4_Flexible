@@ -12,7 +12,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
     isLiquid=false;
     is3DCalorimeter=false;
 	// Set the material for each logical volume
-	matWorld = Air; //Vacuum;
+	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;
     matContainer=matAcrylic;
     matScintillator=matLSO;
@@ -480,7 +480,7 @@ void MyDetectorConstruction::ConstructSDandField() {
     sdManager->AddNewDetector(detect_reference);
 	sdManager->AddNewDetector(detect_edep);
 	if(logicDetector_Shell != NULL)
-		logicDetector_Shell->SetSensitiveDetector(detect_reference);
+		logicDetector_Shell->SetSensitiveDetector(detect_edep);
 	if(logicCalorimeter!=NULL)
         for(int i=0; i < logicSiPM.size(); i++) {
             logicSiPM[i]->SetSensitiveDetector(calorimeter);
@@ -499,11 +499,11 @@ void MyDetectorConstruction::ConstructSDandField() {
 }
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
-	G4double shell_thickness = 1.*nm;//1.*nm;
+	G4double shell_thickness = 2.*cm;//1.*nm;
 	G4double inner_radius =5.0*cm;// 25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
-	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matWorld, "logicDetector_Shell");
+	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matLiquid, "logicDetector_Shell");
 	physDetector_Shell = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicDetector_Shell, "Detector_Shell", logicWorld, false, 0, true);
 }
 // End Ideal Detector
@@ -860,7 +860,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
 //
         //    // Unique name
         //    G4String name = "calor_unit_" + std::to_string(counter++);
-//
+// 
         //    // Call the unit constructor
         //    ConstructCalorimeter_unit_3d(translation, 0. * deg, name);
         //}

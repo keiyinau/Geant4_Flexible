@@ -99,6 +99,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("PolX");
     man->CreateNtupleDColumn("PolY");
     man->CreateNtupleDColumn("PolZ");
+    man->CreateNtupleDColumn("Lifetime_ns");
     man->FinishNtuple(4);
 
     man->CreateNtuple("TruthGamma", "Gamma Truth Data");
@@ -132,6 +133,7 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("PolY");
     man->CreateNtupleDColumn("PolZ");
     man->CreateNtupleSColumn("CreatorProcess");
+    man->CreateNtupleDColumn("Time_ns");
     man->FinishNtuple(6);
 
     man->CreateNtuple("GammaEdeps", "Gamma Energy Deposits");

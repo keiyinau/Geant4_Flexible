@@ -67,7 +67,8 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         G4String creatorName = (creatorProcess != nullptr)
                             ? creatorProcess->GetProcessName()
                             : "primary";  
-        fEventAction->AddPositronTruth(trackID, pos, mom, pol, creatorName);
+        G4double time = preStepPoint->GetGlobalTime();
+        fEventAction->AddPositronTruth(trackID, pos, mom, pol, creatorName, time);
 
     }
 
@@ -79,7 +80,10 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         G4String type = particleName;
         fEventAction->AddPsTruth(trackID, parentID, type, pos, mom, pol);
     }
-
+    if (particleName == "o-Ps" && track->GetTrackStatus() == fStopAndKill) { // && creator_process_name == "Decay"
+        G4double destroyTime = postStepPoint->GetGlobalTime();  // Or preStep
+        fEventAction->AddPsDestroyTime(trackID, destroyTime);
+    }
     // Capture gamma at creation (first step)
     if (stepID == 1 && particleName == "gamma") {
         G4String creator = "";
@@ -113,7 +117,7 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         }
     }
     // Capture energy deposition for gamma in detector_edep
-    G4double edep = step->GetTotalEnergyDeposit();
+    G4double edep = preStepPoint->GetKineticEnergy() - postStepPoint->GetKineticEnergy();
     G4String volName = track->GetTouchableHandle()->GetVolume()->GetName();  // Current volume
     if (particleName == "gamma" && edep > 0 && volName.find("calor_unit_")) {  // Adjust name if pattern (e.g., volName.contains("detect_edep"))
         G4double time = preStepPoint->GetGlobalTime();  // Instantaneous time at step start
