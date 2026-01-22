@@ -12,13 +12,18 @@ void MyEventAction::BeginOfEventAction(const G4Event* aEvent)
 {
 
 	G4cout << ">> Begin of Event:" << aEvent->GetEventID() << G4endl;
-
-    // New: Clear truth maps
+    positronCreators.clear();
     psPositions.clear(); psMomenta.clear(); psPols.clear(); psTypes.clear(); psParents.clear();
     gammaPositions.clear(); gammaMomenta.clear(); gammaPols.clear(); gammaEnergies.clear(); gammaTypes.clear(); gammaParents.clear(); gammaFirstDets.clear();
     positronPositions.clear(); positronMomenta.clear(); positronPols.clear();
-}
+    primaryDecayTime = 0.0;
 
+}
+void MyEventAction::SetPrimaryDecayTime(G4double t) {
+    if (primaryDecayTime == 0.0) {  // Set only once (primary)
+        primaryDecayTime = t;
+    }
+}
 void MyEventAction::EndOfEventAction(const G4Event* aEvent)
 {
 G4int evt = aEvent->GetEventID();
@@ -76,7 +81,19 @@ G4int evt = aEvent->GetEventID();
         man->FillNtupleDColumn(6, 8, positronPols[trk].x());
         man->FillNtupleDColumn(6, 9, positronPols[trk].y());
         man->FillNtupleDColumn(6, 10, positronPols[trk].z());
+        man->FillNtupleSColumn(6, 11, positronCreators[trk]);
         man->AddNtupleRow(6);
+    }
+    for (const auto& entry : gammaEdeps) {
+        G4int trk = entry.first;
+        for (const auto& edep : entry.second) {
+            man->FillNtupleIColumn(7, 0, evt);
+            man->FillNtupleIColumn(7, 1, trk);
+            man->FillNtupleDColumn(7, 2, edep.deltaE / MeV);
+            man->FillNtupleSColumn(7, 3, edep.detName);
+            man->FillNtupleDColumn(7, 4, (edep.time - primaryDecayTime) / ns);
+            man->AddNtupleRow(7);
+        }
     }
 }
 
@@ -97,14 +114,21 @@ void MyEventAction::AddGammaTruth(G4int trackID, G4int parentID, G4String type, 
     gammaParents[trackID] = parentID;
 }
 
-void MyEventAction::AddPositronTruth(G4int trackID, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol) {
+void MyEventAction::AddPositronTruth(G4int trackID, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol,G4String creatorProcess) {
     positronPositions[trackID] = pos;
     positronMomenta[trackID] = mom;
     positronPols[trackID] = pol;
+    positronCreators[trackID] = creatorProcess;
 }
 
 void MyEventAction::SetGammaFirstDetector(G4int trackID, G4String detName) {
     if (gammaFirstDets.count(trackID) == 0) { // Only set first
         gammaFirstDets[trackID] = detName;
+    }
+}
+void MyEventAction::AddGammaEdep(G4int trackID, G4double deltaE, G4String detName, G4double time) {
+    if (gammaPositions.count(trackID) > 0) {  // Only for TruthGammas
+        GammaEdep edepInfo = {deltaE, detName, time};
+        gammaEdeps[trackID].push_back(edepInfo);
     }
 }

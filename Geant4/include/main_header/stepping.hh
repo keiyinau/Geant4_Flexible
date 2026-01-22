@@ -19,9 +19,10 @@ public:
 	virtual void UserSteppingAction(const G4Step*);
 	void SaveToDataFile(const G4Step* step);
 	void ReadOut(const G4Step* step);
-
+	void SetUseVcPolarization(G4bool val) { useVcPolarization = val; }
 private:
 	MyEventAction* fEventAction;
+	G4bool useVcPolarization = false;  // Default: off (use approximated)
 	G4int current_track = 0;
 };
 

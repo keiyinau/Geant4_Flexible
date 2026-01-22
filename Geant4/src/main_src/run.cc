@@ -131,6 +131,14 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleDColumn("PolX");
     man->CreateNtupleDColumn("PolY");
     man->CreateNtupleDColumn("PolZ");
+    man->CreateNtupleSColumn("CreatorProcess");
     man->FinishNtuple(6);
 
+    man->CreateNtuple("GammaEdeps", "Gamma Energy Deposits");
+    man->CreateNtupleIColumn("EventID");
+    man->CreateNtupleIColumn("TrackID");
+    man->CreateNtupleDColumn("DeltaE_MeV");
+    man->CreateNtupleSColumn("DetectorName");
+    man->CreateNtupleDColumn("Time_ns");  // Instantaneous global time
+    man->FinishNtuple(7);
 }

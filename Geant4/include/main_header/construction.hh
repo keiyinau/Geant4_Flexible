@@ -35,6 +35,7 @@
 #include "detector_calorimeter.hh"
 #include "detector_edepcounter.hh"
 
+
 class MyDetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
@@ -80,6 +81,8 @@ public:
 	static G4String file_name;
 
 private:
+
+
 	G4GenericMessenger* fMessenger;
 	// World
 	G4Material *Air, *Vacuum, *matWorld;

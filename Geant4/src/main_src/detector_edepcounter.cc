@@ -1,5 +1,5 @@
 #include "detector_edepcounter.hh"
-
+#include "event.hh"
 Detect_edep::Detect_edep(G4String name) : G4VSensitiveDetector(name), fHitsCollectionID(-1)
 {
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data

@@ -27,19 +27,34 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
     G4String detectorName = track->GetTouchable()->GetVolume()->GetName();
 
 
+    
 
-    // Set longitudinal polarization for positrons from Na-22 decay, this is a brute force and an assumption!!!!!!!
+    // Set longitudinal polarization for positrons from Na-22 decay, this is a brute force and an assumption!!!!!!! 
     ////////////////////////////////////
     G4String creator_process_name = "NULL";
     if (track->GetCreatorProcess()) {
         creator_process_name = track->GetCreatorProcess()->GetProcessName();
     }
 
+    if (stepID == 1 && creator_process_name == "RadioactiveDecay") {
+        if (particleName == "nu_e" || particleName == "e+") { 
+            G4double decayTime = preStepPoint->GetGlobalTime();
+            fEventAction->SetPrimaryDecayTime(decayTime);
+        }
+    }
 
-
-    if (stepID == 1 && particleName == "e+" && creator_process_name == "RadioactiveDecay") {
-        G4ThreeVector momDir = track->GetMomentumDirection();
-        G4ThreeVector pol = momDir.unit();  // Longitudinal pol +1
+    if (stepID == 1 && particleName == "e+" && stepID == 1) {
+        G4ThreeVector mom = preStepPoint->GetMomentumDirection();  // Unit vector
+        G4double vc = preStepPoint->GetBeta();  // v/c = beta
+        G4ThreeVector pol;
+        if (useVcPolarization) {
+            // Stochastic: Polarization magnitude |P| = vc (average), direction -mom (for e+)
+            // For simplicity, set deterministic P = -vc * mom (longitudinal)
+            // For full MC: Sample from distribution, but approx as deterministic for now
+            pol = -vc * mom;  // Negative for positrons
+        } else {
+            pol = mom;  // Approximated full longitudinal (as current)
+        }
         track->SetPolarization(pol);
     }
     /////////////////////////
@@ -48,7 +63,12 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         G4ThreeVector pos = postStepPoint->GetPosition();
         G4ThreeVector mom = postStepPoint->GetMomentum();
         G4ThreeVector pol = track->GetPolarization();
-        fEventAction->AddPositronTruth(trackID, pos, mom, pol);
+        const G4VProcess* creatorProcess = track->GetCreatorProcess();
+        G4String creatorName = (creatorProcess != nullptr)
+                            ? creatorProcess->GetProcessName()
+                            : "primary";  
+        fEventAction->AddPositronTruth(trackID, pos, mom, pol, creatorName);
+
     }
 
     // Capture Ps at creation (first step; position/mom/pol at creation)
@@ -91,6 +111,13 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         } else if (detectorName == "Detector_Shell" || detectorName == "preDetector" || detectorName == "EdepCounter") {  // Fallback for other detectors
             fEventAction->SetGammaFirstDetector(trackID, detectorName);
         }
+    }
+    // Capture energy deposition for gamma in detector_edep
+    G4double edep = step->GetTotalEnergyDeposit();
+    G4String volName = track->GetTouchableHandle()->GetVolume()->GetName();  // Current volume
+    if (particleName == "gamma" && edep > 0 && volName.find("calor_unit_")) {  // Adjust name if pattern (e.g., volName.contains("detect_edep"))
+        G4double time = preStepPoint->GetGlobalTime();  // Instantaneous time at step start
+        fEventAction->AddGammaEdep(trackID, edep, volName, time);
     }
 }
 
