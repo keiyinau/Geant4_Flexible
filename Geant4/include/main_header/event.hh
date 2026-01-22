@@ -41,6 +41,7 @@ private:
 	std::map<G4int, G4ThreeVector> psPositions, psMomenta, psPols;
     std::map<G4int, G4String> psTypes;
     std::map<G4int, G4int> psParents;
+    std::map<G4int, G4double> pscreationtime, pslifetimes;
 
     std::map<G4int, G4ThreeVector> gammaPositions, gammaMomenta, gammaPols;
     std::map<G4int, G4double> gammaEnergies;

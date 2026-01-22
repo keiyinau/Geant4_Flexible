@@ -5,12 +5,12 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = false;
-	isSource=true;
+	isDetector_Shell = true;
+	isSource=false;
 	isTPC = false;
-	isCalorimeter = true;
-    isLiquid=true;
-    is3DCalorimeter=true;
+	isCalorimeter = false;
+    isLiquid=false;
+    is3DCalorimeter=false;
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
     matLiquid=matWater;
@@ -500,7 +500,7 @@ void MyDetectorConstruction::ConstructSDandField() {
 // Ideal Detector
 void MyDetectorConstruction::ConstructShell_Detector() {
 	G4double shell_thickness = 1.*nm;//1.*nm;
-	G4double inner_radius =50.0*cm;// 25.*cm+80.*cm;
+	G4double inner_radius =5.0*cm;// 25.*cm+80.*cm;
 	G4double outer_radius = inner_radius + shell_thickness;
 	G4Sphere* solidDetector_Shell = new G4Sphere("solidDetector_Shell", inner_radius, outer_radius, 0.*deg, 360.*deg, 0.*deg, 360.*deg);
 	logicDetector_Shell = new G4LogicalVolume(solidDetector_Shell, matWorld, "logicDetector_Shell");

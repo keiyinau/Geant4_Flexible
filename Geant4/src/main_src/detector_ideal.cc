@@ -93,22 +93,22 @@ void Detect_reference::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 	for(const auto&data:CurrentData){
 		// Fill the ntuple with the data
-		analysisManager->FillNtupleIColumn(1, 0, data.eventID); // eventID
-		analysisManager->FillNtupleIColumn(1, 1, data.trackID); // trackID
-		analysisManager->FillNtupleIColumn(1, 2, data.stepID); // stepID
-		analysisManager->FillNtupleIColumn(1, 3, data.parentID); // parentID
-		analysisManager->FillNtupleSColumn(1, 4, data.detectorName); // detectorName
-		analysisManager->FillNtupleSColumn(1, 5, data.particleName); // particleName
-		analysisManager->FillNtupleSColumn(1, 6, data.creatorProcessName); // creatorProcessName
-		analysisManager->FillNtupleSColumn(1, 7, data.ProcessName); // ProcessName
-		analysisManager->FillNtupleDColumn(1, 8, data.kineticEnergy/MeV); // kineticEnergy
-		analysisManager->FillNtupleDColumn(1, 9, data.x_distance/mm); // x_distance
-		analysisManager->FillNtupleDColumn(1, 10, data.y_distance/mm); // y_distance
-		analysisManager->FillNtupleDColumn(1, 11, data.z_distance/mm); // z_distance
-		analysisManager->FillNtupleDColumn(1, 12, data.x_momentum/MeV); // x_momentum
-		analysisManager->FillNtupleDColumn(1, 13, data.y_momentum/MeV); // y_momentum
-		analysisManager->FillNtupleDColumn(1, 14, data.z_momentum/MeV); // z_momentum
-		analysisManager->AddNtupleRow(1);
+		analysisManager->FillNtupleIColumn(2, 0, data.eventID); // eventID
+		analysisManager->FillNtupleIColumn(2, 1, data.trackID); // trackID
+		analysisManager->FillNtupleIColumn(2, 2, data.stepID); // stepID
+		analysisManager->FillNtupleIColumn(2, 3, data.parentID); // parentID
+		analysisManager->FillNtupleSColumn(2, 4, data.detectorName); // detectorName
+		analysisManager->FillNtupleSColumn(2, 5, data.particleName); // particleName
+		analysisManager->FillNtupleSColumn(2, 6, data.creatorProcessName); // creatorProcessName
+		analysisManager->FillNtupleSColumn(2, 7, data.ProcessName); // ProcessName
+		analysisManager->FillNtupleDColumn(2, 8, data.kineticEnergy/MeV); // kineticEnergy
+		analysisManager->FillNtupleDColumn(2, 9, data.x_distance/mm); // x_distance
+		analysisManager->FillNtupleDColumn(2, 10, data.y_distance/mm); // y_distance
+		analysisManager->FillNtupleDColumn(2, 11, data.z_distance/mm); // z_distance
+		analysisManager->FillNtupleDColumn(2, 12, data.x_momentum/MeV); // x_momentum
+		analysisManager->FillNtupleDColumn(2, 13, data.y_momentum/MeV); // y_momentum
+		analysisManager->FillNtupleDColumn(2, 14, data.z_momentum/MeV); // z_momentum
+		analysisManager->AddNtupleRow(2);
 	}
 }
 

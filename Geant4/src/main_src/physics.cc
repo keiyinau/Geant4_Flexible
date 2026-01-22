@@ -100,4 +100,3 @@ void MyPhysicsList::SetCuts()
 	
 	//SetCutsWithDefault();		// default cut value  (1.0mm)
 }
-
