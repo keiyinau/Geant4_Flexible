@@ -834,6 +834,38 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             }
             }
         }
+
+        // Generate custom coordinates
+        //std::ifstream coordFile("coordinates.txt");
+        //if (!coordFile.is_open()) {
+        //    G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
+        //    return;  // Or fall back to old lattice code if preferred
+        //}
+//
+        //std::string line;
+        //G4int counter = 0;
+        //while (std::getline(coordFile, line)) {
+        //    // Skip empty lines or comments
+        //    if (line.empty() || line[0] == '#') continue;
+//
+        //    std::istringstream iss(line);
+        //    G4double x, y, z;
+        //    if (!(iss >> x >> y >> z)) {
+        //        G4cout << "Warning: Skipping invalid line in coordinates.txt: " << line << G4endl;
+        //        continue;
+        //    }
+//
+        //    // Position in mm (adjust units if your file uses different, e.g., *cm)
+        //    G4ThreeVector translation(x * mm, y * mm, z * mm);
+//
+        //    // Unique name
+        //    G4String name = "calor_unit_" + std::to_string(counter++);
+//
+        //    // Call the unit constructor
+        //    ConstructCalorimeter_unit_3d(translation, 0. * deg, name);
+        //}
+//
+        //coordFile.close();
     }
     else{
         ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");

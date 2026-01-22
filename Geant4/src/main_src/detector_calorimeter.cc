@@ -1,5 +1,5 @@
 #include "detector_calorimeter.hh"
-
+#include "event.hh"
 Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsCollectionID(-1)
 {
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
@@ -94,8 +94,11 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 
     std::vector<double> shiftedTimes;
     shiftedTimes.reserve(photonTimes.size());
+	// Get primary decay time from event action
+    const MyEventAction* eventAction = static_cast<const MyEventAction*>(G4RunManager::GetRunManager()->GetUserEventAction());
+    G4double primaryTime = eventAction->GetPrimaryDecayTime();
     for (double t : photonTimes) {
-        double t_rel = t- tDecay_ns;   //#############!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! now all >= 0, typically 0–300 ns
+        double t_rel = t- primaryTime;   //#############!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! now all >= 0, typically 0–300 ns
 		//std::cout<<"Photon hit at: "<<t_rel/ns<<" ns"<<std::endl;
         shiftedTimes.push_back(t_rel);
     }
@@ -104,6 +107,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
     // Add only real optical photons (from CsI)
     mySensor.addPhotons(shiftedTimes, photonWavelengths);
     mySensor.runEvent();
+
 
     const auto& debug = mySensor.debug();
     const auto& signal = mySensor.signal();

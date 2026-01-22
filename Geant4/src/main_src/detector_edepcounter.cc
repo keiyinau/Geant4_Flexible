@@ -59,7 +59,8 @@ void Detect_edep::SaveToRoot()
 {
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
     G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-
+    const MyEventAction* eventAction = static_cast<const MyEventAction*>(G4RunManager::GetRunManager()->GetUserEventAction());
+    G4double primaryTime = eventAction->GetPrimaryDecayTime();
 
     G4double min_time = DBL_MAX; // Use a large initial value
     for (const auto& pair : first_time_per_detector) {
@@ -77,8 +78,9 @@ void Detect_edep::SaveToRoot()
             analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
             analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
             analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
-            // New: Fill the first time (in ns; adjust unit if needed)
-            G4double rel_time = (first_time_per_detector[pair.first] - min_time) / ns;
+            G4double firstTime = first_time_per_detector.count(pair.first) > 0 
+                               ? first_time_per_detector[pair.first] : primaryTime;
+            G4double rel_time = (firstTime - primaryTime) / ns;
             analysisManager->FillNtupleDColumn(1, 3, rel_time);
             analysisManager->AddNtupleRow(1);
         }
