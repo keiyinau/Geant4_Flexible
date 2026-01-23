@@ -15,7 +15,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;
     matContainer=matAcrylic;
-    matScintillator=matLSO;
+    matScintillator=matLYSO;
     matSiPM=matSi;
     matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
@@ -312,6 +312,41 @@ void MyDetectorConstruction::DefineMaterials() {
     //matLSO->SetMaterialPropertiesTable(mptLSO);
     // End LSO
 
+    // Define elements (use NIST for common ones)
+    G4Element* elLu = new G4Element("Lutetium", "Lu", 71., 174.967 * g/mole);
+    G4Element* elY  = new G4Element("Yttrium", "Y", 39., 88.906 * g/mole);
+    G4Element* elSi = nist->FindOrBuildElement("Si");
+    G4Element* elO  = nist->FindOrBuildElement("O");
+
+    // Optionally include Ce for doping (trace amount; adjust fraction if needed)
+    G4Element* elCe = new G4Element("Cerium", "Ce", 58., 140.116 * g/mole);
+
+    // Define the material with density ~7.1 g/cm³ (common value for LYSO(Ce))
+    matLYSO = new G4Material("LYSO", 7.1 * g/cm3, 4);  // 4 components (or 5 if including Ce)
+
+    // Add elements by mass fraction (calculated from atomic ratios)
+    matLYSO->AddElement(elLu, 0.7146);  // ~71.46%
+    matLYSO->AddElement(elY, 0.0403);   // ~4.03%
+    matLYSO->AddElement(elSi, 0.0637);  // ~6.37%
+    matLYSO->AddElement(elO, 0.1814);   // ~18.14%
+    // If including Ce doping (e.g., 0.2 mol% substitution, recalculate fractions slightly)
+    //matLYSO->AddElement(elCe, 0.002);  // Some small fraction
+    //// To enable scintillation (Ce doping effect), set material properties
+    //G4MaterialPropertiesTable* mpt = new G4MaterialPropertiesTable();
+    //// Scintillation yield (photons/MeV; typical value for LYSO(Ce))
+    //mpt->AddConstProperty("SCINTILLATIONYIELD", 25000. / MeV);  // ~25-33 photons/keV
+    //// Resolution scale (for energy resolution fluctuations)
+    //mpt->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    //// Decay time constant (fast component)
+    //mpt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
+    //G4double rIndexEnergy[] = {1.0*eV, 3.5*eV};
+    //G4double rIndex[] = {1.81, 1.81};  // Typical value for LYSO
+    //mpt->AddProperty("RINDEX", rIndexEnergy, rIndex, 2);
+    //// Absorption length (example)
+    //G4double absEnergy[] = {1.0*eV, 3.5*eV};
+    //G4double absLength[] = {100.*cm, 100.*cm};  // Adjust based on purity
+    //mpt->AddProperty("ABSLENGTH", absEnergy, absLength, 2);
+    //LYSO->SetMaterialPropertiesTable(mpt);
 
 
 	// CsI
@@ -727,14 +762,13 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
                                    physAcry[0], physBackFoil, surfCsI_AlFoil);
     }
 }
-void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name){
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name, G4double self_rotate){
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
-    rotation->rotateZ(30.0*deg); //Remove this line if no self rotation
-    std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism12.2mm"};
-    std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_12.2mm", "Hexagonal/UntitledSiPM2_12.2mm",
-                                    "Hexagonal/UntitledSiPM3_12.2mm", "Hexagonal/UntitledSiPM4_12.2mm"};
-    std::string Tapflon_name_list[] = {"Hexagonal/UntitledTape12.2mm"};
+    rotation->rotateZ(self_rotate); //Remove this line if no self rotation
+    std::string Scintillator_name_list[] = {"Square/SquareCrystals_SquareCrystal_Crystal_4x4x20"};
+    std::string SiPM_name_list[] = {"Square/SquareCrystals_SquareCrystal_SiPM_4x4x20"};
+    std::string Tapflon_name_list[] = {"Square/SquareCrystals_SquareCrystal_OpenTape_4x4x20"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -758,7 +792,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM.push_back(logicCalorimeter);
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
+        //physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
@@ -781,60 +815,6 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 void MyDetectorConstruction::ConstructCalorimeter() {
     // Place a single unit at origin
     if(is3DCalorimeter){
-        // Generate cubic
-        //int range=0;
-        //G4double dist=0*mm;
-        //int counter=0;
-        //for(int j=0;j<=range;j++){
-        //    for(int i=-range;i<=range;i++){
-        //        for(int k=-range;k<=range;k++){
-        //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
-        //            G4double angle = 0 * deg;
-        //            if(i==0&&j==0&&k==0){
-        //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //                counter+=1;
-        //            }
-        //            else{
-        //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //            }       
-        //
-        //        }
-        //    }
-        //}
-        // Generate hcc
-        //G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
-        //G4double side_length = 2.0 * apothem;  // Side length
-        //G4double a1_x = side_length;  // Primitive vector 1 x-component
-        //G4double a1_y = 0.0;  // Primitive vector 1 y-component
-        //G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
-        //G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
-
-        //int min_N = 13;  // Start from ring 1 for placing source
-        //int max_N = 13+(3-1);  // End at ring 6
-        //int count = 0;  // For unique naming
-
-        //for (int n1 = -max_N; n1 <= max_N; ++n1) {
-        //    for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
-        //    // Calculate the "ring" distance from origin using the max norm
-        //    int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
-        //    if (ring >= min_N && ring <= max_N) {
-        //        // Calculate position using primitive vectors
-        //        G4double x = n1 * a1_x + n2 * a2_x;
-        //        G4double y = n1 * a1_y + n2 * a2_y;
-        //        G4double z = 0.0;  // Adjust if prisms are offset along z
-
-        //        G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
-        //        G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
-        //        G4String name = "calor_unit_" + std::to_string(count++);
-
-        //        // Call your function to place the unit
-        //        ConstructCalorimeter_unit_3d(translation, angle, name);
-        //    }
-        //    }
-        //}
-
         // Generate custom coordinates
         std::ifstream coordFile("coordinates.txt");
         if (!coordFile.is_open()) {
@@ -862,7 +842,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             // Unique name
             G4String name = "calor_unit_" + std::to_string(counter++);
             // Call the unit constructor
-            ConstructCalorimeter_unit_3d(translation, 0. * deg, name);
+            ConstructCalorimeter_unit_3d(translation, 0. * deg, name,0.*deg);
         }
 
         coordFile.close();

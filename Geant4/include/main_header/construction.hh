@@ -71,7 +71,7 @@ public:
 	// Calorimeter
 	void ConstructCalorimeter();
 	void ConstructCalorimeter_unit(G4ThreeVector translation, G4double angle,G4String name);
-	void ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle,G4String name);
+	void ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle,G4String name, G4double self_rotate);
 	// End Calorimeter
 	//Construct source
 	void ConstructSource();
@@ -134,7 +134,7 @@ private:
 	G4Material *matScintillator, *matWrapping, *matSiPM;
 	G4Material *matXe, *matWater;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
-	G4Material *matTi, *matNaCl, *matCsI,*matLSO;
+	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;
 
 
