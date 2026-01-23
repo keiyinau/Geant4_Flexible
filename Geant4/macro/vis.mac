@@ -3,6 +3,7 @@
 
 #Enable command echo
 /control/verbose 2
+#/tracking/verbose 3
 
 /vis/open OGL
 /vis/viewer/set/projection o

@@ -57,7 +57,8 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         }
         track->SetPolarization(pol);
     }
-    /////////////////////////
+
+    
     // Capture forming positron (at formation point)
     if (particleName == "e+" && processName == "eeToPositronium" && status == fStopAndKill) {
         G4ThreeVector pos = postStepPoint->GetPosition();
@@ -67,11 +68,10 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         G4String creatorName = (creatorProcess != nullptr)
                             ? creatorProcess->GetProcessName()
                             : "primary";  
-        G4double time = preStepPoint->GetGlobalTime();
+        G4double time = postStepPoint->GetProperTime();
         fEventAction->AddPositronTruth(trackID, pos, mom, pol, creatorName, time);
 
     }
-
     // Capture Ps at creation (first step; position/mom/pol at creation)
     if (stepID == 1 && (particleName == "o-Ps" || particleName == "p-Ps")) {
         G4ThreeVector pos = preStepPoint->GetPosition(); // Creation vertex

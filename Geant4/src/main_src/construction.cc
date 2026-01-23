@@ -804,68 +804,68 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         //    }
         //}
         // Generate hcc
-        G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
-        G4double side_length = 2.0 * apothem;  // Side length
-        G4double a1_x = side_length;  // Primitive vector 1 x-component
-        G4double a1_y = 0.0;  // Primitive vector 1 y-component
-        G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
-        G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
+        //G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+        //G4double side_length = 2.0 * apothem;  // Side length
+        //G4double a1_x = side_length;  // Primitive vector 1 x-component
+        //G4double a1_y = 0.0;  // Primitive vector 1 y-component
+        //G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
+        //G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
 
-        int min_N = 13;  // Start from ring 1 for placing source
-        int max_N = 13+(3-1);  // End at ring 6
-        int count = 0;  // For unique naming
+        //int min_N = 13;  // Start from ring 1 for placing source
+        //int max_N = 13+(3-1);  // End at ring 6
+        //int count = 0;  // For unique naming
 
-        for (int n1 = -max_N; n1 <= max_N; ++n1) {
-            for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
-            // Calculate the "ring" distance from origin using the max norm
-            int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
-            if (ring >= min_N && ring <= max_N) {
-                // Calculate position using primitive vectors
-                G4double x = n1 * a1_x + n2 * a2_x;
-                G4double y = n1 * a1_y + n2 * a2_y;
-                G4double z = 0.0;  // Adjust if prisms are offset along z
+        //for (int n1 = -max_N; n1 <= max_N; ++n1) {
+        //    for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
+        //    // Calculate the "ring" distance from origin using the max norm
+        //    int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
+        //    if (ring >= min_N && ring <= max_N) {
+        //        // Calculate position using primitive vectors
+        //        G4double x = n1 * a1_x + n2 * a2_x;
+        //        G4double y = n1 * a1_y + n2 * a2_y;
+        //        G4double z = 0.0;  // Adjust if prisms are offset along z
 
-                G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
-                G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
-                G4String name = "calor_unit_" + std::to_string(count++);
+        //        G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+        //        G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
+        //        G4String name = "calor_unit_" + std::to_string(count++);
 
-                // Call your function to place the unit
-                ConstructCalorimeter_unit_3d(translation, angle, name);
-            }
-            }
-        }
+        //        // Call your function to place the unit
+        //        ConstructCalorimeter_unit_3d(translation, angle, name);
+        //    }
+        //    }
+        //}
 
         // Generate custom coordinates
-        //std::ifstream coordFile("coordinates.txt");
-        //if (!coordFile.is_open()) {
-        //    G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
-        //    return;  // Or fall back to old lattice code if preferred
-        //}
-//
-        //std::string line;
-        //G4int counter = 0;
-        //while (std::getline(coordFile, line)) {
-        //    // Skip empty lines or comments
-        //    if (line.empty() || line[0] == '#') continue;
-//
-        //    std::istringstream iss(line);
-        //    G4double x, y, z;
-        //    if (!(iss >> x >> y >> z)) {
-        //        G4cout << "Warning: Skipping invalid line in coordinates.txt: " << line << G4endl;
-        //        continue;
-        //    }
-//
-        //    // Position in mm (adjust units if your file uses different, e.g., *cm)
-        //    G4ThreeVector translation(x * mm, y * mm, z * mm);
-//
-        //    // Unique name
-        //    G4String name = "calor_unit_" + std::to_string(counter++);
-// 
-        //    // Call the unit constructor
-        //    ConstructCalorimeter_unit_3d(translation, 0. * deg, name);
-        //}
-//
-        //coordFile.close();
+        std::ifstream coordFile("coordinates.txt");
+        if (!coordFile.is_open()) {
+            G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
+            return;  // Or fall back to old lattice code if preferred
+        }
+
+        std::string line;
+        G4int counter = 0;
+        while (std::getline(coordFile, line)) {
+            std::istringstream linestream(line);
+            // Skip empty lines or comments
+            if (line.empty() || line[0] == '#') continue;
+
+            std::istringstream iss(line);
+            G4double x, y, z;
+            if (!(iss >> x >> y >> z)) {
+                G4cout << "Warning: Skipping invalid line in coordinates.txt: " << line << G4endl;
+                continue;
+            }
+
+            // Position in mm (adjust units if your file uses different, e.g., *cm)
+            G4ThreeVector translation(x , y , z);
+
+            // Unique name
+            G4String name = "calor_unit_" + std::to_string(counter++);
+            // Call the unit constructor
+            ConstructCalorimeter_unit_3d(translation, 0. * deg, name);
+        }
+
+        coordFile.close();
     }
     else{
         ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");

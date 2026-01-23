@@ -43,7 +43,6 @@ G4int evt = aEvent->GetEventID();
         man->FillNtupleDColumn(6, 9, positronPols[trk].y());
         man->FillNtupleDColumn(6, 10, positronPols[trk].z());
         man->FillNtupleSColumn(6, 11, positronCreators[trk]);
-        G4cout << "e+ raw time: " << positronTimes[trk] / ns << " ns, primary: " << primaryDecayTime / ns << " ns, subtracted: " << (positronTimes[trk] - primaryDecayTime) / ps << " ps" << G4endl;
         man->FillNtupleDColumn(6, 12, (positronTimes[trk] - primaryDecayTime) / ps);
         man->AddNtupleRow(6);
     }

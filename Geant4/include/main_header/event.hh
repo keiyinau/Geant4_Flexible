@@ -54,6 +54,7 @@ private:
     std::map<G4int, G4ThreeVector> positronPositions, positronMomenta, positronPols;
     std::map<G4int, G4String> positronCreators;
     std::map<G4int, G4double> positronTimes;
+    std::map<G4int, G4double> positronCreateTimes;
 
 };
 #endif
