@@ -85,7 +85,7 @@ G4double G4eeToPositroniumModel::CrossSectionPerVolume(
 
 void G4eeToPositroniumModel::SampleSecondaries(
     vector<G4DynamicParticle*>* vdp,
-    const G4MaterialCutsCouple*,
+    const G4MaterialCutsCouple* couple,
     const G4DynamicParticle* dp,
     G4double tmin,
     G4double maxEnergy)
@@ -97,22 +97,62 @@ void G4eeToPositroniumModel::SampleSecondaries(
 
     // Case 1: less than & equal to 6.8*eV, binding energy of positronium at ground state
     G4ThreeVector posiPol = dp->GetPolarization();
-    if (posiKinEnergy <= 6.8*eV) {
-        G4double Br_p_Ps = 0.25;        // branching ratio of para-positronium in vacuum
-        // momemtum direction for positronium at rest
-        G4ThreeVector momentum(0., 0., 0.);
 
-        // the branching ratio should vary in different material, not complete yet.
-        if (rndmEngine->flat() < Br_p_Ps) {
-            aPositronium = new G4DynamicParticle(theParaPositronium, momentum);
-            aPositronium->SetPolarization(0., 0., 0.);  // p-Ps: spin-0, always unpolarized
+    const G4Material* currentMaterial = couple->GetMaterial();
+    G4double density = currentMaterial->GetDensity() / (g / cm3);  // density in g/cm³
+    if (posiKinEnergy <= 6.8*eV) {
+        G4double psFraction = 1.0;  // Default: vacuum / very low density
+
+        if (density > 0.5) {
+            // Dense solids: water, plastics, metals
+            psFraction = 0.25;  // ~20–30% typical for condensed matter
+        } else if (density > 0.005) {
+            // Low-density porous (aerogels, foams)
+            psFraction = 0.70;  // 50–90% range
+        } else if (density > 0.0005) {
+            // Air-like gases
+            psFraction = 0.95;  // Almost full Ps formation
         }
-        else {
-            aPositronium = new G4DynamicParticle(theOrthoPositronium, momentum);
-            G4ThreeVector oPsPol = posiPol.unit(); // o-Ps: Inherit longitudinal pol from positron (full transfer assumption), https://indico.jlab.org/event/206/contributions/1963/attachments/1701/2168/JPos2017_Kawasuso.pdf and 
-            aPositronium->SetPolarization(oPsPol);
+        G4double rand= rndmEngine->flat();
+        if(rand<psFraction){
+            G4double Br_p_Ps = 0.25;        // branching ratio of para-positronium in vacuum
+            // momemtum direction for positronium at rest
+            G4ThreeVector momentum(0., 0., 0.);
+
+            // the branching ratio should vary in different material, not complete yet.
+            if (rndmEngine->flat() < Br_p_Ps) {
+                aPositronium = new G4DynamicParticle(theParaPositronium, momentum);
+                aPositronium->SetPolarization(0., 0., 0.);  // p-Ps: spin-0, always unpolarized
+            }
+            else {
+                aPositronium = new G4DynamicParticle(theOrthoPositronium, momentum);
+                G4ThreeVector oPsPol = posiPol.unit(); // o-Ps: Inherit longitudinal pol from positron (full transfer assumption), https://indico.jlab.org/event/206/contributions/1963/attachments/1701/2168/JPos2017_Kawasuso.pdf and 
+                aPositronium->SetPolarization(oPsPol);
+            }
+            vdp->push_back(aPositronium);
         }
-        vdp->push_back(aPositronium);
+        else{
+            // Generate isotropic random direction for gamma1
+            G4double cost = 2. * G4UniformRand() - 1.;
+            G4double sint = std::sqrt(1. - cost * cost);
+            G4double phi  = twopi * G4UniformRand();
+
+            G4ThreeVector gammaDir(sint * std::cos(phi),
+                                sint * std::sin(phi),
+                                cost);
+
+            G4ThreeVector gammaDirOpp = -gammaDir;
+
+            G4DynamicParticle* gamma1 = new G4DynamicParticle(theGamma, gammaDir, 0.511 * MeV);
+            G4DynamicParticle* gamma2 = new G4DynamicParticle(theGamma, gammaDirOpp, 0.511 * MeV);
+
+            // Polarization: for direct annihilation, often unpolarized or partial
+            gamma1->SetPolarization(0., 0., 0.);
+            gamma2->SetPolarization(0., 0., 0.);
+
+            vdp->push_back(gamma1);
+            vdp->push_back(gamma2);
+        }
     }
     // Case 2: greater than 6.8*eV, Positron interacts in flight
     else {

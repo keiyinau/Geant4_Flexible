@@ -19,7 +19,7 @@ public:
     virtual void BeginOfEventAction(const G4Event*);
     virtual void EndOfEventAction(const G4Event*);
 
-    void AddPsTruth(G4int trackID, G4int parentID, G4String type, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol);
+    void AddPsTruth(G4int trackID, G4int parentID, G4String type, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol,G4double createTime);
     void AddGammaTruth(G4int trackID, G4int parentID, G4String type, G4double energy, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol);
     void AddPositronTruth(G4int trackID, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol, G4String creatorProcess, G4double time);
     void SetGammaFirstDetector(G4int trackID, G4String detName);
@@ -44,7 +44,7 @@ private:
     std::map<G4int, G4int> psParents;
     std::map<G4int, G4double> pscreationtime, pslifetimes;
     std::map<G4int, G4double> psDestroyTimes;
-
+    std::map<G4int, G4double> psCreateTimes;  
     std::map<G4int, G4ThreeVector> gammaPositions, gammaMomenta, gammaPols;
     std::map<G4int, G4double> gammaEnergies;
     std::map<G4int, G4String> gammaTypes;

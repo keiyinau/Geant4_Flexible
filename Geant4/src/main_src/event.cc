@@ -13,9 +13,10 @@ void MyEventAction::BeginOfEventAction(const G4Event* aEvent)
 
 	G4cout << ">> Begin of Event:" << aEvent->GetEventID() << G4endl;
     positronCreators.clear();
-    psPositions.clear(); psMomenta.clear(); psPols.clear(); psTypes.clear(); psParents.clear(); psDestroyTimes.clear();
+    psPositions.clear(); psMomenta.clear(); psPols.clear(); psTypes.clear(); psParents.clear(); psDestroyTimes.clear();psCreateTimes.clear();pslifetimes.clear();pscreationtime.clear();
     gammaPositions.clear(); gammaMomenta.clear(); gammaPols.clear(); gammaEnergies.clear(); gammaTypes.clear(); gammaParents.clear(); gammaFirstDets.clear();
-    positronPositions.clear(); positronMomenta.clear(); positronPols.clear();
+    positronPositions.clear(); positronMomenta.clear(); positronPols.clear();positronCreators.clear(); positronTimes.clear(); 
+    gammaEdeps.clear();
     primaryDecayTime = 0.0;
 
 }
@@ -42,9 +43,9 @@ G4int evt = aEvent->GetEventID();
         man->FillNtupleDColumn(6, 9, positronPols[trk].y());
         man->FillNtupleDColumn(6, 10, positronPols[trk].z());
         man->FillNtupleSColumn(6, 11, positronCreators[trk]);
-        man->FillNtupleDColumn(6, 12, positronTimes[trk] / ns);
+        G4cout << "e+ raw time: " << positronTimes[trk] / ns << " ns, primary: " << primaryDecayTime / ns << " ns, subtracted: " << (positronTimes[trk] - primaryDecayTime) / ps << " ps" << G4endl;
+        man->FillNtupleDColumn(6, 12, (positronTimes[trk] - primaryDecayTime) / ps);
         man->AddNtupleRow(6);
-        positronTime = positronTimes[trk]- primaryDecayTime ;
     }
     for (const auto& entry : psPositions) {
         G4int trk = entry.first;
@@ -61,8 +62,13 @@ G4int evt = aEvent->GetEventID();
         man->FillNtupleDColumn(4, 10, psPols[trk].x());
         man->FillNtupleDColumn(4, 11, psPols[trk].y());
         man->FillNtupleDColumn(4, 12, psPols[trk].z());
-        G4double lifetime = (psDestroyTimes[trk]-primaryDecayTime - positronTime) / ns;
+        G4double createTime = psCreateTimes.count(trk) ? psCreateTimes[trk] : 0.0;
+        G4double destroyTime = psDestroyTimes.count(trk) ? psDestroyTimes[trk] : createTime;
+
+        G4double lifetime = (destroyTime - createTime) / ns;
+        G4double timeFromDecay = (psDestroyTimes[trk] - primaryDecayTime) / ns;
         man->FillNtupleDColumn(4, 13, lifetime);
+        man->FillNtupleDColumn(4, 14, timeFromDecay);
         man->AddNtupleRow(4);
     }
 
@@ -101,12 +107,13 @@ G4int evt = aEvent->GetEventID();
     }
 }
 
-void MyEventAction::AddPsTruth(G4int trackID, G4int parentID, G4String type, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol) {
+void MyEventAction::AddPsTruth(G4int trackID, G4int parentID, G4String type, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol,G4double createTime) {
     psPositions[trackID] = pos;
     psMomenta[trackID] = mom;
     psPols[trackID] = pol;
     psTypes[trackID] = type;
     psParents[trackID] = parentID;
+    psCreateTimes[trackID] = createTime;
 }
 
 void MyEventAction::AddGammaTruth(G4int trackID, G4int parentID, G4String type, G4double energy, G4ThreeVector pos, G4ThreeVector mom, G4ThreeVector pol) {

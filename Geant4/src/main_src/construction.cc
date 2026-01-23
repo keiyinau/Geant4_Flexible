@@ -5,12 +5,12 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
-	isDetector_Shell = true;
-	isSource=false;
+	isDetector_Shell = false;
+	isSource=true;
 	isTPC = false;
-	isCalorimeter = false;
-    isLiquid=false;
-    is3DCalorimeter=false;
+	isCalorimeter = true;
+    isLiquid=true;
+    is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;

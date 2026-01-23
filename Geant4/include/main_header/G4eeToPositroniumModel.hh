@@ -36,12 +36,11 @@ public:
 		G4double cutEnergy = 0.0,
 		G4double maxEnergy = DBL_MAX) override;
 
-	virtual void SampleSecondaries(
-		std::vector<G4DynamicParticle*>*,
-		const G4MaterialCutsCouple*,
-		const G4DynamicParticle*,
-		G4double tmin,
-		G4double maxEnergy) override;
+	void SampleSecondaries(std::vector<G4DynamicParticle*>* vdp,
+						const G4MaterialCutsCouple* couple,
+						const G4DynamicParticle* dp,
+						G4double tmin,
+						G4double maxEnergy);
 
 private:
 

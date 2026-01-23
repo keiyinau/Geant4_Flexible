@@ -78,7 +78,8 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         G4ThreeVector mom = preStepPoint->GetMomentum();
         G4ThreeVector pol = track->GetPolarization();
         G4String type = particleName;
-        fEventAction->AddPsTruth(trackID, parentID, type, pos, mom, pol);
+        G4double createTime = preStepPoint->GetGlobalTime();  // ← capture here
+        fEventAction->AddPsTruth(trackID, parentID, type, pos, mom, pol, createTime);
     }
     if (particleName == "o-Ps" && track->GetTrackStatus() == fStopAndKill) { // && creator_process_name == "Decay"
         G4double destroyTime = postStepPoint->GetGlobalTime();  // Or preStep
@@ -99,6 +100,8 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
             type = "PsDecay";
         } else if (creator == "RadioactiveDecay" && std::abs(energy - 1.275 * MeV) < 1.0 * keV) {
             type = "NaGamma";
+        } else if (creator == "eeToPositronium") {
+            type = "AnnihilationGamma";
         }
         if (!type.empty()) {
             fEventAction->AddGammaTruth(trackID, parentID, type, energy, pos, mom, pol);
