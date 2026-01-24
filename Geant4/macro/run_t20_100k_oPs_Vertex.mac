@@ -1,0 +1,30 @@
+/run/numberOfThreads 20
+/run/initialize
+
+/control/verbose 0
+#/gps/verbose 2
+
+/gps/particle o-Ps
+
+/gps/pos/type Volume
+/gps/pos/shape Cylinder
+/gps/pos/centre 0 0 0 mm
+/gps/pos/radius 6 mm  # ~8.5 + 10%; update from script
+/gps/pos/halfz 2 mm
+
+/gps/hist/type biaspt
+/gps/hist/file biaspt.dat
+
+/gps/hist/type biaspp  
+/gps/hist/file biaspp.dat
+
+/gps/hist/type biasz
+/gps/hist/file biasz.dat
+
+/gps/ene/type Mono
+/gps/ene/mono 0. MeV
+/gps/number 1
+
+/gps/ang/type iso
+
+/run/beamOn 100000

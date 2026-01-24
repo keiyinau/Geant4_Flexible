@@ -60,17 +60,13 @@ void Detect_edep::SaveToRoot()
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
     G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
     const MyEventAction* eventAction = static_cast<const MyEventAction*>(G4RunManager::GetRunManager()->GetUserEventAction());
-    G4double primaryTime = eventAction->GetPrimaryDecayTime();
-
-    G4double min_time = DBL_MAX; // Use a large initial value
-    for (const auto& pair : first_time_per_detector) {
-        if (pair.second < min_time) {
-            min_time = pair.second;
-        }
-    }
-    // If no times recorded (no deposits), set min_time to 0
-    if (min_time == DBL_MAX) {
-        min_time = 0.;
+    G4double primaryTime = 0.0;
+    if (!eventAction) {
+        G4cerr << "Warning: No EventAction found — using absolute times" << G4endl;
+        primaryTime = 0.0;
+    } else {
+        primaryTime = eventAction->GetPrimaryDecayTime();
+        if (primaryTime == 0.0) G4cout << "Warning: primaryTime unset for event " << evt << " — using absolute" << G4endl;
     }
 
     for (const auto& pair : edep_per_detector) {
@@ -78,8 +74,7 @@ void Detect_edep::SaveToRoot()
             analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
             analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
             analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
-            G4double firstTime = first_time_per_detector.count(pair.first) > 0 
-                               ? first_time_per_detector[pair.first] : primaryTime;
+            G4double firstTime = first_time_per_detector.count(pair.first) > 0 ? first_time_per_detector[pair.first] : primaryTime;
             G4double rel_time = (firstTime - primaryTime) / ns;
             analysisManager->FillNtupleDColumn(1, 3, rel_time);
             analysisManager->AddNtupleRow(1);

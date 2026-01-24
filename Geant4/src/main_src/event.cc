@@ -43,7 +43,17 @@ G4int evt = aEvent->GetEventID();
         man->FillNtupleDColumn(6, 9, positronPols[trk].y());
         man->FillNtupleDColumn(6, 10, positronPols[trk].z());
         man->FillNtupleSColumn(6, 11, positronCreators[trk]);
-        man->FillNtupleDColumn(6, 12, (positronTimes[trk] - primaryDecayTime) / ps);
+        G4double positronTime = positronTimes.count(trk) ? positronTimes[trk] : primaryDecayTime;  // fallback
+        G4double subtracted = (positronTime - primaryDecayTime) / ps;
+
+        if (subtracted < 0.0) {
+            subtracted = 0.0; 
+            //G4cout << "Warning: Negative positron time for trk " << trk << " — clamped to 0" << G4endl;
+        } else if (subtracted > 1e6) {  
+            subtracted = 0.0;  
+            //G4cout << "Warning: Large positron time for trk " << trk << " — capped to 0" << G4endl;
+        }
+        man->FillNtupleDColumn(6, 12, subtracted / ps);
         man->AddNtupleRow(6);
     }
     for (const auto& entry : psPositions) {
@@ -65,7 +75,7 @@ G4int evt = aEvent->GetEventID();
         G4double destroyTime = psDestroyTimes.count(trk) ? psDestroyTimes[trk] : createTime;
 
         G4double lifetime = (destroyTime - createTime) / ns;
-        G4double timeFromDecay = (psDestroyTimes[trk] - primaryDecayTime) / ns;
+        G4double timeFromDecay = (destroyTime - primaryDecayTime) / ns;
         man->FillNtupleDColumn(4, 13, lifetime);
         man->FillNtupleDColumn(4, 14, timeFromDecay);
         man->AddNtupleRow(4);

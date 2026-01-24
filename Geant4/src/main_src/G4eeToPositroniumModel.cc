@@ -100,19 +100,16 @@ void G4eeToPositroniumModel::SampleSecondaries(
 
     const G4Material* currentMaterial = couple->GetMaterial();
     G4double density = currentMaterial->GetDensity() / (g / cm3);  // density in g/cm³
-    if (posiKinEnergy <= 6.8*eV) {
+    G4double I = currentMaterial->GetIonisation()->GetMeanExcitationEnergy() / eV;  // material I
+    G4double E_lower = I - 6.8;  // eV
+    G4double E_upper = I;
+    G4double f = max(0.0, (E_upper - E_lower) / posiKinEnergy);
+    // Implement ore gap
+    if (posiKinEnergy >= E_lower && posiKinEnergy < I || posiKinEnergy<=6.8) {
         G4double psFraction = 1.0;  // Default: vacuum / very low density
 
-        if (density > 0.5) {
-            // Dense solids: water, plastics, metals
-            psFraction = 0.25;  // ~20–30% typical for condensed matter
-        } else if (density > 0.005) {
-            // Low-density porous (aerogels, foams)
-            psFraction = 0.70;  // 50–90% range
-        } else if (density > 0.0005) {
-            // Air-like gases
-            psFraction = 0.95;  // Almost full Ps formation
-        }
+        if (f < 0) f = 0.0;  // clamp
+        psFraction *= f;
         G4double rand= rndmEngine->flat();
         if(rand<psFraction){
             G4double Br_p_Ps = 0.25;        // branching ratio of para-positronium in vacuum

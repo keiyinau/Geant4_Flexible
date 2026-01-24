@@ -14,7 +14,7 @@
 /gps/pos/shape Cylinder
 /gps/pos/centre 0 0 0 mm
 /gps/pos/radius 4.765 mm
-/gps/pos/halfz 0.0001 mm
+/gps/pos/halfz 1 mm
 
 #Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono

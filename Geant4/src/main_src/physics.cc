@@ -50,6 +50,8 @@ void MyPhysicsList::ConstructProcess()
 	//pEM_Opt0.ConstructProcess();
 	G4EmLivermorePolarizedPhysics pEM_Pol(ver);
 	pEM_Pol.ConstructProcess();
+	//G4EmLivermorePhysics pEM_NPol(ver);
+	//pEM_NPol.ConstructProcess();
 	G4EmExtraPhysics pEmExtraPhysics(ver);					// Synchroton Radiation & GN Physics
 	pEmExtraPhysics.ConstructProcess();
 	G4DecayPhysics pDecayPhysics(ver);						// Decays, including ParaPositronium, OrthoPositronium
@@ -73,7 +75,7 @@ void MyPhysicsList::ConstructProcess()
 	
 	// Assign allowed process for positron
 	G4ProcessManager *positronManager = G4Positron::Positron()->GetProcessManager();
-	positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics
+	//positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics
 	//positronManager->AddProcess(new G4eMultipleScattering, -1, 1, 1);
 	//positronManager->AddProcess(new G4eIonisation,         -1, 2, 2);
 	//positronManager->AddProcess(new G4eBremsstrahlung,     -1, 3, 3);
