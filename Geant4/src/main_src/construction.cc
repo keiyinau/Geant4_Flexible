@@ -10,7 +10,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isTPC = false;
 	isCalorimeter = true;
     isLiquid=true;
-    is3DCalorimeter=true;
+    is3DCalorimeter=false;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;

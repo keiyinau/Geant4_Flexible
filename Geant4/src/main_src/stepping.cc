@@ -27,7 +27,9 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
     G4String detectorName = track->GetTouchable()->GetVolume()->GetName();
 
 
-    
+    //if(stepID==1 && parentID<=4 && particleName!="e-"){
+    //    G4cout<<"parentID="<<parentID<<", Name="<<particleName<<", Energy="<<track->GetKineticEnergy()<<G4endl;
+    //}
 
     // Set longitudinal polarization for positrons from Na-22 decay, this is a brute force and an assumption!!!!!!! 
     ////////////////////////////////////
@@ -73,6 +75,7 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
 
     }
     // Capture Ps at creation (first step; position/mom/pol at creation)
+    //The parentID selection select only Primiary Positronium as concern
     if (stepID == 1 && (particleName == "o-Ps" || particleName == "p-Ps")) {
         G4ThreeVector pos = preStepPoint->GetPosition(); // Creation vertex
         G4ThreeVector mom = preStepPoint->GetMomentum();
@@ -102,6 +105,8 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
             type = "NaGamma";
         } else if (creator == "eeToPositronium") {
             type = "AnnihilationGamma";
+        } else if (parentID==0){
+            type = "CreationProcess";
         }
         if (!type.empty()) {
             fEventAction->AddGammaTruth(trackID, parentID, type, energy, pos, mom, pol);
