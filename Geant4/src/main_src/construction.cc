@@ -727,14 +727,13 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
                                    physAcry[0], physBackFoil, surfCsI_AlFoil);
     }
 }
-void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name){
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name, G4double self_rotate){
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(angle);
-    rotation->rotateZ(30.0*deg); //Remove this line if no self rotation
-    std::string Scintillator_name_list[] = {"Hexagonal/UntitledPrism12.2mm"};
-    std::string SiPM_name_list[] = {"Hexagonal/UntitledSiPM1_12.2mm", "Hexagonal/UntitledSiPM2_12.2mm",
-                                    "Hexagonal/UntitledSiPM3_12.2mm", "Hexagonal/UntitledSiPM4_12.2mm"};
-    std::string Tapflon_name_list[] = {"Hexagonal/UntitledTape12.2mm"};
+    rotation->rotateZ(self_rotate); //Remove this line if no self rotation
+    std::string Scintillator_name_list[] = {"Square/SquareCrystals_SquareCrystal_Crystal_4x4x20"};
+    std::string SiPM_name_list[] = {"Square/SquareCrystals_SquareCrystal_SiPM_4x4x20"};
+    std::string Tapflon_name_list[] = {"Square/SquareCrystals_SquareCrystal_OpenTape_4x4x20"};
     int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
     int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
     int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
@@ -748,7 +747,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         scintillator->SetScale(1.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
-        
+        logicScintillators.push_back(logicScintillator_pre);
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
@@ -758,7 +757,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM.push_back(logicCalorimeter);
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
+        //physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
@@ -766,7 +765,6 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);
-        logicScintillators.push_back(logicTapflon_pre);
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
     for (int i=0; i<Size_of_Scintillator_name_list; i++) {
@@ -781,65 +779,96 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
 void MyDetectorConstruction::ConstructCalorimeter() {
     // Place a single unit at origin
+    //if(is3DCalorimeter){
+    //    // Generate cubic
+    //    //int range=0;
+    //    //G4double dist=0*mm;
+    //    //int counter=0;
+    //    //for(int j=0;j<=range;j++){
+    //    //    for(int i=-range;i<=range;i++){
+    //    //        for(int k=-range;k<=range;k++){
+    //    //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
+    //    //            G4double angle = 0 * deg;
+    //    //            if(i==0&&j==0&&k==0){
+    //    //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
+    //    //                ConstructCalorimeter_unit(translation,angle,name_);
+    //    //                counter+=1;
+    //    //            }
+    //    //            else{
+    //    //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
+    //    //                ConstructCalorimeter_unit(translation,angle,name_);
+    //    //            }       
+    //    //
+    //    //        }
+    //    //    }
+    //    //}
+    //    // Generate hcc
+    //    G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
+    //    G4double side_length = 2.0 * apothem;  // Side length
+    //    G4double a1_x = side_length;  // Primitive vector 1 x-component
+    //    G4double a1_y = 0.0;  // Primitive vector 1 y-component
+    //    G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
+    //    G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
+//
+    //    int min_N = 13;  // Start from ring 1 for placing source
+    //    int max_N = 13+(3-1);  // End at ring 6
+    //    int count = 0;  // For unique naming
+//
+    //    for (int n1 = -max_N; n1 <= max_N; ++n1) {
+    //        for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
+    //        // Calculate the "ring" distance from origin using the max norm
+    //        int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
+    //        if (ring >= min_N && ring <= max_N) {
+    //            // Calculate position using primitive vectors
+    //            G4double x = n1 * a1_x + n2 * a2_x;
+    //            G4double y = n1 * a1_y + n2 * a2_y;
+    //            G4double z = 0.0;  // Adjust if prisms are offset along z
+//
+    //            G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
+    //            G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
+    //            G4String name = "calor_unit_" + std::to_string(count++);
+//
+    //            // Call your function to place the unit
+    //            ConstructCalorimeter_unit_3d(translation, angle, name);
+    //        }
+    //        }
+    //    }
+    //}
+    //else{
+    //    ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");
+    //}
     if(is3DCalorimeter){
-        // Generate cubic
-        //int range=0;
-        //G4double dist=0*mm;
-        //int counter=0;
-        //for(int j=0;j<=range;j++){
-        //    for(int i=-range;i<=range;i++){
-        //        for(int k=-range;k<=range;k++){
-        //            G4String name_=to_string(i)+"_"+to_string(j)+"_"+to_string(k);
-        //            G4double angle = 0 * deg;
-        //            if(i==0&&j==0&&k==0){
-        //                G4ThreeVector translation(0.*mm+(i*6.05*2)*mm, 0.*mm+(j*6.05*2)*mm, 0.*mm+(k*6.05*2)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //                counter+=1;
-        //            }
-        //            else{
-        //                G4ThreeVector translation(0.*mm+(i*(6.05)*2+std::copysign(1.0f,i)*dist)*mm, 0.*mm+(j*(6.05)*2+std::copysign(1.0f,j)*dist)*mm, 0.*mm+(k*(6.05)*2+std::copysign(1.0f,k)*dist)*mm);
-        //                ConstructCalorimeter_unit(translation,angle,name_);
-        //            }       
-        //
-        //        }
-        //    }
-        //}
-        // Generate hcc
-        G4double apothem = (12.2+0.3)/2*std::sqrt(3.0)/2.0;  // Apothem (distance from center to flat side)
-        G4double side_length = 2.0 * apothem;  // Side length
-        G4double a1_x = side_length;  // Primitive vector 1 x-component
-        G4double a1_y = 0.0;  // Primitive vector 1 y-component
-        G4double a2_x = side_length / 2.0;  // Primitive vector 2 x-component
-        G4double a2_y = side_length * std::sqrt(3.0) / 2.0;  // Primitive vector 2 y-component (sin(60°))
-
-        int min_N = 13;  // Start from ring 1 for placing source
-        int max_N = 13+(3-1);  // End at ring 6
-        int count = 0;  // For unique naming
-
-        for (int n1 = -max_N; n1 <= max_N; ++n1) {
-            for (int n2 = std::max(-max_N, -n1 - max_N); n2 <= std::min(max_N, -n1 + max_N); ++n2) {
-            // Calculate the "ring" distance from origin using the max norm
-            int ring = std::max({std::abs(n1), std::abs(n2), std::abs(n1 + n2)});
-            if (ring >= min_N && ring <= max_N) {
-                // Calculate position using primitive vectors
-                G4double x = n1 * a1_x + n2 * a2_x;
-                G4double y = n1 * a1_y + n2 * a2_y;
-                G4double z = 0.0;  // Adjust if prisms are offset along z
-
-                G4ThreeVector translation(x, y, z);  // Units: assume bare numbers match your radius units
-                G4double angle = 0.0*deg;  // No rotation; adjust if needed to align with prism definition
-                G4String name = "calor_unit_" + std::to_string(count++);
-
-                // Call your function to place the unit
-                ConstructCalorimeter_unit_3d(translation, angle, name);
-            }
-            }
+        // Generate custom coordinates
+        std::ifstream coordFile("Squarecoordinates_thickness4.txt");
+        if (!coordFile.is_open()) {
+            G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
+            return;  // Or fall back to old lattice code if preferred
         }
+        std::string line;
+        G4int counter = 0;
+        while (std::getline(coordFile, line)) {
+            std::istringstream linestream(line);
+            // Skip empty lines or comments
+            if (line.empty() || line[0] == '#') continue;
+            std::istringstream iss(line);
+            G4double x, y, z;
+            if (!(iss >> x >> y >> z)) {
+                G4cout << "Warning: Skipping invalid line in coordinates.txt: " << line << G4endl;
+                continue;
+            }
+            // Position in mm (adjust units if your file uses different, e.g., *cm)
+            G4ThreeVector translation(x , y , z);
+            // Unique name
+            G4String name = "calor_unit_" + std::to_string(counter++);
+            // Call the unit constructor
+            ConstructCalorimeter_unit_3d(translation, 0. * deg, name,0.*deg);
+        }
+        coordFile.close();
     }
     else{
         ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");
     }
-}
+    }
 //Construct source
 void MyDetectorConstruction::ConstructSource(){
 	G4Tubs* solidRing = new G4Tubs("solidRing", disk_radius, ring_radius, ring_height_half, 0.*deg, 360.*deg);
