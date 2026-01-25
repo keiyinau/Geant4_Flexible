@@ -10,7 +10,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	isTPC = false;
 	isCalorimeter = true;
     isLiquid=true;
-    is3DCalorimeter=false;
+    is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
     matLiquid=matWater;
@@ -479,7 +479,7 @@ void MyDetectorConstruction::DefineMessenger() {
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
 	G4double xWorld = 0.22*m;
 	G4double yWorld = 0.22*m;
-	G4double zWorld = 0.22*m;
+	G4double zWorld = 1*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -816,7 +816,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     // Place a single unit at origin
     if(is3DCalorimeter){
         // Generate custom coordinates
-        std::ifstream coordFile("coordinates.txt");
+        std::ifstream coordFile("Squarecoordinates_thickness5.txt");
         if (!coordFile.is_open()) {
             G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
             return;  // Or fall back to old lattice code if preferred
