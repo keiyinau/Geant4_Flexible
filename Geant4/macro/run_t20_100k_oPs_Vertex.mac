@@ -9,7 +9,7 @@
 /gps/pos/type Volume
 /gps/pos/shape Cylinder
 /gps/pos/centre 0 0 0 mm
-/gps/pos/radius 6 mm  # ~8.5 + 10%; update from script
+/gps/pos/radius 6 mm  
 /gps/pos/halfz 2 mm
 
 /gps/hist/type biaspt
