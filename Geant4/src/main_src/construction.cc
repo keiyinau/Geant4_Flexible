@@ -5,6 +5,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 
 	DefineMaterials();
 
+    coordinate_name="Squarecoordinates_thickness5.txt";
 	isDetector_Shell = false;
 	isSource=false;
 	isTPC = false;
@@ -34,7 +35,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	container_height_half = 2/2*cm;
 	container_thickness = 1.*mm;
 	d_pos_z = 0.02*mm;						//Distance between two nearest plane detectors, spacing of two plane detectors
-
+    
 	DefineMessenger();
 
 
@@ -439,6 +440,7 @@ void MyDetectorConstruction::DefineMessenger() {
 	fMessenger->DeclareProperty("control/execute rebuild.mac",placeHolder,"Rebuild Selected Physical Volume inside a 1.5*1.5*1.5 m^3 Cubic World contains Air, its center is the origin");
 	fMessenger->DeclareProperty("isDetector_Shell", isDetector_Shell, "Construct Shell Detector (spherical shell locate at origin, inner radius = 3*cm, thickness = 1*nm)");
 	fMessenger->DeclareProperty("setFileName", file_name, "Set the name of output root file");
+    fMessenger->DeclareProperty("setcoordinateName",coordinate_name,"Set the coordinate file");
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
@@ -839,7 +841,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
     //}
     if(is3DCalorimeter){
         // Generate custom coordinates
-        std::ifstream coordFile("Squarecoordinates_thickness4.txt");
+        std::ifstream coordFile(coordinate_name);
         if (!coordFile.is_open()) {
             G4cerr << "Error: Cannot open coordinates.txt for calorimeter positions!" << G4endl;
             return;  // Or fall back to old lattice code if preferred

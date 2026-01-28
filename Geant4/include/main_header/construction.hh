@@ -133,7 +133,8 @@ private:
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI,*matLSO;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;
-
+	
+	G4String coordinate_name;
 
 };
 
