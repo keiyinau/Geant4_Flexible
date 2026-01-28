@@ -89,8 +89,9 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4double E1, E2, E3;
     G4ThreeVector dir1, dir2, dir3;
     G4int accepted = 0;
+    G4double DM_mass=0.50;
     while (accepted == 0) {
-        G4double x = min_energy + dis(gen) * (M / 2 - min_energy);
+        G4double x = DM_mass;//min_energy + dis(gen) * (M / 2 - min_energy);
         G4double y = min_energy + dis(gen) * (M / 2 - min_energy);
         E3 = M - x - y;
         if (E3 > min_energy && E3 < M / 2 && x + y < M) {
@@ -152,10 +153,20 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4ThreeVector pol3(std::cos(phi_pol), std::sin(phi_pol), 0.);
     pol3.rotateUz(dir3);
     gamma3->SetPolarization(pol3);
+    //products->PushProducts(gamma1);
+    //products->PushProducts(gamma2);
+    //products->PushProducts(gamma3);
 
-    products->PushProducts(gamma1);
-    products->PushProducts(gamma2);
-    products->PushProducts(gamma3);
+    if(E1!=DM_mass){
+        products->PushProducts(gamma1);
+    }
+    if(E2!=DM_mass){
+        products->PushProducts(gamma2);
+    }
+    if(E3!=DM_mass){
+        products->PushProducts(gamma3);
+    }
+
 
 #ifdef G4VERBOSE
     if (GetVerboseLevel() > 1) {

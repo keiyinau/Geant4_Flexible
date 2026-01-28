@@ -137,6 +137,9 @@ private:
 	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;
 
+	//Setting
+	G4String coordinate_name;
+
 
 };
 
