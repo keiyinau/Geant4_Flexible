@@ -853,7 +853,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             G4double rot2 = 0.;
             G4double rot3= 0.;
 
-            if (vals.size() == 5) {
+            if (vals.size() == 6) {
                 rot1 = vals[3];
                 rot2 = vals[4];
                 rot3=vals[5];

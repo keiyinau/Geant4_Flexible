@@ -153,19 +153,19 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4ThreeVector pol3(std::cos(phi_pol), std::sin(phi_pol), 0.);
     pol3.rotateUz(dir3);
     gamma3->SetPolarization(pol3);
-    //products->PushProducts(gamma1);
-    //products->PushProducts(gamma2);
-    //products->PushProducts(gamma3);
+    products->PushProducts(gamma1);
+    products->PushProducts(gamma2);
+    products->PushProducts(gamma3);
 
-    if(E1!=DM_mass){
-        products->PushProducts(gamma1);
-    }
-    if(E2!=DM_mass){
-        products->PushProducts(gamma2);
-    }
-    if(E3!=DM_mass){
-        products->PushProducts(gamma3);
-    }
+    //if(E1!=DM_mass){
+    //    products->PushProducts(gamma1);
+    //}
+    //if(E2!=DM_mass){
+    //    products->PushProducts(gamma2);
+    //}
+    //if(E3!=DM_mass){
+    //    products->PushProducts(gamma3);
+    //}
 
 
 #ifdef G4VERBOSE
