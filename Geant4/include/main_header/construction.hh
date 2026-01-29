@@ -71,7 +71,7 @@ public:
 	// Calorimeter
 	void ConstructCalorimeter();
 	void ConstructCalorimeter_unit(G4ThreeVector translation, G4double angle,G4String name);
-	void ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle,G4String name, G4double self_rotate);
+	void ConstructCalorimeter_unit_3d(G4ThreeVector translation,G4String name, G4double rotateX, G4double rotateY, G4double rotateZ);
 	// End Calorimeter
 	//Construct source
 	void ConstructSource();

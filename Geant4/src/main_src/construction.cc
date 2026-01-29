@@ -6,7 +6,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	DefineMaterials();
 
 
-    coordinate_name="Squarecoordinates_thickness5.txt";
+    coordinate_name="coordinates.txt";
 
 	isDetector_Shell = false;
 	isSource=true;
@@ -766,10 +766,11 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
                                    physAcry[0], physBackFoil, surfCsI_AlFoil);
     }
 }
-void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4double angle, G4String name, G4double self_rotate){
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation,G4String name, G4double rotateX, G4double rotateY, G4double rotateZ){
     G4RotationMatrix* rotation = new G4RotationMatrix();
-    rotation->rotateX(angle);
-    rotation->rotateZ(self_rotate); //Remove this line if no self rotation
+    rotation->rotateX(rotateX);
+    rotation->rotateY(rotateY);
+    rotation->rotateZ(rotateZ); //Remove this line if no self rotation
     std::string Scintillator_name_list[] = {"Square/SquareCrystals_SquareCrystal_Crystal_4x4x20"};
     std::string SiPM_name_list[] = {"Square/SquareCrystals_SquareCrystal_SiPM_4x4x20"};
     std::string Tapflon_name_list[] = {"Square/SquareCrystals_SquareCrystal_OpenTape_4x4x20"};
@@ -840,7 +841,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
                 vals.push_back(val);
             }
 
-            if (vals.size() != 3 && vals.size() != 5) {
+            if (vals.size() != 3 && vals.size() != 6) {
                 G4cout << "Warning: Skipping invalid line in coordinates.txt (expected 3 or 5 parameters): " << line << G4endl;
                 continue;
             }
@@ -850,10 +851,12 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             G4double z = vals[2];
             G4double rot1 = 0.;
             G4double rot2 = 0.;
+            G4double rot3= 0.;
 
             if (vals.size() == 5) {
                 rot1 = vals[3];
                 rot2 = vals[4];
+                rot3=vals[5];
             }
 
             // Position in mm (adjust units if your file uses different, e.g., *cm)
@@ -862,7 +865,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             // Unique name
             G4String name = "calor_unit_" + std::to_string(counter++);
             // Call the unit constructor with rotations
-            ConstructCalorimeter_unit_3d(translation, rot1 * deg, name, rot2 * deg);
+            ConstructCalorimeter_unit_3d(translation,  name,rot1 * deg, rot2 * deg, rot3 * deg);
         }
 
         coordFile.close();
