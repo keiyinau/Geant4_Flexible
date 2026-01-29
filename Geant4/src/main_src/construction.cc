@@ -834,19 +834,35 @@ void MyDetectorConstruction::ConstructCalorimeter() {
             if (line.empty() || line[0] == '#') continue;
 
             std::istringstream iss(line);
-            G4double x, y, z;
-            if (!(iss >> x >> y >> z)) {
-                G4cout << "Warning: Skipping invalid line in coordinates.txt: " << line << G4endl;
+            std::vector<G4double> vals;
+            G4double val;
+            while (iss >> val) {
+                vals.push_back(val);
+            }
+
+            if (vals.size() != 3 && vals.size() != 5) {
+                G4cout << "Warning: Skipping invalid line in coordinates.txt (expected 3 or 5 parameters): " << line << G4endl;
                 continue;
             }
 
+            G4double x = vals[0];
+            G4double y = vals[1];
+            G4double z = vals[2];
+            G4double rot1 = 0.;
+            G4double rot2 = 0.;
+
+            if (vals.size() == 5) {
+                rot1 = vals[3];
+                rot2 = vals[4];
+            }
+
             // Position in mm (adjust units if your file uses different, e.g., *cm)
-            G4ThreeVector translation(x , y , z);
+            G4ThreeVector translation(x, y, z);
 
             // Unique name
             G4String name = "calor_unit_" + std::to_string(counter++);
-            // Call the unit constructor
-            ConstructCalorimeter_unit_3d(translation, 0. * deg, name,0.*deg);
+            // Call the unit constructor with rotations
+            ConstructCalorimeter_unit_3d(translation, rot1 * deg, name, rot2 * deg);
         }
 
         coordFile.close();
