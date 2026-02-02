@@ -91,7 +91,7 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4int accepted = 0;
     G4double DM_mass=0.50;
     while (accepted == 0) {
-        G4double x = DM_mass;//min_energy + dis(gen) * (M / 2 - min_energy);
+        G4double x = min_energy + dis(gen) * (M / 2 - min_energy); //DM_mass;
         G4double y = min_energy + dis(gen) * (M / 2 - min_energy);
         E3 = M - x - y;
         if (E3 > min_energy && E3 < M / 2 && x + y < M) {
