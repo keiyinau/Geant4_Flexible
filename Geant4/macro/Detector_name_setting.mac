@@ -1,0 +1,5 @@
+/MyDetector/setFileName Coordinate_file_{filename}
+/MyDetector/setDetectorCoordinate setDetectorCoordinate{filename}
+
+
+/run/beamOn 50000
