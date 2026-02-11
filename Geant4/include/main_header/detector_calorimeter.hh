@@ -35,6 +35,7 @@ public:
 	};
 	struct LoadData{
 		G4int eventID;
+		G4String detectorName;
 		G4String SiPMName;
 		G4double Area;
 		G4int RealPhotonCount;
@@ -48,7 +49,7 @@ public:
 	sipm::SiPMProperties myProperties ;
 	sipm::SiPMSensor mySensor;
 	sipm::SiPMAnalogSignal mySignal;
-	void PlotWaveform(const sipm::SiPMAnalogSignal& signal);
+	void PlotWaveform(const sipm::SiPMAnalogSignal& signal,  const G4String& det_name);
 	double signalLength,SampleTime,DarkCountRate,RiseTime,FallTimeFast,RecoveryTime,Dcr,Xt,Ap,pitch,size,gain;
 	int nCells;
 	double gatewidth, threshold;
@@ -58,8 +59,8 @@ public:
 
 
 private:
-	std::vector<double> photonTimes; // Map of TrackID to scintillator count
-	std::vector<double> photonWavelengths; // Map of TrackID to hit time
+	std::map<G4String, std::vector<double>> photonTimes_per_detector; // Map of TrackID to scintillator count
+	std::map<G4String, std::vector<double>> photonWavelengths_per_detector; // Map of TrackID to hit time
 	virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 	G4int fHitsCollectionID; // Declare fHitsCollectionID
 };

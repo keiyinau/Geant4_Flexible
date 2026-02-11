@@ -139,7 +139,7 @@ private:
 
 	//Setting
 	G4String coordinate_name;
-
+	G4bool logicOptical;
 
 };
 

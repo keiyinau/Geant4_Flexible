@@ -2,17 +2,17 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-
+    logicOptical=true;
 	DefineMaterials();
 
 
     coordinate_name="coordinates.txt";
 
 	isDetector_Shell = false;
-	isSource=true;
+	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
-    isLiquid=true;
+    isLiquid=false;
     is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Vacuum; //Vacuum;
@@ -260,7 +260,7 @@ void MyDetectorConstruction::DefineMaterials() {
     G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
     mptAir->AddProperty("RINDEX", "Air");
     mptAir->AddProperty("ABSLENGTH", Air_absorption_Energy, Air_absorption_Index,Air_absorption_Index.size());
-    //Air->SetMaterialPropertiesTable(mptAir);
+    
 
     // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
@@ -281,7 +281,6 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_Energy_cm_txt("AbsorptionLength_Water.txt", Water_absorption_Energy, Water_absorption_Index);
     mptWater->AddProperty("RINDEX", "Water");
     mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index,Water_absorption_Index.size());
-    //matWater->SetMaterialPropertiesTable(mptWater);
     // End water
 
 
@@ -312,7 +311,6 @@ void MyDetectorConstruction::DefineMaterials() {
     mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
     mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
     mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
-    //matLSO->SetMaterialPropertiesTable(mptLSO);
     // End LSO
 
     // Define elements (use NIST for common ones)
@@ -332,24 +330,21 @@ void MyDetectorConstruction::DefineMaterials() {
     matLYSO->AddElement(elY, 0.0403);   // ~4.03%
     matLYSO->AddElement(elSi, 0.0637);  // ~6.37%
     matLYSO->AddElement(elO, 0.1814);   // ~18.14%
-    // If including Ce doping (e.g., 0.2 mol% substitution, recalculate fractions slightly)
-    //matLYSO->AddElement(elCe, 0.002);  // Some small fraction
-    //// To enable scintillation (Ce doping effect), set material properties
-    //G4MaterialPropertiesTable* mpt = new G4MaterialPropertiesTable();
-    //// Scintillation yield (photons/MeV; typical value for LYSO(Ce))
-    //mpt->AddConstProperty("SCINTILLATIONYIELD", 25000. / MeV);  // ~25-33 photons/keV
-    //// Resolution scale (for energy resolution fluctuations)
-    //mpt->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    //// Decay time constant (fast component)
-    //mpt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
-    //G4double rIndexEnergy[] = {1.0*eV, 3.5*eV};
-    //G4double rIndex[] = {1.81, 1.81};  // Typical value for LYSO
-    //mpt->AddProperty("RINDEX", rIndexEnergy, rIndex, 2);
-    //// Absorption length (example)
-    //G4double absEnergy[] = {1.0*eV, 3.5*eV};
-    //G4double absLength[] = {100.*cm, 100.*cm};  // Adjust based on purity
-    //mpt->AddProperty("ABSLENGTH", absEnergy, absLength, 2);
-    //LYSO->SetMaterialPropertiesTable(mpt);
+    G4MaterialPropertiesTable* mptLYSO = new G4MaterialPropertiesTable();
+
+    G4double rIndexEnergy[] = {1.0*eV, 3.5*eV};
+    G4double rIndex[] = {1.81, 1.81};  // Typical value for LYSO
+    G4double absEnergy[] = {1.0*eV, 3.5*eV};
+    G4double absLength[] = {100.*cm, 100.*cm};
+    G4double LYSO_emission_Energy[] = {1.0*eV, 3.5*eV};
+    G4double LYSO_emission_fractions[] = {0.5, 0.5};  // Adjust based on purity
+    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", 25./keV);  // ~25-33 photons/keV
+    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
+    mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,2);
+    mptLYSO->AddProperty("RINDEX", rIndexEnergy, rIndex, 2);
+    mptLYSO->AddProperty("ABSLENGTH", absEnergy, absLength, 2);
+    matLYSO->SetMaterialPropertiesTable(mptLYSO);
 
 
 	// CsI
@@ -374,7 +369,6 @@ void MyDetectorConstruction::DefineMaterials() {
     mptCsI->AddProperty("ABSLENGTH", CsI_absorption_Energy, CsI_absorption_Index,CsI_absorption_Index.size());
 	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 3./keV);
 	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
-	//matCsI->SetMaterialPropertiesTable(mptCsI);
 	// End CsI
 
 	// Define Aluminium for wrapping and protection
@@ -385,14 +379,12 @@ void MyDetectorConstruction::DefineMaterials() {
     G4double RIndex_al[nEntries] = {1.37, 0.44}; // Example refractive index values
     // Add the properties to the table
     mptAl->AddProperty("RINDEX", PhotonEnergy, RIndex_al, nEntries);
-    //matAl->SetMaterialPropertiesTable(mptAl);
     // End Aluminium
 
 	// Define Acrylic
 	matAcrylic = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
 	G4MaterialPropertiesTable* mptAcrylic = new G4MaterialPropertiesTable();
     mptAcrylic->AddProperty("RINDEX", "PMMA");
-	//matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
 	// End Acrylic
 
 
@@ -406,7 +398,6 @@ void MyDetectorConstruction::DefineMaterials() {
 	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
 	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
     mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
-    //matTeflon->SetMaterialPropertiesTable(mptTeflon);
     // End Tapflon
 
 	// Define SiPM
@@ -422,7 +413,6 @@ void MyDetectorConstruction::DefineMaterials() {
 	mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
     mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
     mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
-	//matSi->SetMaterialPropertiesTable(mptSi);
 
     // CsI-Teflon (reflective surface)
     surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
@@ -444,7 +434,17 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_AlFoil->SetModel(unified);
     surfCsI_AlFoil->SetFinish(ground);
     //End surface
-
+    if(logicOptical){
+        Air->SetMaterialPropertiesTable(mptAir);
+        matWater->SetMaterialPropertiesTable(mptWater);
+        matLSO->SetMaterialPropertiesTable(mptLSO);
+        matLYSO->SetMaterialPropertiesTable(mptLYSO);
+        matSi->SetMaterialPropertiesTable(mptSi);
+        matCsI->SetMaterialPropertiesTable(mptCsI);
+        matAl->SetMaterialPropertiesTable(mptAl);
+        matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
+        matTeflon->SetMaterialPropertiesTable(mptTeflon);
+    }
 
 
     std::cout<<"==========================="<<std::endl;
@@ -797,7 +797,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
         logicSiPM.push_back(logicCalorimeter);
-        //physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
+        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
