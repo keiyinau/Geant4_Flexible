@@ -9,13 +9,13 @@ MyDetectorConstruction::MyDetectorConstruction() {
     coordinate_name="coordinates.txt";
 
 	isDetector_Shell = false;
-	isSource=false;
+	isSource=true;
 	isTPC = false;
 	isCalorimeter = true;
     isLiquid=false;
     is3DCalorimeter=true;
 	// Set the material for each logical volume
-	matWorld = Vacuum; //Vacuum;
+	matWorld = Air; //Vacuum;
     matLiquid=matWater;
     matContainer=matAcrylic;
     matScintillator=matLYSO;
@@ -248,7 +248,42 @@ bool MyDetectorConstruction::readAndProcessData_Energy_cm_txt(const std::string&
 
     return true;
 }
+bool MyDetectorConstruction::readAndProcessData_Nonproportionality(const std::string& filename, 
+                                               std::vector<G4double>& emission_Energy, 
+                                               std::vector<G4double>& emission_fractions) {
+   std::ifstream datafile(filename);
+    if (!datafile) {
+        std::cerr << "Error: Cannot open file " << filename << "\n";
+        return false;
+    }
 
+    std::vector<std::pair<G4double, G4double>> paired;
+    std::string line;
+    while (std::getline(datafile, line)) {
+        std::istringstream iss(line);
+        G4double wlen, fraction;
+        if (iss >> wlen >> fraction) { // Space-separated values
+            if (wlen <= 0) continue; // Skip invalid wavelengths
+            paired.emplace_back(wlen, fraction); // Energy (eV), fraction
+        }
+    }
+
+    if (paired.empty()) {
+        std::cerr << "Error: No valid data read from " << filename << "\n";
+        return false;
+    }
+
+    std::sort(paired.begin(), paired.end()); // Sort by energy (increasing)
+
+    emission_Energy.clear();
+    emission_fractions.clear();
+    for (const auto& p : paired) {
+        emission_Energy.push_back(p.first*keV);
+        emission_fractions.push_back(p.second);
+    }
+
+    return true;
+}
 G4String MyDetectorConstruction::file_name = "";
 
 void MyDetectorConstruction::DefineMaterials() {
@@ -331,19 +366,26 @@ void MyDetectorConstruction::DefineMaterials() {
     matLYSO->AddElement(elSi, 0.0637);  // ~6.37%
     matLYSO->AddElement(elO, 0.1814);   // ~18.14%
     G4MaterialPropertiesTable* mptLYSO = new G4MaterialPropertiesTable();
-
-    G4double rIndexEnergy[] = {1.0*eV, 3.5*eV};
-    G4double rIndex[] = {1.81, 1.81};  // Typical value for LYSO
-    G4double absEnergy[] = {1.0*eV, 3.5*eV};
-    G4double absLength[] = {100.*cm, 100.*cm};
-    G4double LYSO_emission_Energy[] = {1.0*eV, 3.5*eV};
-    G4double LYSO_emission_fractions[] = {0.5, 0.5};  // Adjust based on purity
-    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", 25./keV);  // ~25-33 photons/keV
+    std::vector<G4double> LYSO_emission_Energy, LYSO_emission_fractions;
+    readAndProcessData_Energy("EmissionSpectrum_LYSO_Ce.csv", LYSO_emission_Energy, LYSO_emission_fractions);
+    std::vector<G4double> LYSO_refraction_Energy, LYSO_refraction_Index;
+    readAndProcessData_txt("RefractiveIndex_LYSO_Ce.txt", LYSO_refraction_Energy, LYSO_refraction_Index);
+    std::vector<G4double> LYSO_absorption_Energy, LYSO_absorption_Index;
+    readAndProcessData_Energy_cm_txt("AbsorptionLength_LYSO_Ce.txt", LYSO_absorption_Energy, LYSO_absorption_Index);
+    std::vector<G4double> LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative;
+    readAndProcessData_Nonproportionality("Nonproportionality_LYSO_Ce_Relative.txt", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative);
+    G4double baseYield=33./keV;
+    std::vector<G4double> LYSO_LY_Nonproportion_fractions(LYSO_LY_Nonproportion_relative.size());
+    for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
+        LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
+    }
+    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+    mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     mptLYSO->AddConstProperty("RESOLUTIONSCALE", 1.0);
     mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
-    mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,2);
-    mptLYSO->AddProperty("RINDEX", rIndexEnergy, rIndex, 2);
-    mptLYSO->AddProperty("ABSLENGTH", absEnergy, absLength, 2);
+    mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
+    mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
+    mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
     matLYSO->SetMaterialPropertiesTable(mptLYSO);
 
 
@@ -374,10 +416,9 @@ void MyDetectorConstruction::DefineMaterials() {
 	// Define Aluminium for wrapping and protection
 	matAl = nist->FindOrBuildMaterial("G4_Al");
 	G4MaterialPropertiesTable* mptAl = new G4MaterialPropertiesTable();
-    const G4int nEntries = 2; // Example with two points
-    G4double PhotonEnergy[nEntries] = {1.5 * eV, 3.0 * eV}; // Example energy range
-    G4double RIndex_al[nEntries] = {1.37, 0.44}; // Example refractive index values
-    // Add the properties to the table
+    const G4int nEntries = 2; 
+    G4double PhotonEnergy[nEntries] = {1.5 * eV, 3.0 * eV}; 
+    G4double RIndex_al[nEntries] = {1.37, 0.44}; 
     mptAl->AddProperty("RINDEX", PhotonEnergy, RIndex_al, nEntries);
     // End Aluminium
 
@@ -448,12 +489,12 @@ void MyDetectorConstruction::DefineMaterials() {
 
 
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of CsI"<<std::endl;
-    mptCsI->DumpTable();
+    std::cout<<"Printing the material properties of LYSO"<<std::endl;
+    mptLYSO->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of Al"<<std::endl;
-    mptAl->DumpTable();
+    std::cout<<"Printing the material properties of Teflon"<<std::endl;
+    mptTeflon->DumpTable();
     std::cout<<"==========================="<<std::endl;
     std::cout<<"Printing the material properties of Si"<<std::endl;
     mptSi->DumpTable();

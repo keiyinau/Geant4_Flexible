@@ -61,7 +61,9 @@ public:
 	bool readAndProcessData_Energy_cm_txt(const std::string& filename, 
 		   std::vector<double>& emission_Energy, 
 		   std::vector<double>& emission_fractions);
-	
+	bool readAndProcessData_Nonproportionality(const std::string& filename,
+		   std::vector<double>& emission_Energy,
+		   std::vector<double>& emission_fractions);
 	// Ideal Detector
 	void ConstructShell_Detector();
 	// End Ideal Detector

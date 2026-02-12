@@ -29,7 +29,7 @@ MyPrimaryGenerator::MyPrimaryGenerator(){
 	//posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	posParticleGun = G4ThreeVector(0.*cm, 0.*cm, 0.*cm);
 	momDirectionParticleGun = G4ThreeVector(0., 0., 1.);
-	kinParticleGun = 100*keV; 
+	kinParticleGun = 662*keV; 
 	chargeParticleGun = 0.*eplus;
 	//if (pdParticleGun == fPositron){
 	//	G4double maxEnergy = 600. * keV;  // Na-22 beta+ endpoint
