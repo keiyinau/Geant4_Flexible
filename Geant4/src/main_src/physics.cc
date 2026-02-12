@@ -70,9 +70,16 @@ void MyPhysicsList::ConstructProcess()
 	// Required Physics for this Project
 	G4RadioactiveDecayPhysics pRadioactiveDecayPhysics;		// RadioactiveDecayPhysics
 	pRadioactiveDecayPhysics.ConstructProcess();
-	MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics
-	pMyOpticalPhysics.GetProcess();
-	
+	//MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics
+	//pMyOpticalPhysics.GetProcess();
+	G4OpticalParameters* opParams = G4OpticalParameters::Instance();
+	opParams->SetScintByParticleType(true);  // Enable particle-type dependent yields (e.g., for ELECTRONSCINTILLATIONYIELD)
+	MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics (flag now set in constructor)
+    pMyOpticalPhysics.GetProcess();
+
+
+
+
 	// Assign allowed process for positron
 	G4ProcessManager *positronManager = G4Positron::Positron()->GetProcessManager();
 	//positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics

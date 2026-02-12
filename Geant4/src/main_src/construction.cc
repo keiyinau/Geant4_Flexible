@@ -379,6 +379,9 @@ void MyDetectorConstruction::DefineMaterials() {
     for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
     }
+    for(size_t i=0; i<LYSO_LY_Nonproportion_Energy.size(); i++){
+        G4cout << "Non-prop E: " << LYSO_LY_Nonproportion_Energy[i]/keV << " keV, relative: " << LYSO_LY_Nonproportion_relative[i] << G4endl;
+    }
     mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
     mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     mptLYSO->AddConstProperty("RESOLUTIONSCALE", 1.0);

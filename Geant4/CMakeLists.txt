@@ -27,6 +27,7 @@ file(GLOB DATA_FILES
 	"src/DataFile/Water/*",
 	"src/DataFile/Air/*",
 	"src/DataFile/crystal_coordinate/*.txt",
+	"src/DataFile/LYSO/*",
 
 )
 file(GLOB 3D_MODELS
