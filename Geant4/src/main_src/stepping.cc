@@ -45,6 +45,9 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         }
     }
 
+    //if(step->GetTotalEnergyDeposit()>0 && detectorName.find("calor_unit_")!=std::string::npos){
+    //    G4cout<<"Energy deposit: "<<step->GetTotalEnergyDeposit()/keV<<" keV by "<<particleName<<" at time "<<preStepPoint->GetGlobalTime()/ns<<" ns"<<G4endl;
+    //}
     if (stepID == 1 && particleName == "e+" && stepID == 1) {
         G4ThreeVector mom = preStepPoint->GetMomentumDirection();  // Unit vector
         G4double vc = preStepPoint->GetBeta();  // v/c = beta

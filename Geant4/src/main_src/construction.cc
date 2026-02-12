@@ -379,10 +379,10 @@ void MyDetectorConstruction::DefineMaterials() {
     for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
     }
-    for(size_t i=0; i<LYSO_LY_Nonproportion_Energy.size(); i++){
-        G4cout << "Non-prop E: " << LYSO_LY_Nonproportion_Energy[i]/keV << " keV, relative: " << LYSO_LY_Nonproportion_relative[i] << G4endl;
-    }
-    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+
+    //mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+    
+    //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", {200.*keV,300.*keV}, {10./keV,20./keV}, 2);
     mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     mptLYSO->AddConstProperty("RESOLUTIONSCALE", 1.0);
     mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
@@ -390,7 +390,7 @@ void MyDetectorConstruction::DefineMaterials() {
     mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
     matLYSO->SetMaterialPropertiesTable(mptLYSO);
-
+    //matLYSO->GetIonisation()->SetBirksConstant(0.0 * mm/MeV);
 
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
