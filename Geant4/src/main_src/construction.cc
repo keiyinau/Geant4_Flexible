@@ -9,7 +9,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
     coordinate_name="coordinates.txt";
 
 	isDetector_Shell = false;
-	isSource=true;
+	isSource=false;
 	isTPC = false;
 	isCalorimeter = true;
     isLiquid=false;
@@ -278,7 +278,7 @@ bool MyDetectorConstruction::readAndProcessData_Nonproportionality(const std::st
     emission_Energy.clear();
     emission_fractions.clear();
     for (const auto& p : paired) {
-        emission_Energy.push_back(p.first*keV);
+        emission_Energy.push_back(p.first*1e-3);
         emission_fractions.push_back(p.second);
     }
 
@@ -380,17 +380,20 @@ void MyDetectorConstruction::DefineMaterials() {
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
     }
 
-    //mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
     
-    //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", {200.*keV,300.*keV}, {10./keV,20./keV}, 2);
-    mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
-    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
+    //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
+    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0.0);
     mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
     mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
     mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
+    //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
+    //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
+    //mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
+    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV);
     matLYSO->SetMaterialPropertiesTable(mptLYSO);
-    //matLYSO->GetIonisation()->SetBirksConstant(0.0 * mm/MeV);
 
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
@@ -828,7 +831,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
         auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(1.0);
+        scintillator->SetScale(20.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
@@ -836,7 +839,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
         std::string name_SiPM = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(1.0);
+        scintillatorDet->SetScale(20.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
@@ -845,7 +848,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(1.0);
+        scintillatorwrapping->SetScale(20.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);

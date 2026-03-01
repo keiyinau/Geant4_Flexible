@@ -1,0 +1,8 @@
+/MyDetector/setFileName Energy_{energyList}
+
+/gun/particle gamma
+/gun/energy {energyList} keV
+
+/run/beamOn 1000
+
+/control/shell echo "=== FINISHED ENERGY {energyList} keV ==="

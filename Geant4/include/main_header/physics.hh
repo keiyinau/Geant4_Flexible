@@ -39,7 +39,9 @@
 
 #include "G4OpticalParameters.hh"
 
-
+#include "BirksOnsagerSaturation.hh"
+#include "G4Scintillation.hh"  
+#include "G4Threading.hh"
 // G4OpticalPhysics::ConstructProcess() is protected, so using MyOpticalPhysics to inherit from G4OpticalPhysics to call the function ConstructProcess().
 class MyOpticalPhysics : public G4OpticalPhysics
 {

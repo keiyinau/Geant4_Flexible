@@ -1,0 +1,64 @@
+/run/numberOfThreads 10
+/run/initialize
+
+# === Exactly the 12 energies from the paper plot (log scale) ===
+/MyDetector/setFileName Energy_10
+/gun/particle gamma
+/gun/energy 10 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 10 keV ==="
+
+/MyDetector/setFileName Energy_20
+/gun/energy 20 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 20 keV ==="
+
+/MyDetector/setFileName Energy_30
+/gun/energy 30 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 30 keV ==="
+
+/MyDetector/setFileName Energy_50
+/gun/energy 50 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 50 keV ==="
+
+/MyDetector/setFileName Energy_100
+/gun/energy 100 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 100 keV ==="
+
+/MyDetector/setFileName Energy_200
+/gun/energy 200 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 200 keV ==="
+
+/MyDetector/setFileName Energy_300
+/gun/energy 300 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 300 keV ==="
+
+/MyDetector/setFileName Energy_500
+/gun/energy 500 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 500 keV ==="
+
+/MyDetector/setFileName Energy_662
+/gun/energy 662 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 662 keV ==="
+
+/MyDetector/setFileName Energy_800
+/gun/energy 800 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 800 keV ==="
+
+/MyDetector/setFileName Energy_1000
+/gun/energy 1000 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 1000 keV ==="
+
+/MyDetector/setFileName Energy_1300
+/gun/energy 1300 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 1300 keV ==="
