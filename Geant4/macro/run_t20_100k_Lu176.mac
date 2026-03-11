@@ -5,8 +5,8 @@
 /control/verbose 0
 
 # Set the active region of Co-60
-/control/execute region_setup_Na22.mac
-/MyDetector/setFileName Na22
+/control/execute region_setup_Lu176.mac
+/MyDetector/setFileName Lu176
 
 # Run commands
 /run/beamOn 10000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806

@@ -1,9 +1,14 @@
 /run/numberOfThreads 10
 /run/initialize
-
+/process/inactivate Cerenkov
+# === Exactly the 12 energies from the paper plot (log scale) ===
+/MyDetector/setFileName Energy_1
+/gun/particle gamma
+/gun/energy 1 keV
+/run/beamOn 1000
+/control/shell echo "=== FINISHED ENERGY 10 keV ==="
 # === Exactly the 12 energies from the paper plot (log scale) ===
 /MyDetector/setFileName Energy_10
-/gun/particle gamma
 /gun/energy 10 keV
 /run/beamOn 1000
 /control/shell echo "=== FINISHED ENERGY 10 keV ==="

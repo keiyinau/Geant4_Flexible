@@ -3,9 +3,10 @@
 
 # Enable command echo
 /control/verbose 0
+/process/inactivate Cerenkov
 
 # Set the active region of Co-60
 /control/execute region_setup_Co60.mac
-
+/MyDetector/setFileName Co60
 # Run commands
-/run/beamOn 100000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806
+/run/beamOn 10000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806

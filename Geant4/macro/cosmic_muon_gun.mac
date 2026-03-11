@@ -1,0 +1,22 @@
+/run/numberOfThreads 20
+/run/initialize
+/control/verbose 0
+
+# ==================== PARTICLE GUN SETTINGS ====================
+/gun/particle mu+
+/gun/energy 4 GeV                  # ← mono energy (change as needed)
+/gun/position 0. 0. 0. cm          # default point source (same as GPS default)
+/gun/direction 0. 0. -1.           # along -z (common for vertical muons; change to 0 0 1 if needed)
+/gun/time 0 ns
+
+# Optional: if you want to restore the old plane source + angular cut you had commented
+#/gun/pos/type Plane
+#/gun/pos/shape Square
+#/gun/pos/centre 0. 10. 0. cm
+#/gun/pos/halfx 2.5 cm
+#/gun/pos/halfy 25 cm
+#/gun/ang/type iso
+#/gun/ang/minphi 90 deg
+#/gun/ang/maxphi 180 deg
+/gps/direction 0 0 1
+/run/beamOn 100000
