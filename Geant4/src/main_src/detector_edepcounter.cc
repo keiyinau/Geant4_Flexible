@@ -47,8 +47,11 @@ G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
         if (it == first_time_per_detector.end() || time < it->second) {
             first_time_per_detector[detector_Name] = time;
         }
+
     }
-    // Optionally call ReadOut(aStep, track) for debugging
+    //if(particle=="electron" && track->GetCurrentStepNumber()==1){
+    //    track->SetTrackStatus(fStopAndKill);
+    //}
     return true;
 }
 

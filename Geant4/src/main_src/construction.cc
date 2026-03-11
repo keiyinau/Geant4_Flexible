@@ -374,7 +374,7 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LYSO_Ce.txt", LYSO_absorption_Energy, LYSO_absorption_Index);
     std::vector<G4double> LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative;
     readAndProcessData_Nonproportionality("Nonproportionality_LYSO_Ce_Relative.txt", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative);
-    G4double baseYield=33./keV;
+    G4double baseYield=33.0000/keV;
     std::vector<G4double> LYSO_LY_Nonproportion_fractions(LYSO_LY_Nonproportion_relative.size());
     for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
@@ -392,8 +392,8 @@ void MyDetectorConstruction::DefineMaterials() {
     //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
     //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
     //mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
-    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV);
-    matLYSO->SetMaterialPropertiesTable(mptLYSO);
+    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
+    //matLYSO->GetIonisation()->SetBirksConstant(0.0028 * cm/MeV);
 
 	// CsI
 	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
@@ -528,9 +528,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 0.22*m;
-	G4double yWorld = 0.22*m;
-	G4double zWorld = 1*m;
+	G4double xWorld = 0.1*m;
+	G4double yWorld = 0.1*m;
+	G4double zWorld = 0.1*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -831,7 +831,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
         std::string name_scint = Scintillator_name_list[i];
         auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(20.0);
+        scintillator->SetScale(1.0);
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
@@ -839,7 +839,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
         std::string name_SiPM = SiPM_name_list[i];
         auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(20.0);
+        scintillatorDet->SetScale(1.0);
         auto ScintillatorDet = scintillatorDet->GetSolid();
         G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
 		logicCalorimeter=logicSiPM_pre;
@@ -848,7 +848,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
         std::string name_Wrapping = Tapflon_name_list[i];
         auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(20.0);
+        scintillatorwrapping->SetScale(1.0);
         auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
         G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
         logicTapflon.push_back(logicTapflon_pre);

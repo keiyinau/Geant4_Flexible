@@ -48,10 +48,10 @@ void MyPhysicsList::ConstructProcess()
 	G4int ver = 1;
 	//G4EmStandardPhysics pEM_Opt0(ver);						// EmPhysics_Opt0, including ParaPositronium, OrthoPositronium
 	//pEM_Opt0.ConstructProcess();
-	G4EmLivermorePolarizedPhysics pEM_Pol(ver);
-	pEM_Pol.ConstructProcess();
-	//G4EmLivermorePhysics pEM_NPol(ver);
-	//pEM_NPol.ConstructProcess();
+	//G4EmLivermorePolarizedPhysics pEM_Pol(ver);
+	//pEM_Pol.ConstructProcess();
+	G4EmLivermorePhysics pEM_NPol(ver);
+	pEM_NPol.ConstructProcess();
 	G4EmExtraPhysics pEmExtraPhysics(ver);					// Synchroton Radiation & GN Physics
 	pEmExtraPhysics.ConstructProcess();
 	G4DecayPhysics pDecayPhysics(ver);						// Decays, including ParaPositronium, OrthoPositronium
@@ -118,7 +118,7 @@ void MyPhysicsList::ConstructProcess()
 
 void MyPhysicsList::SetCuts()
 {
-	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1e-1*eV, 100.*GeV);
+	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(1*eV, 100.*GeV);
 	
 	//SetCutsWithDefault();		// default cut value  (1.0mm)
 }

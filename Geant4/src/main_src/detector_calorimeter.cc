@@ -136,7 +136,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 
             // Ensure gate fits in signal length
             if (gateEnd <= signalLength) {
-                G4double integral = signal.integral(gateStart, gateEnd, 0.0);  // No threshold for integration
+                G4double integral = signal.peak(gateStart, gateEnd, 0.0);  // No threshold for integration
 
                 if (integral < 1e10) {  // Removed >0 to save even if integral==0
                     data.Area = integral;

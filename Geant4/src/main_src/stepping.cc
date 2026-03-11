@@ -11,7 +11,7 @@ MySteppingAction::~MySteppingAction()
 void MySteppingAction::UserSteppingAction(const G4Step* step)
 {
     
-
+    
     G4Track* track = step->GetTrack();
     G4String particleName = track->GetDefinition()->GetParticleName();
     G4int trackID = track->GetTrackID();
