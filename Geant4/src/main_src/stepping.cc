@@ -39,7 +39,7 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
     }
 
     if (stepID == 1 && creator_process_name == "RadioactiveDecay") {
-        if (particleName == "nu_e" || particleName == "e+") { 
+        if (particleName == "nu_e"|| particleName=="anti_nu_e") { 
             G4double decayTime = preStepPoint->GetGlobalTime();
             fEventAction->SetPrimaryDecayTime(decayTime);
         }

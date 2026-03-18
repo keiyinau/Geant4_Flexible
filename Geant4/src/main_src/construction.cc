@@ -33,8 +33,8 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	disk_height_half = 0.00508*mm;			//The activity is placed between two layers of 0.00508*mm Ti foil which is 0.0102*mm in total
 	bare_source_radius = disk_radius;
 	bare_source_height_half = 0.0001*mm;	//The thickness of bare source is not provide so this is a made up value
-    container_radius = 2*cm;				//All variables of container are made up.
-	container_height_half = 2/2*cm;
+    container_radius = 1*cm;				//All variables of container are made up.
+	container_height_half = 0.5/2*cm;
 	container_thickness = 1.*mm;
 	d_pos_z = 0.02*mm;						//Distance between two nearest plane detectors, spacing of two plane detectors
 
@@ -349,13 +349,13 @@ void MyDetectorConstruction::DefineMaterials() {
     // End LSO
 
     // Define elements (use NIST for common ones)
-    G4Element* elLu = new G4Element("Lutetium", "Lu", 71., 174.967 * g/mole);
-    G4Element* elY  = new G4Element("Yttrium", "Y", 39., 88.906 * g/mole);
+    G4Element* elLu = nist->FindOrBuildElement("Lu");
+    G4Element* elY  = nist->FindOrBuildElement("Y");
     G4Element* elSi = nist->FindOrBuildElement("Si");
     G4Element* elO  = nist->FindOrBuildElement("O");
 
     // Optionally include Ce for doping (trace amount; adjust fraction if needed)
-    G4Element* elCe = new G4Element("Cerium", "Ce", 58., 140.116 * g/mole);
+    G4Element* elCe =  nist->FindOrBuildElement("Ce");
 
     // Define the material with density ~7.1 g/cm³ (common value for LYSO(Ce))
     matLYSO = new G4Material("LYSO", 7.1 * g/cm3, 4);  // 4 components (or 5 if including Ce)
@@ -374,7 +374,7 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LYSO_Ce.txt", LYSO_absorption_Energy, LYSO_absorption_Index);
     std::vector<G4double> LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative;
     readAndProcessData_Nonproportionality("Nonproportionality_LYSO_Ce_Relative.txt", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative);
-    G4double baseYield=33.0000/keV;
+    G4double baseYield=26.0000/keV; //Previous 33 keV
     std::vector<G4double> LYSO_LY_Nonproportion_fractions(LYSO_LY_Nonproportion_relative.size());
     for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
@@ -384,15 +384,15 @@ void MyDetectorConstruction::DefineMaterials() {
     
     //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
-    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0.0);
+    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
     mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
     mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
     mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
-    //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
-    //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
-    //mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
-    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
+    mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
+    mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
+    mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
+    matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
     //matLYSO->GetIonisation()->SetBirksConstant(0.0028 * cm/MeV);
 
 	// CsI
@@ -442,7 +442,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	readAndProcessData_Energy_txt("teflon_Reflectance-modified.txt", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
     std::vector<G4double> tapflon_refraction_Energy, tapflon_refraction_Index;
 	readAndProcessData_Energy_txt("Refraction_Index_Teflon_Gray.txt", tapflon_refraction_Energy, tapflon_refraction_Index);
-	G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
+	mptTeflon = new G4MaterialPropertiesTable();
 	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
     mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
     // End Tapflon
@@ -463,9 +463,13 @@ void MyDetectorConstruction::DefineMaterials() {
 
     // CsI-Teflon (reflective surface)
     surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    surfCsI_Teflon->SetType(dielectric_metal); // Teflon as reflective surface
+    //surfCsI_Teflon->SetType(dielectric_dielectric); // Teflon as reflective surface, dielectric_metal
+    //surfCsI_Teflon->SetModel(unified);
+    //surfCsI_Teflon->SetFinish(polished);
+    surfCsI_Teflon->SetType(dielectric_dielectric);
     surfCsI_Teflon->SetModel(unified);
-    surfCsI_Teflon->SetFinish(polished);
+    surfCsI_Teflon->SetFinish(ground); // specular->polishedteflonair, diffusive->groundteflonair
+    surfCsI_Teflon->SetSigmaAlpha(0.2);
     //End surface
 
     // CsI-SiPM (dielectric-dielectric interface)
@@ -480,10 +484,17 @@ void MyDetectorConstruction::DefineMaterials() {
     surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
     surfCsI_AlFoil->SetModel(unified);
     surfCsI_AlFoil->SetFinish(ground);
+
+
+    G4OpticalSurface* surfCrystalGrease = new G4OpticalSurface("CrystalGrease");
+    surfCrystalGrease->SetType(dielectric_dielectric);
+    surfCrystalGrease->SetFinish(polished);
+    surfCrystalGrease->SetModel(unified);
+    surfCrystalGrease->SetSigmaAlpha(0.05*degree);
     //End surface
     if(logicOptical){
         Air->SetMaterialPropertiesTable(mptAir);
-        matWater->SetMaterialPropertiesTable(mptWater);
+        //matWater->SetMaterialPropertiesTable(mptWater);
         matLSO->SetMaterialPropertiesTable(mptLSO);
         matLYSO->SetMaterialPropertiesTable(mptLYSO);
         matSi->SetMaterialPropertiesTable(mptSi);
@@ -528,9 +539,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 0.1*m;
-	G4double yWorld = 0.1*m;
-	G4double zWorld = 0.1*m;
+	G4double xWorld = 0.05*m;
+	G4double yWorld = 0.05*m;
+	G4double zWorld = 0.05*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -612,206 +623,67 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     rot->rotateX(angle);
 
     // --------------------------------------------------------------
-    // 2. Name lists
+    // 2. LYSO crystal 2×2×20 mm (half-sizes: 1×1×10 mm)
     // --------------------------------------------------------------
-    const std::string Scintillator_name_list[] = {"CsI"};
-    const std::string SiPM_name_list[]       = {"SiPM0"};//,"SiPM1"};//,"SiPM2","SiPM3"};
-    const std::string Tapflon_name_list[]    = {"AlFoil"};
-    const std::string Protection_name_list[] = {};//{"Bottom","Left","Right","Top"};
-    const std::string Acrylic_name_list[]    = {"Acrylic"};
+    G4Box* crystalSolid = new G4Box("LYSO_solid", 1.*mm, 1.*mm, 10.*mm);
+    G4LogicalVolume* logicCrystal = new G4LogicalVolume(crystalSolid, matLYSO,
+                                                        "LYSO" + name + "Logic");
+    logicScintillators.push_back(logicCrystal);
 
-    const int nScint = sizeof(Scintillator_name_list)/sizeof(std::string);
-    const int nSiPM  = sizeof(SiPM_name_list)/sizeof(std::string);
-    const int nFoil  = sizeof(Tapflon_name_list)/sizeof(std::string);
-    const int nProt  = sizeof(Protection_name_list)/sizeof(std::string);
-    const int nAcry  = sizeof(Acrylic_name_list)/sizeof(std::string);
-
-    std::vector<G4VPhysicalVolume*> physScint(nScint), physFoil(nFoil),
-                                    physSiPM(nSiPM),   physProt(nProt),
-                                    physAcry(nAcry);
+    G4VPhysicalVolume* physCrystal = new G4PVPlacement(rot, translation, logicCrystal,
+                                                       "LYSO" + name, logicWorld, false, 0, true);
 
     // --------------------------------------------------------------
-    // 3. CsI crystal (5×5×50 cm³)
+    // 3. Teflon wrapping (5 faces, open at SiPM end)
     // --------------------------------------------------------------
-    for (int i=0;i<nScint;i++) {
-        G4Box* box = new G4Box(Scintillator_name_list[i]+"_solid",
-                               2.5*cm, 2.5*cm, 25.0*cm);               // half-lengths
-        G4LogicalVolume* log = new G4LogicalVolume(box, matScintillator,
-                               Scintillator_name_list[i]+name+"Logic");
-        logicScintillators.push_back(log);
-        physScint[i] = new G4PVPlacement(rot, translation, log,
-                       Scintillator_name_list[i]+name, logicWorld, false, i, true);
-    }
+    const G4double foilThick = 0.1*mm;
+    G4Box* outer = new G4Box("outerFoil", 1.*mm + foilThick, 1.*mm + foilThick, 10.*mm);
+    G4Box* inner = new G4Box("innerFoil", 1.*mm, 1.*mm, 10.*mm - 0.1*mm);
+    G4ThreeVector shift(0, 0, +0.1*mm);   // open at -z (SiPM side)
+    G4SubtractionSolid* foilSolid = new G4SubtractionSolid("Teflon_solid", outer, inner, nullptr, shift);
 
-    // --------------------------------------------------------------
-    // 4. Al foil – open at the SiPM face (z = -25 cm)
-    // --------------------------------------------------------------
-    const G4double foilThick = 0.0016*cm;               // 0.016 mm
-    for (int i=0;i<nFoil;i++) {
-        G4Box* outer = new G4Box("outerFoil",
-                                 2.5*cm+foilThick, 2.5*cm+foilThick, 25.0*cm);
-        G4Box* inner = new G4Box("innerFoil",
-                                 2.5*cm, 2.5*cm, 25.0*cm-0.1*cm);   // shortened 1 mm
-        G4ThreeVector shift(0,0,+0.1*cm);                  // open at -z
-        G4SubtractionSolid* foil = new G4SubtractionSolid(
-                Tapflon_name_list[i]+"_solid", outer, inner, nullptr, shift);
+    G4LogicalVolume* logicTeflon = new G4LogicalVolume(foilSolid, matWrapping,
+                                                       "Teflon" + name + "Logic");
+    logicTapflon.push_back(logicTeflon);
 
-        G4LogicalVolume* log = new G4LogicalVolume(foil, matWrapping,
-                               Tapflon_name_list[i]+name+"Logic");
-        logicTapflon.push_back(log);
-        physFoil[i] = new G4PVPlacement(rot, translation, log,
-                       Tapflon_name_list[i]+name, logicWorld, false, i, true);
-    }
+    G4VPhysicalVolume* physTeflon = new G4PVPlacement(rot, translation, logicTeflon,
+                                                      "Teflon" + name, logicWorld, false, 0, true);
 
     // --------------------------------------------------------------
-    // 5. 4-sided Al protection (Bottom/Left/Right/Top)
+    // 4. Optical grease layer (200 µm)
     // --------------------------------------------------------------
-    const G4double alThick = 1.0*cm;
-    for (int i=0;i<nProt;i++) {
-        G4Box* box = nullptr;
-        G4ThreeVector localPos(0,0,0);
+    G4double greaseThick = 0.2*mm;
+    G4Box* greaseSolid = new G4Box("Grease_solid", 1.*mm, 1.*mm, greaseThick/2);
+    G4Material* greaseMat = new G4Material("OpticalGrease", 1.05*g/cm3, 1);
+    greaseMat->AddElement(G4Element::GetElement("C"), 0.6);
+    G4LogicalVolume* logicGrease = new G4LogicalVolume(greaseSolid, greaseMat, "Grease" + name + "Logic");
 
-        if (i==0) {                                   // Bottom
-            box = new G4Box(Protection_name_list[i]+"_solid",
-                            2.5*cm+foilThick, alThick/2, 25.0*cm);
-            localPos = G4ThreeVector(0,
-                     -(2.5*cm+foilThick+alThick/2), 0);
-        }
-        else if (i==1) {                              // Left
-            box = new G4Box(Protection_name_list[i]+"_solid",
-                            alThick/2, 2.5*cm+foilThick, 25.0*cm);
-            localPos = G4ThreeVector(-(2.5*cm+foilThick+alThick/2),0,0);
-        }
-        else if (i==2) {                              // Right
-            box = new G4Box(Protection_name_list[i]+"_solid",
-                            alThick/2, 2.5*cm+foilThick, 25.0*cm);
-            localPos = G4ThreeVector(+(2.5*cm+foilThick+alThick/2),0,0);
-        }
-        else {                                        // Top
-            box = new G4Box(Protection_name_list[i]+"_solid",
-                            2.5*cm+foilThick, alThick/2, 25.0*cm);
-            localPos = G4ThreeVector(0,
-                     +(2.5*cm+foilThick+alThick/2), 0);
-        }
-
-        G4LogicalVolume* log = new G4LogicalVolume(box, matAl,
-                               Protection_name_list[i]+name+"Logic");
-        logicProtection.push_back(log);
-        physProt[i] = new G4PVPlacement(rot,
-                       translation + (*rot)(localPos),
-                       log, Protection_name_list[i]+name,
-                       logicWorld, false, i, true);
-    }
+    G4ThreeVector greasePos(0, 0, -10.*mm - greaseThick/2);
+    G4VPhysicalVolume* physGrease = new G4PVPlacement(rot, translation + (*rot)(greasePos),
+                                                      logicGrease, "Grease" + name, logicWorld, false, 0, true);
 
     // --------------------------------------------------------------
-    // 6. Acrylic plate – **same thickness as SiPM** (1.64 mm)
+    // 5. One SiPM attached at the grease end
     // --------------------------------------------------------------
-    const G4double plateThick = 0.164*cm;               // 1.64 mm
-    for (int i=0;i<nAcry;i++) {
-        // ---- base plate -------------------------------------------------
-        G4Box* base = new G4Box(Acrylic_name_list[i]+"_base",
-                                2.5*cm, 2.5*cm, plateThick/2);
+    G4Box* sipmSolid = new G4Box("SiPM_solid", 1.*mm, 1.*mm, 0.082*cm);  // 1.64 mm thick
+    G4LogicalVolume* logicSiPMs = new G4LogicalVolume(sipmSolid, matSiPM, "SiPM" + name + "Logic");
+    logicCalorimeter = logicSiPMs;   // for your SensitiveDetector
 
-        // ---- holes exactly the size of the SiPMs -----------------------
-        G4Box* hole = new G4Box("hole",
-                                0.209*cm, 0.209*cm, plateThick/2 + 0.01*mm); // tiny overlap for subtraction
-
-        const G4double holeXY[4][2] = {
-            {-1.25*cm, 1.25*cm},
-            { 1.25*cm, 1.25*cm},
-            {-1.25*cm,-1.25*cm},
-            { 1.25*cm,-1.25*cm}
-        };
-
-        G4VSolid* acry = base;
-        for (int j=0;j<4;j++) {
-            G4ThreeVector hp(holeXY[j][0], holeXY[j][1], 0);
-            acry = new G4SubtractionSolid(
-                       Acrylic_name_list[i]+"_h"+std::to_string(j),
-                       acry, hole, nullptr, hp);
-        }
-
-        G4LogicalVolume* log = new G4LogicalVolume(acry, matAcrylic,
-                               Acrylic_name_list[i]+name+"Logic");
-        logicAcrylic.push_back(log);
-
-        // ---- place **exactly on the CsI face** (no air) ----------------
-        G4ThreeVector posAcry(0,0,-25.0*cm - plateThick/2);
-        physAcry[i] = new G4PVPlacement(rot,
-                       translation + (*rot)(posAcry),
-                       log, Acrylic_name_list[i]+name,
-                       logicWorld, false, i, true);
-    }
-
+    G4ThreeVector sipmPos(0, 0, -10.*mm - greaseThick - 0.082*cm);
+    G4VPhysicalVolume* physSiPM = new G4PVPlacement(rot, translation + (*rot)(sipmPos),
+                                                    logicSiPMs, "SiPM" + name, logicWorld, false, 0, true);
+    logicSiPM.push_back(logicCalorimeter);
     // --------------------------------------------------------------
-    // 7. 4 SiPMs – **embedded in the acrylic holes** (same thickness)
+    // 6. Optical border surfaces (direction matters!)
     // --------------------------------------------------------------
-    for (int i=0;i<nSiPM;i++) {
-        // half-length = 0.82 mm  → full thickness = 1.64 mm
-        G4Box* box = new G4Box(SiPM_name_list[i]+"_solid",
-                               0.209*cm, 0.209*cm, 0.082*cm);
+    // Crystal → Grease
+    new G4LogicalBorderSurface("Crystal-Grease", physCrystal, physGrease, surfCrystalGrease);
 
-        G4LogicalVolume* log = new G4LogicalVolume(box, matSiPM,
-                               SiPM_name_list[i]+name+"Logic");
-        logicCalorimeter = log;                 // for SD
-        logicSiPM.push_back(log);
+    // Grease → SiPM
+    new G4LogicalBorderSurface("Grease-SiPM", physGrease, physSiPM, surfCsI_SiPM);
 
-        const G4double holeXY[4][2] = {
-            //{-1.25*cm, 1.25*cm},
-            //{ 1.25*cm, 1.25*cm},
-            {-1.25*cm,-1.25*cm},
-            { 1.25*cm,-1.25*cm}
-        };
-        // centre of the hole = centre of the SiPM
-        G4ThreeVector posSiPM(holeXY[i][0], holeXY[i][1],
-                              -25.0*cm - plateThick/2);
-
-        physSiPM[i] = new G4PVPlacement(rot,
-                       translation + (*rot)(posSiPM),
-                       log, SiPM_name_list[i]+name,
-                       logicWorld, false, i, true);
-    }
-
-    // --------------------------------------------------------------
-    // 8. Back Al Foil (behind Acrylic + SiPM layer)
-    // --------------------------------------------------------------
-    const G4double backFoilThick = 0.0016*cm;  // 0.016 mm
-    G4Box* backFoilBox = new G4Box("BackFoil_solid",
-                                   2.5*cm, 2.5*cm, backFoilThick/2);
-
-    G4LogicalVolume* logicBackFoil = new G4LogicalVolume(backFoilBox, matWrapping,
-                                                        "BackFoil" + name + "Logic");
-
-    // Place it directly behind the acrylic layer (no gap)
-    G4ThreeVector backFoilPos(0, 0, -25.0*cm - plateThick - backFoilThick/2);
-    G4VPhysicalVolume* physBackFoil = new G4PVPlacement(
-        rot, translation + (*rot)(backFoilPos),
-        logicBackFoil, "BackFoil" + name, logicWorld, false, 0, true);
-
-    // --------------------------------------------------------------
-    // 9. Optical border surfaces (direction matters!)
-    // --------------------------------------------------------------
-    for (int i=0;i<nScint;i++) {
-        // CsI → Acrylic (direct contact)
-        new G4LogicalBorderSurface("CsI_Acrylic",
-                                   physScint[i], physAcry[0], surfCsI_SiPM);
-
-        // Acrylic → each SiPM (direct contact)
-        for (int j=0;j<nSiPM;j++) {
-            new G4LogicalBorderSurface("Acrylic_SiPM",
-                                       physAcry[0], physSiPM[j], surfCsI_SiPM);
-        }
-
-        // CsI → Al foil (reflective)
-        for (int j=0;j<nFoil;j++) {
-            new G4LogicalBorderSurface("CsI_AlFoil",
-                                       physScint[i], physFoil[j], surfCsI_AlFoil);
-        }
-        
-        // Acrylic → Back Foil (reflects stray light back into SiPMs)
-        new G4LogicalBorderSurface("Acrylic_BackFoil",
-                                   physAcry[0], physBackFoil, surfCsI_AlFoil);
-    }
+    // Crystal → Teflon (reflective)
+    new G4LogicalBorderSurface("Crystal-Teflon", physCrystal, physTeflon, surfCsI_Teflon);
 }
 void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation,G4String name, G4double rotateX, G4double rotateY, G4double rotateZ){
     G4RotationMatrix* rotation = new G4RotationMatrix();
@@ -835,6 +707,14 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         auto Scintillator = scintillator->GetSolid();
         G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
         logicScintillators.push_back(logicScintillator_pre);
+        // === REGIONAL PRODUCTION CUTS FOR LYSO (fixes artificial low-energy spikes) ===
+        G4Region* lysoRegion = new G4Region("LYSO_Region");
+        logicScintillator_pre->SetRegion(lysoRegion);
+        lysoRegion->AddRootLogicalVolume(logicScintillator_pre);
+
+        G4ProductionCuts* cuts = new G4ProductionCuts();
+        cuts->SetProductionCut(5.*eV);        // for both e- and gamma
+        lysoRegion->SetProductionCuts(cuts);
         physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
 
         std::string name_SiPM = SiPM_name_list[i];
@@ -854,11 +734,68 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         logicTapflon.push_back(logicTapflon_pre);
         physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
     }
-    for (int i=0; i<Size_of_Scintillator_name_list; i++) {
-        new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
-        new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
-        //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
-        //new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
+    //for (int i=0; i<Size_of_Scintillator_name_list; i++) {
+    //    new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
+    //    new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
+    //    //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
+    //    //new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
+    //}
+
+
+
+
+
+
+
+    // === ADD OPTICAL GREASE + PROPER SURFACES ===
+    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
+        // 1. Optical grease layer (thin volume between crystal and SiPM)
+        G4double greaseThick = 0.2*mm;
+        // Approximate grease size from your SiPM STL (adjust if needed)
+        G4Box* greaseSolid = new G4Box("Grease_solid", 1.54*mm, 1.54*mm, greaseThick/2);
+        G4Material* greaseMat = new G4Material("OpticalGrease", 1.05*g/cm3, 1);
+        greaseMat->AddElement(G4Element::GetElement("C"), 0.6);
+        G4LogicalVolume* logicGrease = new G4LogicalVolume(greaseSolid, greaseMat, "Grease"+name+"Logic");
+
+        // Place grease right in front of SiPM (adjust offset if your STL has offset)
+        G4ThreeVector greasePos(0, 0, greaseThick+10*mm);   // you may need to tweak this offset based on STL coordinates
+        //G4VPhysicalVolume* physGrease = new G4PVPlacement(rotation, translation + (*rotation)(greasePos),logicGrease, "Grease"+name, logicWorld, false, i, true);
+
+        // 2. Surfaces
+
+        G4OpticalSurface* surfCoupling = new G4OpticalSurface("CrystalSiPM_Coupling");
+        surfCoupling->SetType(dielectric_dielectric);
+        surfCoupling->SetFinish(polished);           // smooth optical contact
+        surfCoupling->SetModel(unified);
+        surfCoupling->SetSigmaAlpha(0.05*degree);    // very smooth coupling
+
+
+        G4OpticalSurface* surfCrystalGrease = new G4OpticalSurface("CrystalGrease");
+        surfCrystalGrease->SetType(dielectric_dielectric);
+        surfCrystalGrease->SetFinish(polished);
+        surfCrystalGrease->SetModel(unified);
+        surfCrystalGrease->SetSigmaAlpha(0.05*degree);
+
+        G4OpticalSurface* surfGreaseSiPM = new G4OpticalSurface("GreaseSiPM");
+        surfGreaseSiPM->SetType(dielectric_dielectric);
+        surfGreaseSiPM->SetFinish(polished);
+        surfGreaseSiPM->SetModel(unified);
+
+        G4OpticalSurface* surfTeflon = new G4OpticalSurface("TeflonSurf");
+        surfTeflon->SetType(dielectric_dielectric);
+        surfTeflon->SetFinish(groundbackpainted);
+        surfTeflon->SetModel(unified);
+        surfTeflon->SetSigmaAlpha(0.25*degree);   // tuning knob
+
+        //G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
+        //mptTeflon->AddConstProperty("REFLECTIVITY", 0.98);
+        surfTeflon->SetMaterialPropertiesTable(mptTeflon);
+
+        // 3. Create border surfaces
+        new G4LogicalBorderSurface("Crystal-SiPM_Coupling", physScintillators[i],physSiPM[i],surfCoupling);
+        //new G4LogicalBorderSurface("Crystal-Grease", physScintillators[i], physGrease, surfCrystalGrease);
+        //new G4LogicalBorderSurface("Grease-SiPM", physGrease, physSiPM[i], surfGreaseSiPM);
+        new G4LogicalBorderSurface("Crystal-Teflon", physScintillators[i], physTapflon[i], surfTeflon);
     }
 }
 
@@ -918,7 +855,7 @@ void MyDetectorConstruction::ConstructCalorimeter() {
         coordFile.close();
     }
     else{
-        ConstructCalorimeter_unit(G4ThreeVector(0,-(25*cm-(4*bare_source_radius)),(-1*cm+3.5*cm+disk_height_half+ring_height_half)), 90*deg, "");
+        ConstructCalorimeter_unit(G4ThreeVector(0,0,0), 0*deg, "");
     }
 }
 //Construct source

@@ -24,6 +24,8 @@
 
 #include "G4SDManager.hh"
 
+#include "G4ProductionCuts.hh"
+
 #include "G4LogicalVolume.hh"
 #include "G4OpticalSurface.hh"
 #include "G4LogicalBorderSurface.hh"
@@ -107,7 +109,7 @@ private:
 	G4bool isCalorimeter;
 	G4LogicalVolume *logicCalorimeter;
 	G4VPhysicalVolume *physCalorimeter;
-	G4OpticalSurface *surfCsI_SiPM, *surfCsI_AlFoil,*surfCsI_Teflon;;
+	G4OpticalSurface *surfCsI_SiPM, *surfCsI_AlFoil,*surfCsI_Teflon, *surfCrystalGrease;
 	std::vector<G4LogicalVolume*> logicScintillators,logicSiPM,logicTapflon,logicProtection,logicAcrylic;
 	// End Ideal Detector
 	
@@ -142,7 +144,7 @@ private:
 	//Setting
 	G4String coordinate_name;
 	G4bool logicOptical;
-
+	G4MaterialPropertiesTable* mptTeflon;
 };
 
 #endif

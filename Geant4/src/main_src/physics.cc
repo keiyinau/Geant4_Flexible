@@ -78,21 +78,22 @@ void MyPhysicsList::ConstructProcess()
 	//MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics (flag now set in constructor)
     //pMyOpticalPhysics.GetProcess();
 
-	//if (!G4Threading::IsWorkerThread()) {  // Only do this once, in master thread
-	//		G4EmSaturation* saturation = new BirksOnsagerSaturation(1);  // Verbose level 1 for debugging (set to 0 for silent)
+	if (!G4Threading::IsWorkerThread()) {  // Only do this once, in master thread
+			G4EmSaturation* saturation = new BirksOnsagerSaturation(1);  // Verbose level 1 for debugging (set to 0 for silent)
+
+			// Get the Scintillation process from a charged particle's process manager (e.g., electron)
+			G4ProcessManager* pManager = G4Electron::ElectronDefinition()->GetProcessManager();
+			G4VProcess* scintProc = pManager->GetProcess("Scintillation");
+			G4Scintillation* scint = dynamic_cast<G4Scintillation*>(scintProc);
 //
-	//		// Get the Scintillation process from a charged particle's process manager (e.g., electron)
-	//		G4ProcessManager* pManager = G4Electron::ElectronDefinition()->GetProcessManager();
-	//		G4VProcess* scintProc = pManager->GetProcess("Scintillation");
-	//		G4Scintillation* scint = dynamic_cast<G4Scintillation*>(scintProc);
-//
-	//		if (scint) {
-	//			scint->AddSaturation(saturation);
-	//			G4cout << "Custom Birks-Onsager saturation added to G4Scintillation." << G4endl;
-	//		} else {
-	//			G4cout << "Error: Scintillation process not found! Check optical physics setup." << G4endl;
-	//		}
-	//	}
+			if (scint) {
+				scint->AddSaturation(saturation);
+				//scint->SetScintillationByParticleType(true);
+				G4cout << "Custom Birks-Onsager saturation added to G4Scintillation." << G4endl;
+			} else {
+				G4cout << "Error: Scintillation process not found! Check optical physics setup." << G4endl;
+			}
+		}
 	// Assign allowed process for positron
 	G4ProcessManager *positronManager = G4Positron::Positron()->GetProcessManager();
 	//positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics

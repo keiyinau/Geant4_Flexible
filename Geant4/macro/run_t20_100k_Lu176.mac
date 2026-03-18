@@ -1,8 +1,8 @@
 /run/numberOfThreads 20
 /run/initialize
-
+#/process/inactivate Cerenkov
 # Enable command echo
-/control/verbose 0
+#/control/verbose 0
 
 # Set the active region of Co-60
 /control/execute region_setup_Lu176.mac

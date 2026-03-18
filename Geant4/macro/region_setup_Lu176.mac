@@ -1,14 +1,16 @@
-/gps/verbose 2
+#/gps/verbose 2
 #Set the General Particle Source to be Co60
-#/gps/particle ion
-#/gps/ion 71 176
+/gps/particle ion
+/gps/ion 71 176
 
 #Position region of generated gps, should equal to the active region
-#/gps/pos/type Volume
-#/gps/pos/shape Cylinder
-#/gps/pos/centre 0 0 0 mm
-#/gps/pos/radius 4.765 mm
-#/gps/pos/halfz 0.0001 mm
+# Position: uniform decays inside a 4×4×20 mm box, now centred at (0, 0, 10) mm
+/gps/pos/type Volume
+/gps/pos/shape Para
+/gps/pos/centre 0 0 0 mm      # ← this is the only line that changed
+/gps/pos/halfx  2 mm
+/gps/pos/halfy  2 mm
+/gps/pos/halfz 10 mm
 
 #Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono

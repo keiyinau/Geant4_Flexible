@@ -5,14 +5,14 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=true;
-	isXT=true;
-	isAP=true;
-	signalLength=500; //ns
+	isDCR=false;
+	isXT=false;
+	isAP=false;
+	signalLength=1000; //ns
 	SampleTime=1; //ns
 	DarkCountRate=1.7*1000*1000; //Hz
 	RiseTime=10; //ns
-	FallTimeFast=55; //ns
+	FallTimeFast=200; //ns
 	RecoveryTime=55; //ns
 	Dcr=1.7*1000*1000; //Hz
 	Xt=0.23; //ns
@@ -36,7 +36,7 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
 	}
 	datafile.close();
 	// Electronic parameters
-	gatewidth=40; //ns
+	gatewidth=306; //ns
 	threshold=0.5; //mV
 	gain=-2.5;
 
@@ -136,7 +136,7 @@ void Calorimeter::EndOfEvent(G4HCofThisEvent*)
 
             // Ensure gate fits in signal length
             if (gateEnd <= signalLength) {
-                G4double integral = signal.peak(gateStart, gateEnd, 0.0);  // No threshold for integration
+                G4double integral = signal.integral(gateStart, gateEnd, 14.0);  // No threshold for integration
 
                 if (integral < 1e10) {  // Removed >0 to save even if integral==0
                     data.Area = integral;

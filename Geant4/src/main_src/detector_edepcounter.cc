@@ -76,7 +76,7 @@ void Detect_edep::SaveToRoot()
     }
 
     for (const auto& pair : edep_per_detector) {
-        if (pair.second >= 500. * eV) {
+        if (pair.second >= 0. * eV) {
             analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
             analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
             analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
