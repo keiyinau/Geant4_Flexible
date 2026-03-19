@@ -5,9 +5,9 @@ Calorimeter::Calorimeter(G4String name) : G4VSensitiveDetector(name), fHitsColle
     ClearVectorsCounts(); // Initialize the vectors to store accumulated data
 	collectionName.insert("Calorimeter");
 	isGraph=false;
-	isDCR=false;
-	isXT=false;
-	isAP=false;
+	isDCR=true;
+	isXT=true;
+	isAP=true;
 	signalLength=1000; //ns
 	SampleTime=1; //ns
 	DarkCountRate=1.7*1000*1000; //Hz
@@ -208,7 +208,15 @@ void Calorimeter::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Tr
 }
 void Calorimeter::SaveToRoot(){
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+	const G4double SiPM_gain=1e6;
+	const G4double preamp_gain=20.0;
+	const G4double electron_charge=1.6217662e-19;
+	const G4double ADC_gain=100*1e-15;
+	const G4double Total_Gain=ADC_gain/(preamp_gain*SiPM_gain*electron_charge);
+	const G4double unit_Area=163.73262320291757;
 	for(const auto&data:CurrentData){
+		//calibrated_pe=data.PEsCount;
+		//calibrated_area=data.Area;
 		analysisManager->FillNtupleIColumn(0,0, data.eventID);
 		analysisManager->FillNtupleSColumn(0,1, data.detectorName);
 		analysisManager->FillNtupleDColumn(0,2, data.Area);
@@ -216,6 +224,8 @@ void Calorimeter::SaveToRoot(){
 		analysisManager->FillNtupleIColumn(0,4, data.PEsCount);
 		analysisManager->FillNtupleIColumn(0,5, data.NoisePEsCount);
 		analysisManager->FillNtupleDColumn(0,6, data.Time_Of_Triggering);
+		analysisManager->FillNtupleDColumn(0,7, data.Area/unit_Area);
+
 		// Fill the ntuple with the data
 		analysisManager->AddNtupleRow(0);
 	}

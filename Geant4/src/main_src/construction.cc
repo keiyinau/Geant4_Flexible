@@ -9,14 +9,14 @@ MyDetectorConstruction::MyDetectorConstruction() {
     coordinate_name="coordinates.txt";
 
 	isDetector_Shell = false;
-	isSource=false;
+	isSource=true;
 	isTPC = false;
 	isCalorimeter = true;
-    isLiquid=false;
+    isLiquid=true;
     is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
-    matLiquid=matWater;
+    matLiquid=matAcrylic;
     matContainer=matAcrylic;
     matScintillator=matLYSO;
     matSiPM=matSi;
@@ -462,28 +462,28 @@ void MyDetectorConstruction::DefineMaterials() {
     mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
 
     // CsI-Teflon (reflective surface)
-    surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    //surfCsI_Teflon->SetType(dielectric_dielectric); // Teflon as reflective surface, dielectric_metal
+    //surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
+    ////surfCsI_Teflon->SetType(dielectric_dielectric); // Teflon as reflective surface, dielectric_metal
+    ////surfCsI_Teflon->SetModel(unified);
+    ////surfCsI_Teflon->SetFinish(polished);
+    //surfCsI_Teflon->SetType(dielectric_dielectric);
     //surfCsI_Teflon->SetModel(unified);
-    //surfCsI_Teflon->SetFinish(polished);
-    surfCsI_Teflon->SetType(dielectric_dielectric);
-    surfCsI_Teflon->SetModel(unified);
-    surfCsI_Teflon->SetFinish(ground); // specular->polishedteflonair, diffusive->groundteflonair
-    surfCsI_Teflon->SetSigmaAlpha(0.2);
-    //End surface
-
-    // CsI-SiPM (dielectric-dielectric interface)
-    surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
-    surfCsI_SiPM->SetType(dielectric_dielectric);
-    surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
-    surfCsI_SiPM->SetFinish(polished);
-	// End SiPM
-
-    // CsI-AlFoil (reflective surface)
-    surfCsI_AlFoil = new G4OpticalSurface("CsI_AlFoil_Surface");
-    surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
-    surfCsI_AlFoil->SetModel(unified);
-    surfCsI_AlFoil->SetFinish(ground);
+    //surfCsI_Teflon->SetFinish(ground); // specular->polishedteflonair, diffusive->groundteflonair
+    //surfCsI_Teflon->SetSigmaAlpha(0.2);
+    ////End surface
+//
+    //// CsI-SiPM (dielectric-dielectric interface)
+    //surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
+    //surfCsI_SiPM->SetType(dielectric_dielectric);
+    //surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
+    //surfCsI_SiPM->SetFinish(polished);
+	//// End SiPM
+//
+    //// CsI-AlFoil (reflective surface)
+    //surfCsI_AlFoil = new G4OpticalSurface("CsI_AlFoil_Surface");
+    //surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
+    //surfCsI_AlFoil->SetModel(unified);
+    //surfCsI_AlFoil->SetFinish(ground);
 
 
     G4OpticalSurface* surfCrystalGrease = new G4OpticalSurface("CrystalGrease");
@@ -785,7 +785,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         surfTeflon->SetType(dielectric_dielectric);
         surfTeflon->SetFinish(groundbackpainted);
         surfTeflon->SetModel(unified);
-        surfTeflon->SetSigmaAlpha(0.25*degree);   // tuning knob
+        surfTeflon->SetSigmaAlpha(0.25*degree);   // tuning knob, 0.25 start
 
         //G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
         //mptTeflon->AddConstProperty("REFLECTIVITY", 0.98);

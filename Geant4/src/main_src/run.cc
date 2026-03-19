@@ -40,11 +40,13 @@ void MyRunAction::CreateDataFile_SensitiveDetector(G4AnalysisManager* man)
     man->CreateNtupleIColumn("EventID");
     man->CreateNtupleSColumn("DetectorName");
     man->CreateNtupleDColumn("Area"); // Accumulated distance in mm
-    man->CreateNtupleIColumn("#RealPhoton"); // Accumulated
-    man->CreateNtupleIColumn("#PE"); // Accumulated
-    man->CreateNtupleIColumn("#NoisePE"); // Position X in
+    man->CreateNtupleIColumn("RealPhoton"); // Accumulated
+    man->CreateNtupleIColumn("PE"); // Accumulated
+    man->CreateNtupleIColumn("NoisePE"); // Position X in
     man->CreateNtupleDColumn("Time_Of_Triggering_ns"); // Position Y in
     //man->CreateNtupleSColumn("SiPMName");
+    man->CreateNtupleDColumn("PECountInArea");
+
     man->FinishNtuple(0);
 
     man->CreateNtuple("EdepCounter", "EdepCounter Data");
