@@ -5,7 +5,7 @@ MyDetectorConstruction::MyDetectorConstruction()
 	// Define required materials
 
 	DefineMaterials();
-	testMaterialName = "LSO";
+	testMaterialName = "LYSO";
 	isDetector_Shell = true;
 	isSource=false;
 	isTPC = false;
@@ -56,12 +56,15 @@ void MyDetectorConstruction::DefineMaterials() {
 	matLSO->AddElement(O, 5);
 	// End LSO
 	//LYSO
-	matLYSO = new G4Material("Lu2(1-x)Y2xSiO5", 7.2*g/cm3, 4);
-	matLYSO->AddElement(Lu, 1);
-	G4Element* Y = nist->FindOrBuildElement("Y");
-	matLYSO->AddElement(Y, 1);
-	matLYSO->AddElement(Si, 1);
-	matLYSO->AddElement(O, 5);
+	matLYSO = new G4Material("Lu2(1-x)Y2xSiO5", 7.1*g/cm3, 4);
+	G4Element* elLu = nist->FindOrBuildElement("Lu");
+    G4Element* elY  = nist->FindOrBuildElement("Y");
+    G4Element* elSi = nist->FindOrBuildElement("Si");
+    G4Element* elO  = nist->FindOrBuildElement("O");
+	matLYSO->AddElement(elLu, 0.7146);  // ~71.46%
+    matLYSO->AddElement(elY, 0.0403);   // ~4.03%
+    matLYSO->AddElement(elSi, 0.0637);  // ~6.37%
+    matLYSO->AddElement(elO, 0.1814);   // ~18.14%
 	// End LYSO
 	//LaBr3
 	matLaBr3 = new G4Material("LaBr3", 5.3*g/cm3, 2);

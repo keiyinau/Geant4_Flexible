@@ -4,6 +4,8 @@
 #include "G4VUserPhysicsList.hh"
 #include "G4VModularPhysicsList.hh"
 #include "G4EmStandardPhysics.hh"
+#include "G4EmLivermorePolarizedPhysics.hh"
+#include "G4EmLivermorePhysics.hh"
 #include "G4OpticalPhysics.hh"
 #include "G4DecayPhysics.hh"
 #include "G4RadioactiveDecayPhysics.hh"
@@ -34,6 +36,11 @@
 #include "G4eeToPositroniumModel.hh"
 #include "G4eeToPositronium.hh"
 
+
+#include "G4OpticalParameters.hh"
+
+#include "G4Scintillation.hh"  
+#include "G4Threading.hh"
 // G4OpticalPhysics::ConstructProcess() is protected, so using MyOpticalPhysics to inherit from G4OpticalPhysics to call the function ConstructProcess().
 class MyOpticalPhysics : public G4OpticalPhysics
 {

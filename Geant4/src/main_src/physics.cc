@@ -46,8 +46,12 @@ void MyPhysicsList::ConstructProcess()
 
 	// Add all physics processes in TFTFP_BERT
 	G4int ver = 1;
-	G4EmStandardPhysics pEM_Opt0(ver);						// EmPhysics_Opt0, including ParaPositronium, OrthoPositronium
-	pEM_Opt0.ConstructProcess();
+	//G4EmStandardPhysics pEM_Opt0(ver);						// EmPhysics_Opt0, including ParaPositronium, OrthoPositronium
+	//pEM_Opt0.ConstructProcess();
+	//G4EmLivermorePolarizedPhysics pEM_Pol(ver);
+	//pEM_Pol.ConstructProcess();
+	G4EmLivermorePhysics pEM_NPol(ver);
+	pEM_NPol.ConstructProcess();
 	G4EmExtraPhysics pEmExtraPhysics(ver);					// Synchroton Radiation & GN Physics
 	pEmExtraPhysics.ConstructProcess();
 	G4DecayPhysics pDecayPhysics(ver);						// Decays, including ParaPositronium, OrthoPositronium
@@ -68,14 +72,33 @@ void MyPhysicsList::ConstructProcess()
 	pRadioactiveDecayPhysics.ConstructProcess();
 	MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics
 	pMyOpticalPhysics.GetProcess();
-	
+	//G4OpticalParameters* opParams = G4OpticalParameters::Instance();
+	//opParams->SetScintByParticleType(true);  // Enable particle-type dependent yields (e.g., for ELECTRONSCINTILLATIONYIELD)
+
+	//MyOpticalPhysics pMyOpticalPhysics;					// OpticalPhysics (flag now set in constructor)
+    //pMyOpticalPhysics.GetProcess();
+
+
 	// Assign allowed process for positron
 	G4ProcessManager *positronManager = G4Positron::Positron()->GetProcessManager();
-	positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics
+	//positronManager->RemoveProcess(4);		// Remove the G4eplusAnnihilation, the number 4 is from the order in G4EmStandardPhysics
 	//positronManager->AddProcess(new G4eMultipleScattering, -1, 1, 1);
 	//positronManager->AddProcess(new G4eIonisation,         -1, 2, 2);
 	//positronManager->AddProcess(new G4eBremsstrahlung,     -1, 3, 3);
-	positronManager->AddProcess(new G4eeToPositronium,      0,-1, 4);
+	G4VProcess* annihilProc = positronManager->GetProcess("annihil");
+	if (!annihilProc) {
+		annihilProc = positronManager->GetProcess("Polar-annihil");  // Fallback for polarized lists
+	}
+	if (annihilProc) {
+		positronManager->RemoveProcess(annihilProc);
+		G4cout << "Removed default annihilation process: " << annihilProc->GetProcessName() << G4endl;
+	} else {
+		G4cout << "Error: No annihilation process found to remove! Check physics list." << G4endl;
+	}
+
+	// Add your custom process (with explicit name for clarity)
+	G4eeToPositronium* customAnnihil = new G4eeToPositronium("eeToPositronium");
+	positronManager->AddProcess(customAnnihil, 0, -1, 4);  // At-rest and post-step
 	//positronManager->DumpInfo();		// Output to check the process list of Positron
 }
 
@@ -85,4 +108,3 @@ void MyPhysicsList::SetCuts()
 	
 	//SetCutsWithDefault();		// default cut value  (1.0mm)
 }
-
