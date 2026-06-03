@@ -16,9 +16,9 @@ MyDetectorConstruction::MyDetectorConstruction() {
     is3DCalorimeter=true;
 	// Set the material for each logical volume
 	matWorld = Air; //Vacuum;
-    matLiquid=matAcrylic;
+    matLiquid=matWater;
     matContainer=matAcrylic;
-    matScintillator=matLYSO;
+    matScintillator=matPlasticScint;
     matSiPM=matSi;
     matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
@@ -319,6 +319,7 @@ void MyDetectorConstruction::DefineMaterials() {
     // End water
 
 
+    matPlasticScint= nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
 
 	//NaCl
 	matNaCl = new G4Material("NaCl", 2.16*g/cm3, 2);

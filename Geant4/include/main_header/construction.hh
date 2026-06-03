@@ -140,7 +140,7 @@ private:
 	G4Material *matScintillator, *matWrapping, *matSiPM;
 	G4Material *matXe, *matWater;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
-	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
+	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO, *matPlasticScint;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;
 
 	//Setting
