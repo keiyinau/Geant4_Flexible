@@ -2,7 +2,7 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=true;
+    logicOptical=false;
 	DefineMaterials();
 
 
@@ -539,9 +539,9 @@ void MyDetectorConstruction::DefineMessenger() {
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
-	G4double xWorld = 0.05*m;
-	G4double yWorld = 0.05*m;
-	G4double zWorld = 0.05*m;
+	G4double xWorld = 2*m;
+	G4double yWorld = 2*m;
+	G4double zWorld = 2*m;
 
 	// A cubic world with volume 1.5 m*1.5 m*1.5 m
 	G4Box* solidWorld = new G4Box("solidWorld", xWorld, yWorld, zWorld);
@@ -685,120 +685,160 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     // Crystal → Teflon (reflective)
     new G4LogicalBorderSurface("Crystal-Teflon", physCrystal, physTeflon, surfCsI_Teflon);
 }
-void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation,G4String name, G4double rotateX, G4double rotateY, G4double rotateZ){
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
+    G4ThreeVector translation,
+    G4String name,
+    G4double rotateX,
+    G4double rotateY,
+    G4double rotateZ)
+{
+    // === 1. ROTATION ===
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(rotateX);
     rotation->rotateY(rotateY);
-    rotation->rotateZ(rotateZ); //Remove this line if no self rotation
-    std::string Scintillator_name_list[] = {"Square/SquareCrystals_SquareCrystal_Crystal_4x4x20"};
-    std::string SiPM_name_list[] = {"Square/SquareCrystals_SquareCrystal_SiPM_4x4x20"};
-    std::string Tapflon_name_list[] = {"Square/SquareCrystals_SquareCrystal_OpenTape_4x4x20"};
-    int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
-    int Size_of_SiPM_name_list = sizeof(SiPM_name_list)/sizeof(std::string);
-    int Size_of_Tapflon_name_list = sizeof(Tapflon_name_list)/sizeof(std::string);
+    rotation->rotateZ(rotateZ);
 
-    std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Tapflon_name_list);
-    std::vector<G4VPhysicalVolume*> physSiPM(Size_of_SiPM_name_list);
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
-        std::string name_scint = Scintillator_name_list[i];
-        auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(1.0);
-        auto Scintillator = scintillator->GetSolid();
-        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
-        logicScintillators.push_back(logicScintillator_pre);
-        // === REGIONAL PRODUCTION CUTS FOR LYSO (fixes artificial low-energy spikes) ===
-        G4Region* lysoRegion = new G4Region("LYSO_Region");
-        logicScintillator_pre->SetRegion(lysoRegion);
-        lysoRegion->AddRootLogicalVolume(logicScintillator_pre);
+    // === 2. CONFIGURATION (edit only these) ===
+    const std::string data_dir          = "phase1/v4";
+    const std::string hodoscope_prefix  = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_Hodoscope_";
+    const std::string pmt_prefix        = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_PMT_";
+    const std::string lightguide_prefix = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_LightGuide_";
 
-        G4ProductionCuts* cuts = new G4ProductionCuts();
-        cuts->SetProductionCut(5.*eV);        // for both e- and gamma
-        lysoRegion->SetProductionCuts(cuts);
-        physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
+    // === 3. ROBUST DISCOVERY (map by number) ===
+    auto discover_numbered = [&](const std::string& prefix) -> std::map<int, std::string> {
+        std::map<int, std::string> result;
+        try {
+            for (const auto& entry : fs::directory_iterator(data_dir)) {
+                if (!entry.is_regular_file()) continue;
+                std::string fname = entry.path().filename().string();
+                if (fname.size() <= 4 || fname.substr(fname.size() - 4) != ".stl") continue;
+                if (fname.find(prefix) != 0) continue;
 
-        std::string name_SiPM = SiPM_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(1.0);
-        auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
-		logicCalorimeter=logicSiPM_pre;
-        logicSiPM.push_back(logicCalorimeter);
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
+                size_t last_us = fname.rfind('_');
+                if (last_us == std::string::npos || last_us >= fname.size() - 5) continue;
 
-        std::string name_Wrapping = Tapflon_name_list[i];
-        auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(1.0);
-        auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
-        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
-        logicTapflon.push_back(logicTapflon_pre);
-        physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
+                std::string num_str = fname.substr(last_us + 1, fname.size() - last_us - 5);
+                int num = 0;
+                try { num = std::stoi(num_str); } catch (...) { continue; }
+
+                std::string stem = fname.substr(0, fname.size() - 4);
+                std::string base = (fs::path(data_dir) / stem).string();
+                result[num] = base;
+            }
+        } catch (const std::exception& e) {
+            G4cerr << "Directory scan error in " << data_dir << ": " << e.what() << G4endl;
+        }
+        return result;
+    };
+
+    auto hodo_map = discover_numbered(hodoscope_prefix);
+    auto pmt_map  = discover_numbered(pmt_prefix);
+    auto lg_map   = discover_numbered(lightguide_prefix);
+
+    // Debug output (you can remove these 3 blocks later)
+    G4cout << "\n=== Hodoscope discovery (" << hodo_map.size() << " files) ===" << G4endl;
+    for (auto& p : hodo_map) G4cout << "  Hodoscope_" << p.first << G4endl;
+
+    G4cout << "\n=== PMT discovery (" << pmt_map.size() << " files) ===" << G4endl;
+    for (auto& p : pmt_map) G4cout << "  PMT_" << p.first << G4endl;
+
+    G4cout << "\n=== LightGuide discovery (" << lg_map.size() << " files) ===" << G4endl;
+    for (auto& p : lg_map) G4cout << "  LightGuide_" << p.first << G4endl;
+
+    // === 4. HODOSCOPE-DRIVEN ALIGNMENT (all Hodoscope are placed) ===
+    std::vector<std::string> Scintillator_name_list, SiPM_name_list, Lightguide_name_list;
+    std::vector<int> used_numbers;
+
+    for (auto& [num, hodo_name] : hodo_map) {
+        Scintillator_name_list.push_back(hodo_name);
+        used_numbers.push_back(num);
+
+        SiPM_name_list.push_back( pmt_map.count(num) ? pmt_map[num] : "" );
+        Lightguide_name_list.push_back( lg_map.count(num) ? lg_map[num] : "" );
     }
-    //for (int i=0; i<Size_of_Scintillator_name_list; i++) {
-    //    new G4LogicalBorderSurface("CsI_SiPM_Border", physScintillators[i], physSiPM[i], surfCsI_SiPM);
-    //    new G4LogicalBorderSurface("CsI_Teflon_Border", physScintillators[i], physTapflon[i], surfCsI_Teflon);
-    //    //new G4LogicalBorderSurface("CsI_SiPM_Border_Reverse", physSiPM[i], physScintillators[i], surfCsI_SiPM);
-    //    //new G4LogicalBorderSurface("CsI_Teflon_Border_Reverse", physTapflon[i], physScintillators[i], surfCsI_Teflon);
-    //}
 
+    size_t n_units = Scintillator_name_list.size();
+    G4cout << "\n=== Final units (Hodoscope-driven): " << n_units << " ===\n" << G4endl;
 
+    if (n_units == 0) {
+        G4cerr << "ERROR: No Hodoscope files found!" << G4endl;
+        return;
+    }
 
+    // === 5. HELPER ===
+    auto load_stl_solid = [](const std::string& base_name) -> G4VSolid* {
+        auto mesh = CADMesh::TessellatedMesh::FromSTL(base_name + ".stl");
+        mesh->SetScale(1.0);
+        return mesh->GetSolid();
+    };
 
+    // === 6. PHYSICAL VOLUMES VECTORS ===
+    std::vector<G4VPhysicalVolume*> physScintillators(n_units, nullptr);
+    std::vector<G4VPhysicalVolume*> physSiPM(n_units, nullptr);
+    std::vector<G4VPhysicalVolume*> physLightGuides(n_units, nullptr);
 
+    // === 7. MAIN CONSTRUCTION LOOP ===
+    for (size_t i = 0; i < n_units; ++i) {
+        // --- Hodoscope (always placed) ---
+        G4VSolid* hodoSolid = load_stl_solid(Scintillator_name_list[i]);
+        G4LogicalVolume* logicHodo = new G4LogicalVolume(
+            hodoSolid, matScintillator, Scintillator_name_list[i] + name + "Logic");
+        logicScintillators.push_back(logicHodo);
 
+        physScintillators[i] = new G4PVPlacement(
+            rotation, translation, logicHodo,
+            Scintillator_name_list[i] + name, logicWorld, false, i, true);
 
-    // === ADD OPTICAL GREASE + PROPER SURFACES ===
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
-        // 1. Optical grease layer (thin volume between crystal and SiPM)
-        G4double greaseThick = 0.2*mm;
-        // Approximate grease size from your SiPM STL (adjust if needed)
-        G4Box* greaseSolid = new G4Box("Grease_solid", 1.54*mm, 1.54*mm, greaseThick/2);
-        G4Material* greaseMat = new G4Material("OpticalGrease", 1.05*g/cm3, 1);
-        greaseMat->AddElement(G4Element::GetElement("C"), 0.6);
-        G4LogicalVolume* logicGrease = new G4LogicalVolume(greaseSolid, greaseMat, "Grease"+name+"Logic");
+        // --- PMT (only if file exists) ---
+        if (!SiPM_name_list[i].empty()) {
+            G4VSolid* sipmSolid = load_stl_solid(SiPM_name_list[i]);
+            G4LogicalVolume* logicSipm = new G4LogicalVolume(
+                sipmSolid, matSiPM, SiPM_name_list[i] + name + "Logic");
+            logicSiPM.push_back(logicSipm);
 
-        // Place grease right in front of SiPM (adjust offset if your STL has offset)
-        G4ThreeVector greasePos(0, 0, greaseThick+10*mm);   // you may need to tweak this offset based on STL coordinates
-        //G4VPhysicalVolume* physGrease = new G4PVPlacement(rotation, translation + (*rotation)(greasePos),logicGrease, "Grease"+name, logicWorld, false, i, true);
+            physSiPM[i] = new G4PVPlacement(
+                rotation, translation, logicSipm,
+                SiPM_name_list[i] + name, logicWorld, false, i, true);
+        }
 
-        // 2. Surfaces
+        // --- LightGuide (only if file exists) ---
+        if (!Lightguide_name_list[i].empty()) {
+            G4VSolid* lgSolid = load_stl_solid(Lightguide_name_list[i]);
+            G4LogicalVolume* logicLG = new G4LogicalVolume(
+                lgSolid, matWrapping, Lightguide_name_list[i] + name + "Logic");
+            logicLightGuides.push_back(logicLG);
 
-        G4OpticalSurface* surfCoupling = new G4OpticalSurface("CrystalSiPM_Coupling");
-        surfCoupling->SetType(dielectric_dielectric);
-        surfCoupling->SetFinish(polished);           // smooth optical contact
-        surfCoupling->SetModel(unified);
-        surfCoupling->SetSigmaAlpha(0.05*degree);    // very smooth coupling
+            physLightGuides[i] = new G4PVPlacement(
+                rotation, translation, logicLG,
+                Lightguide_name_list[i] + name, logicWorld, false, i, true);
+        }
+    }
 
+    // === 8. OPTICAL SURFACES (with safety guards) ===
+    for (size_t i = 0; i < n_units; ++i) {
+        // Only create border surfaces when both volumes exist
+        if (physScintillators[i] && physLightGuides[i]) {
+            G4OpticalSurface* surfHodoLG = new G4OpticalSurface("HodoscopeLightGuide");
+            surfHodoLG->SetType(dielectric_dielectric);
+            surfHodoLG->SetFinish(polished);
+            surfHodoLG->SetModel(unified);
+            surfHodoLG->SetSigmaAlpha(0.05*degree);
 
-        G4OpticalSurface* surfCrystalGrease = new G4OpticalSurface("CrystalGrease");
-        surfCrystalGrease->SetType(dielectric_dielectric);
-        surfCrystalGrease->SetFinish(polished);
-        surfCrystalGrease->SetModel(unified);
-        surfCrystalGrease->SetSigmaAlpha(0.05*degree);
+            new G4LogicalBorderSurface("Hodoscope-LightGuide",
+                physScintillators[i], physLightGuides[i], surfHodoLG);
+        }
 
-        G4OpticalSurface* surfGreaseSiPM = new G4OpticalSurface("GreaseSiPM");
-        surfGreaseSiPM->SetType(dielectric_dielectric);
-        surfGreaseSiPM->SetFinish(polished);
-        surfGreaseSiPM->SetModel(unified);
+        if (physLightGuides[i] && physSiPM[i]) {
+            G4OpticalSurface* surfLGPMT = new G4OpticalSurface("LightGuidePMT");
+            surfLGPMT->SetType(dielectric_dielectric);
+            surfLGPMT->SetFinish(polished);
+            surfLGPMT->SetModel(unified);
 
-        G4OpticalSurface* surfTeflon = new G4OpticalSurface("TeflonSurf");
-        surfTeflon->SetType(dielectric_dielectric);
-        surfTeflon->SetFinish(groundbackpainted);
-        surfTeflon->SetModel(unified);
-        surfTeflon->SetSigmaAlpha(0.25*degree);   // tuning knob, 0.25 start
-
-        //G4MaterialPropertiesTable* mptTeflon = new G4MaterialPropertiesTable();
-        //mptTeflon->AddConstProperty("REFLECTIVITY", 0.98);
-        surfTeflon->SetMaterialPropertiesTable(mptTeflon);
-
-        // 3. Create border surfaces
-        new G4LogicalBorderSurface("Crystal-SiPM_Coupling", physScintillators[i],physSiPM[i],surfCoupling);
-        //new G4LogicalBorderSurface("Crystal-Grease", physScintillators[i], physGrease, surfCrystalGrease);
-        //new G4LogicalBorderSurface("Grease-SiPM", physGrease, physSiPM[i], surfGreaseSiPM);
-        new G4LogicalBorderSurface("Crystal-Teflon", physScintillators[i], physTapflon[i], surfTeflon);
+            new G4LogicalBorderSurface("LightGuide-PMT",
+                physLightGuides[i], physSiPM[i], surfLGPMT);
+        }
     }
 }
-
 
 
 void MyDetectorConstruction::ConstructCalorimeter() {

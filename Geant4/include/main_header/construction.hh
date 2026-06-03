@@ -37,6 +37,8 @@
 #include "detector_calorimeter.hh"
 #include "detector_edepcounter.hh"
 
+#include <filesystem>             
+namespace fs = std::filesystem;
 
 class MyDetectorConstruction : public G4VUserDetectorConstruction
 {
@@ -145,6 +147,8 @@ private:
 	G4String coordinate_name;
 	G4bool logicOptical;
 	G4MaterialPropertiesTable* mptTeflon;
+
+	std::vector<G4LogicalVolume*> logicLightGuides;
 };
 
 #endif
