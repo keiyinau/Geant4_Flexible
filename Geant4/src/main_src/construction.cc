@@ -703,7 +703,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
     const std::string data_dir          = "phase1/v4";
     const std::string hodoscope_prefix  = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_Hodoscope_";
     const std::string pmt_prefix        = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_PMT_";
-    const std::string lightguide_prefix = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_LightGuide_";
+    const std::string lightguide_prefix = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_PMT_4_LightGuide_";
 
     // === 3. ROBUST DISCOVERY (map by number) ===
     auto discover_numbered = [&](const std::string& prefix) -> std::map<int, std::string> {

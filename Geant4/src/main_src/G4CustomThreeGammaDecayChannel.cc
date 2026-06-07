@@ -124,12 +124,21 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
             if (dis(gen) * max_d < d) {
                 // ... rest of your shuffle logic ...
                 // Shuffle energies/dirs to avoid bias
-                std::vector<G4double> E_shuffle = {x, y, E3};
-                std::vector<G4ThreeVector> dir_shuffle = {dir1, dir2, dir3};
-                std::shuffle(E_shuffle.begin(), E_shuffle.end(), gen);
-                std::shuffle(dir_shuffle.begin(), dir_shuffle.end(), gen);
-                E1 = E_shuffle[0]; E2 = E_shuffle[1]; E3 = E_shuffle[2];
-                dir1 = dir_shuffle[0]; dir2 = dir_shuffle[1]; dir3 = dir_shuffle[2];
+                std::vector<G4int> indices = {0, 1, 2};
+                std::shuffle(indices.begin(), indices.end(), gen);
+                
+                std::vector<G4double> E_orig = {x, y, E3};
+                std::vector<G4ThreeVector> dir_orig = {dir1, dir2, dir3};
+                
+                // Assign matched pairs based on the same random permutation
+                E1 = E_orig[indices[0]];
+                E2 = E_orig[indices[1]];
+                E3 = E_orig[indices[2]];
+                
+                dir1 = dir_orig[indices[0]];
+                dir2 = dir_orig[indices[1]];
+                dir3 = dir_orig[indices[2]];
+                
                 accepted = 1;
             }
         }
