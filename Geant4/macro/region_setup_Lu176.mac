@@ -1,21 +1,20 @@
 #/gps/verbose 2
-#Set the General Particle Source to be Co60
+#Set the General Particle Source to be Lu-176
 /gps/particle ion
 /gps/ion 71 176
 
 #Position region of generated gps, should equal to the active region
-# Position: uniform decays inside a 4×4×20 mm box, now centred at (0, 0, 10) mm
+# The crystal's 20mm length is now along the Y-axis
 /gps/pos/type Volume
-/gps/pos/shape Para
-/gps/pos/centre 0 0 0 mm      # ← this is the only line that changed
+/gps/pos/shape Para          # <-- Corrected: GPS uses 'Para' for rectangular prisms
+/gps/pos/centre 0 42 0 mm    # <-- Keep your verified center here
 /gps/pos/halfx  2 mm
-/gps/pos/halfy  2 mm
-/gps/pos/halfz 10 mm
+/gps/pos/halfy 10 mm         # <-- 10mm half-length remains along Y
+/gps/pos/halfz  2 mm
 
 #Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono
 /gps/ene/mono 0. MeV
-/gps/number 1 #Simulating 0.1 s
 
 #Set the direction distribution of Source
 /gps/ang/type iso

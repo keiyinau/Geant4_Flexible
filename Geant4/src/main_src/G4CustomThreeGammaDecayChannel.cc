@@ -91,38 +91,54 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4int accepted = 0;
     G4double DM_mass=0.50;
     while (accepted == 0) {
-        G4double x = min_energy + dis(gen) * (M / 2 - min_energy); //DM_mass;
+        G4double x = min_energy + dis(gen) * (M / 2 - min_energy);
         G4double y = min_energy + dis(gen) * (M / 2 - min_energy);
         E3 = M - x - y;
-        if (E3 > min_energy && E3 < M / 2 && x + y < M) {
-            // Sample directions
-            G4double cost = 2.0 * dis(gen) - 1.0;
-            G4double sint = std::sqrt(1.0 - cost * cost);
-            G4double phi = 2.0 * M_PI * dis(gen);
-            dir1 = G4ThreeVector(sint * std::cos(phi), sint * std::sin(phi), cost);
-            G4ThreeVector k1 = x * dir1;
+        
+        G4double cos_theta1 = 2.0 * dis(gen) - 1.0;
+        G4double sin_theta1 = std::sqrt(1.0 - cos_theta1 * cos_theta1);
+        G4double phi1 = 2.0 * M_PI * dis(gen);
+        dir1 = G4ThreeVector(sin_theta1 * std::cos(phi1), sin_theta1 * std::sin(phi1), cos_theta1);
+        G4ThreeVector k1 = x * dir1; 
 
+        if (E3 > min_energy && E3 < M / 2 && (x + y) > M / 2) {
             G4double cos_theta12 = (E3 * E3 - x * x - y * y) / (2.0 * x * y);
-            if (std::abs(cos_theta12) > 1.0) cos_theta12 = (cos_theta12 > 1.0) ? 1.0 : -1.0;
+            
+            // Skip this iteration if it violates kinematics
+            if (std::abs(cos_theta12) > 1.0) continue; 
+            
             G4double sin_theta12 = std::sqrt(1.0 - cos_theta12 * cos_theta12);
             G4double phi2 = 2.0 * M_PI * dis(gen);
 
             dir2 = G4ThreeVector(sin_theta12 * std::cos(phi2), sin_theta12 * std::sin(phi2), cos_theta12);
-            dir2.rotateUz(dir1);
+            
+            // dir1 is now valid, so this rotation works perfectly!
+            dir2.rotateUz(dir1); 
             G4ThreeVector k2 = y * dir2;
 
+            // Momentum is now strictly conserved: k1 + k2 + k3 = 0
             G4ThreeVector k3 = -k1 - k2;
             dir3 = k3.unit();
 
             G4double d = dalitz_density(x, y, E3, k1, k2, k3);
             if (dis(gen) * max_d < d) {
+                // ... rest of your shuffle logic ...
                 // Shuffle energies/dirs to avoid bias
-                std::vector<G4double> E_shuffle = {x, y, E3};
-                std::vector<G4ThreeVector> dir_shuffle = {dir1, dir2, dir3};
-                std::shuffle(E_shuffle.begin(), E_shuffle.end(), gen);
-                std::shuffle(dir_shuffle.begin(), dir_shuffle.end(), gen);
-                E1 = E_shuffle[0]; E2 = E_shuffle[1]; E3 = E_shuffle[2];
-                dir1 = dir_shuffle[0]; dir2 = dir_shuffle[1]; dir3 = dir_shuffle[2];
+                std::vector<G4int> indices = {0, 1, 2};
+                std::shuffle(indices.begin(), indices.end(), gen);
+                
+                std::vector<G4double> E_orig = {x, y, E3};
+                std::vector<G4ThreeVector> dir_orig = {dir1, dir2, dir3};
+                
+                // Assign matched pairs based on the same random permutation
+                E1 = E_orig[indices[0]];
+                E2 = E_orig[indices[1]];
+                E3 = E_orig[indices[2]];
+                
+                dir1 = dir_orig[indices[0]];
+                dir2 = dir_orig[indices[1]];
+                dir3 = dir_orig[indices[2]];
+                
                 accepted = 1;
             }
         }
@@ -139,20 +155,21 @@ G4DecayProducts* G4CustomThreeGammaDecayChannel::DecayIt(G4double parentMass) {
     G4DynamicParticle* gamma3 = new G4DynamicParticle(G4Gamma::Gamma(), E3 * dir3);
 
     // Set polarizations (linear, perp to dir; random phi)
-    G4double phi_pol = twopi * dis(gen);
-    G4ThreeVector pol1(std::cos(phi_pol), std::sin(phi_pol), 0.);
-    pol1.rotateUz(dir1);
+    // --- NEW FIX: Quantum Entanglement Approximation (Correlated to Decay Plane) ---
+    // 1. Find the normal to the decay plane
+    G4ThreeVector decay_plane_normal = dir1.cross(dir2).unit();
+
+    // 2. The polarization must be perpendicular to the photon's direction (transverse).
+    // To make the polarization lie IN the decay plane, we take the cross product 
+    // of the decay plane normal and the photon's direction.
+    G4ThreeVector pol1 = decay_plane_normal.cross(dir1).unit();
+    G4ThreeVector pol2 = decay_plane_normal.cross(dir2).unit();
+    G4ThreeVector pol3 = decay_plane_normal.cross(dir3).unit();
+
     gamma1->SetPolarization(pol1);
-
-    phi_pol = twopi * dis(gen);
-    G4ThreeVector pol2(std::cos(phi_pol), std::sin(phi_pol), 0.);
-    pol2.rotateUz(dir2);
     gamma2->SetPolarization(pol2);
-
-    phi_pol = twopi * dis(gen);
-    G4ThreeVector pol3(std::cos(phi_pol), std::sin(phi_pol), 0.);
-    pol3.rotateUz(dir3);
     gamma3->SetPolarization(pol3);
+    // -------------------------------------------------------------------------------
     products->PushProducts(gamma1);
     products->PushProducts(gamma2);
     products->PushProducts(gamma3);

@@ -44,9 +44,9 @@ add_executable(sim sim.cc ${headers_main} ${sources_main})
 #target_link_libraries(sim ${Geant4_LIBRARIES})
 
 # Define paths for SimSiPM
-set(SimSiPM_DIR "/home/eltisau/software/SimSiPM")
+set(SimSiPM_DIR "/Users/eltis/Documents/SimSiPM")
 set(SimSiPM_INCLUDE_DIR "${SimSiPM_DIR}/include")
-set(SimSiPM_LIBRARY_DIR "${SimSiPM_DIR}/install/lib")
+set(SimSiPM_LIBRARY_DIR "${SimSiPM_DIR}/build/install/lib")
 # Find ROOT
 find_package(ROOT REQUIRED COMPONENTS Graf Gpad)
 if(NOT ROOT_FOUND)

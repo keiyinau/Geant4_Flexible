@@ -139,7 +139,7 @@ private:
 	G4Material *matXe, *matWater;  // Xenon gas for test
 	// Radioactive Source (Positron Source)
 	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
-	G4Material *matSi, *matAl, *matAcrylic, *matTeflon;
+	G4Material *matSi, *matAl, *matAcrylic, *matTeflon, *matGlass;
 
 	//Setting
 	G4String coordinate_name;
