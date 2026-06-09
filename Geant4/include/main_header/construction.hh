@@ -48,6 +48,7 @@ public:
 	virtual void ConstructSDandField();
 	void DefineMaterials();
 	void DefineMessenger();
+	void SetLightYield(G4double val);
 	bool readAndProcessData(const std::string& filename, 
 				   std::vector<double>& emission_Energy, 
 				   std::vector<double>& emission_fractions);
@@ -141,6 +142,7 @@ private:
 	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon, *matGlass;
 
+	G4double fLightYield;
 	//Setting
 	G4String coordinate_name;
 	G4bool logicOptical;

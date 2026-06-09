@@ -9,4 +9,4 @@
 /MyDetector/setFileName Lu176
 
 # Run commands
-/run/beamOn 10000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806
+/run/beamOn 1000000 # originally 1.85 MBq, now about 2.6 year, so 680577 c/s, 0.01 second=6806

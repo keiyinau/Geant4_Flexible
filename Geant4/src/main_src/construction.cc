@@ -2,12 +2,12 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=true;
+    logicOptical=false;
 	DefineMaterials();
 
 
     coordinate_name="coordinates.txt";
-
+    fLightYield=10000;		// Light yield of scintillator, in photons/MeV. This is a made-up value for demonstration; adjust based on actual material properties.
 	isDetector_Shell = false;
 	isSource=false;
 	isTPC = false;
@@ -18,7 +18,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
 	matWorld = Air; //Vacuum;
     matLiquid=matAcrylic;
     matContainer=matAcrylic;
-    matScintillator=matLYSO;
+    matScintillator=matWater;
     matSiPM=matSi;
     matWrapping=matTeflon;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
@@ -316,6 +316,20 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_Energy_cm_txt("AbsorptionLength_Water.txt", Water_absorption_Energy, Water_absorption_Index);
     mptWater->AddProperty("RINDEX", "Water");
     mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index,Water_absorption_Index.size());
+    // === NEW: Add Liquid Scintillation Properties ===
+    // 1. Placeholder Emission Spectrum (e.g., 2.5 eV to 3.0 eV -> ~413nm to ~496nm)
+    G4double liquidEnergy[] = { 2.5*eV, 3.0*eV }; 
+    G4double liquidEmission[] = { 1.0, 1.0 }; // Flat emission profile
+    mptWater->AddProperty("SCINTILLATIONCOMPONENT1", liquidEnergy, liquidEmission, 2);
+
+    // 2. The Variable you will study: Light Yield (Photons per MeV)
+    mptWater->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
+    
+    // 3. Resolution and Timing (Typical liquid scintillator timings)
+    mptWater->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    mptWater->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns); // Fast decay
+    
+    matWater->SetMaterialPropertiesTable(mptWater);
     // End water
 
 
@@ -384,15 +398,15 @@ void MyDetectorConstruction::DefineMaterials() {
     
     //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
-    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
-    mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
-    mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
-    mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
+    //mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
+    //mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
+    //mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
+    //mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
-    mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
-    mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
-    mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
-    matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
+    //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
+    //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
+    //mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
+    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
     //matLYSO->GetIonisation()->SetBirksConstant(0.0028 * cm/MeV);
 
 	// CsI
@@ -508,7 +522,7 @@ void MyDetectorConstruction::DefineMaterials() {
     //End surface
     if(logicOptical){
         Air->SetMaterialPropertiesTable(mptAir);
-        //matWater->SetMaterialPropertiesTable(mptWater);
+        matWater->SetMaterialPropertiesTable(mptWater);
         matLSO->SetMaterialPropertiesTable(mptLSO);
         matLYSO->SetMaterialPropertiesTable(mptLYSO);
         matSi->SetMaterialPropertiesTable(mptSi);
@@ -550,6 +564,7 @@ void MyDetectorConstruction::DefineMessenger() {
 	fMessenger->DeclareProperty("isDetector_Shell", isDetector_Shell, "Construct Shell Detector (spherical shell locate at origin, inner radius = 3*cm, thickness = 1*nm)");
 	fMessenger->DeclareProperty("setFileName", file_name, "Set the name of output root file");
     fMessenger->DeclareProperty("setDetectorCoordinate",coordinate_name,"Set the coordinate file that is using");
+    fMessenger->DeclareMethod("setLightYield", &MyDetectorConstruction::SetLightYield, "Set Light Yield in photons/MeV");
 }
 // Construct All physical volumes
 G4VPhysicalVolume* MyDetectorConstruction::Construct() {
@@ -923,3 +938,16 @@ void MyDetectorConstruction::ConstructLiquidScintillator(){
 	physLiquid_B = new G4PVPlacement(0, G4ThreeVector(0.*m, 0.*m, 0.*m), logicLiquid_B, "Liquid", logiContainer_B, false, 0, true);
 }
 // End Construct source
+
+void MyDetectorConstruction::SetLightYield(G4double val) {
+    fLightYield = val;
+    G4cout << "Updating Liquid Scintillator Light Yield to: " << fLightYield << " photons/MeV" << G4endl;
+    
+    // If the material table exists, update the specific property
+    if (matWater && matWater->GetMaterialPropertiesTable()) {
+        matWater->GetMaterialPropertiesTable()->AddConstProperty("SCINTILLATIONYIELD", fLightYield / MeV);
+        
+        // Inform the RunManager that cross-sections/physics must be recalculated
+        G4RunManager::GetRunManager()->PhysicsHasBeenModified(); 
+    }
+}
