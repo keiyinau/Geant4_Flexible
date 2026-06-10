@@ -5,7 +5,8 @@
 #/control/verbose 0
 
 # Set the active region of Co-60
-/control/execute region_setup_Lu176.mac
+/control/execute region_LYSO_middle.mac
+
 /MyDetector/setFileName Lu176
 
 # Run commands

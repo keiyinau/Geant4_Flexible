@@ -714,133 +714,52 @@ void MyDetectorConstruction::ConstructCalorimeter_unit(G4ThreeVector translation
     // Crystal → Teflon (reflective)
     new G4LogicalBorderSurface("Crystal-Teflon", physCrystal, physTeflon, surfCsI_Teflon);
 }
-void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation,G4String name, G4double rotateX, G4double rotateY, G4double rotateZ){
+void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translation, G4String name, G4double rotateX, G4double rotateY, G4double rotateZ){
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(rotateX);
     rotation->rotateY(rotateY);
-    rotation->rotateZ(rotateZ); //Remove this line if no self rotation
+    rotation->rotateZ(rotateZ); // Remove this line if no self rotation
     
-    // === 1. ADD ALL STL NAMES ===
-    std::string GlassVial_name_list[]    = {"DarkBox/DarkBox_sim2_DarkBox_sim2_Glass_Vial_2ml"}; 
-    std::string Scintillator_name_list[] = {"DarkBox/DarkBox_sim2_DarkBox_sim2_Water_1ml"};
-    std::string SiPM_name_list[]         = {"DarkBox/DarkBox_sim2_DarkBox_sim2_SiPM_Array"};
-    std::string Tapflon_name_list[]      = {"DarkBox/DarkBox_sim2_DarkBox_sim2_Vial_Al_Wrapping"};
-    // ---> NEW: LYSO and its wrapping
-    std::string LYSO_name_list[]         = {"DarkBox/DarkBox_sim2_DarkBox_sim2_LYSO_Crystal"};
-    std::string LYSOWrap_name_list[]     = {"DarkBox/DarkBox_sim2_DarkBox_sim2_LYSO_Al_Wrapping"};
+    std::string prefix = "pixelated_lyso/Pixelized_crystal_test_Pixelized_crystal_test_";
     
-    int Size_of_Scintillator_name_list = sizeof(Scintillator_name_list)/sizeof(std::string);
-    // (Assuming all lists have the same size for the loop)
+    // === 1. MAIN UNWRAPPED LYSO CRYSTAL ===
+    auto mainLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Main_Unwrapped_LYSO.stl");
+    mainLysoMesh->SetScale(1.0);
+    G4LogicalVolume* logicMainLYSO = new G4LogicalVolume(mainLysoMesh->GetSolid(), matLYSO, "MainLYSO_" + name + "_Logic");
+    
+    logicScintillators.push_back(logicMainLYSO); // Main detector pushed to Sensitive Detector
+    new G4PVPlacement(rotation, translation, logicMainLYSO, "MainLYSO_" + name, logicWorld, false, 0, true);
 
-    std::vector<G4VPhysicalVolume*> physGlassVial(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physScintillators(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physTapflon(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physSiPM(Size_of_Scintillator_name_list);
-    // ---> NEW: Physical volume vectors for LYSO
-    std::vector<G4VPhysicalVolume*> physLYSO(Size_of_Scintillator_name_list);
-    std::vector<G4VPhysicalVolume*> physLYSOWrap(Size_of_Scintillator_name_list);
-    
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
-        // === GLASS VIAL IMPLEMENTATION ===
-        std::string name_Glass = GlassVial_name_list[i];
-        auto vialMesh = CADMesh::TessellatedMesh::FromSTL(name_Glass + ".stl");
-        vialMesh->SetScale(1.0);
-        auto GlassVialSolid = vialMesh->GetSolid();
-        G4LogicalVolume* logicGlass_pre = new G4LogicalVolume(GlassVialSolid, matGlass, name_Glass+name + "Logic");
-        physGlassVial[i] = new G4PVPlacement(rotation, translation, logicGlass_pre, name_Glass+name, logicWorld, false, i, true);
-
-        // === WATER (Scintillator) IMPLEMENTATION ===
-        std::string name_scint = Scintillator_name_list[i];
-        auto scintillator = CADMesh::TessellatedMesh::FromSTL(name_scint + ".stl");
-        scintillator->SetScale(1.0);
-        auto Scintillator = scintillator->GetSolid();
-        G4LogicalVolume* logicScintillator_pre = new G4LogicalVolume(Scintillator, matScintillator, name_scint+name + "Logic");
-        logicScintillators.push_back(logicScintillator_pre);
-        physScintillators[i] = new G4PVPlacement(rotation, translation, logicScintillator_pre, name_scint+name, logicWorld, false, i, true);    
+    // === 2. ALL THREE SiPMs (Bottom, Middle, Top) ===
+    std::string positions[] = {"Bottom", "Middle", "Top"};
+    for (int i = 0; i < 3; i++) {
+        auto sipmMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "SiPM_" + positions[i] + ".stl");
+        sipmMesh->SetScale(1.0);
+        G4LogicalVolume* logicSiPM_part = new G4LogicalVolume(sipmMesh->GetSolid(), matSiPM, "SiPM_" + positions[i] + "_" + name + "_Logic");
         
-        // === SIPM IMPLEMENTATION ===
-        std::string name_SiPM = SiPM_name_list[i];
-        auto scintillatorDet = CADMesh::TessellatedMesh::FromSTL(name_SiPM + ".stl");
-        scintillatorDet->SetScale(1.0);
-        auto ScintillatorDet = scintillatorDet->GetSolid();
-        G4LogicalVolume* logicSiPM_pre = new G4LogicalVolume(ScintillatorDet, matSiPM, name_SiPM+name + "Logic");
-        logicCalorimeter=logicSiPM_pre;
-        logicSiPM.push_back(logicCalorimeter);
-        physSiPM[i] = new G4PVPlacement(rotation, translation, logicCalorimeter, name_SiPM+name, logicWorld, false, i, true);    
-
-        // === VIAL WRAPPING IMPLEMENTATION ===
-        std::string name_Wrapping = Tapflon_name_list[i];
-        auto scintillatorwrapping = CADMesh::TessellatedMesh::FromSTL(name_Wrapping + ".stl");
-        scintillatorwrapping->SetScale(1.0);
-        auto Scintillatorwrapping = scintillatorwrapping->GetSolid();
-        G4LogicalVolume* logicTapflon_pre = new G4LogicalVolume(Scintillatorwrapping, matWrapping, name_Wrapping+name + "Logic");
-        logicTapflon.push_back(logicTapflon_pre);
-        physTapflon[i] = new G4PVPlacement(rotation, translation, logicTapflon_pre, name_Wrapping+name, logicWorld, false, i, true);    
-
-        // === NEW: LYSO CRYSTAL IMPLEMENTATION ===
-        std::string name_LYSO = LYSO_name_list[i];
-        auto lysoMesh = CADMesh::TessellatedMesh::FromSTL(name_LYSO + ".stl");
-        lysoMesh->SetScale(1.0);
-        auto LYSOSolid = lysoMesh->GetSolid();
-        // ** Ensure matLYSO is defined in your materials **
-        G4LogicalVolume* logicLYSO_pre = new G4LogicalVolume(LYSOSolid, matLYSO, name_LYSO+name + "Logic");
-        physLYSO[i] = new G4PVPlacement(rotation, translation, logicLYSO_pre, name_LYSO+name, logicWorld, false, i, true);
-
-        // === NEW: LYSO WRAPPING IMPLEMENTATION ===
-        std::string name_LYSOWrap = LYSOWrap_name_list[i];
-        auto lysoWrapMesh = CADMesh::TessellatedMesh::FromSTL(name_LYSOWrap + ".stl");
-        lysoWrapMesh->SetScale(1.0);
-        auto LYSOWrapSolid = lysoWrapMesh->GetSolid();
-        G4LogicalVolume* logicLYSOWrap_pre = new G4LogicalVolume(LYSOWrapSolid, matWrapping, name_LYSOWrap+name + "Logic");
-        physLYSOWrap[i] = new G4PVPlacement(rotation, translation, logicLYSOWrap_pre, name_LYSOWrap+name, logicWorld, false, i, true);
+        logicSiPM.push_back(logicSiPM_part); // Push to SiPM array
+        new G4PVPlacement(rotation, translation, logicSiPM_part, "SiPM_" + positions[i] + "_" + name, logicWorld, false, i, true);
     }
 
-    // === OPTICAL SURFACES ===
-    for (int i = 0; i < Size_of_Scintillator_name_list; i++) {
-        
-        G4OpticalSurface* surfCoupling = new G4OpticalSurface("CrystalSiPM_Coupling");
-        surfCoupling->SetType(dielectric_dielectric);
-        surfCoupling->SetFinish(polished);           
-        surfCoupling->SetModel(unified);
-        surfCoupling->SetSigmaAlpha(0.05*degree);    
+    // === 3. ONLY THE MIDDLE SIDE LYSO CRYSTAL ===
+    auto sideLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Side_LYSO_Middle.stl");
+    sideLysoMesh->SetScale(1.0);
+    G4LogicalVolume* logicSideLYSO = new G4LogicalVolume(sideLysoMesh->GetSolid(), matLYSO, "SideLYSO_Middle_" + name + "_Logic");
+    
+    logicScintillators.push_back(logicSideLYSO); // Side crystal pushed to Sensitive Detector
+    new G4PVPlacement(rotation, translation, logicSideLYSO, "SideLYSO_Middle_" + name, logicWorld, false, 0, true);
 
-        G4OpticalSurface* surfTeflon = new G4OpticalSurface("TeflonSurf");
-        surfTeflon->SetType(dielectric_dielectric);
-        surfTeflon->SetFinish(groundbackpainted);
-        surfTeflon->SetModel(unified);
-        surfTeflon->SetSigmaAlpha(0.25*degree);   
-        surfTeflon->SetMaterialPropertiesTable(mptTeflon);
+    // === 4. ONLY THE MIDDLE ALUMINUM WRAPPING ===
+    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Wrap_Middle.stl");
+    wrapMesh->SetScale(1.0);
+    G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "Wrap_Middle_" + name + "_Logic");
+    
+    logicTapflon.push_back(logicWrap); // Push to wrapping array
+    new G4PVPlacement(rotation, translation, logicWrap, "Wrap_Middle_" + name, logicWorld, false, 0, true);
 
-        G4OpticalSurface* surfWaterGlass = new G4OpticalSurface("WaterGlass_Surf");
-        surfWaterGlass->SetType(dielectric_dielectric);
-        surfWaterGlass->SetModel(unified);
-        surfWaterGlass->SetFinish(polished); 
-
-        // --- NEW: LYSO / Water Optical Surface ---
-        G4OpticalSurface* surfLYSOWater = new G4OpticalSurface("LYSOWater_Surf");
-        surfLYSOWater->SetType(dielectric_dielectric);
-        surfLYSOWater->SetModel(unified);
-        surfLYSOWater->SetFinish(polished); // Polished interface between crystal and water
-        
-        // Existing Borders
-        new G4LogicalBorderSurface("Water-SiPM_Coupling", physScintillators[i], physSiPM[i], surfCoupling);
-        new G4LogicalBorderSurface("Glass-SiPM_Coupling", physGlassVial[i], physSiPM[i], surfCoupling);
-        new G4LogicalBorderSurface("Glass-Teflon", physGlassVial[i], physTapflon[i], surfTeflon);
-        new G4LogicalBorderSurface("Water_to_Glass", physScintillators[i], physGlassVial[i], surfWaterGlass);
-        new G4LogicalBorderSurface("Glass_to_Water", physGlassVial[i], physScintillators[i], surfWaterGlass);
-
-        // --- NEW BORDERS FOR LYSO ---
-        
-        // 1. LYSO to its specific Aluminum Wrapping
-        new G4LogicalBorderSurface("LYSO-Teflon", physLYSO[i], physLYSOWrap[i], surfTeflon);
-        
-        // 2. LYSO to Water coupling (where the bottom of the crystal dips into the vial/water)
-        new G4LogicalBorderSurface("LYSO_to_Water", physLYSO[i], physScintillators[i], surfLYSOWater);
-        new G4LogicalBorderSurface("Water_to_LYSO", physScintillators[i], physLYSO[i], surfLYSOWater);
-        
-        // Optional: If the LYSO touches the air or glass neck directly anywhere, 
-        // rely on Geant4's RIND boundary handling, or explicitly define it here.
-    }
+    // ==========================================
+    // OPTICAL SURFACES (IGNORED FOR NOW)
+    // ==========================================
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {

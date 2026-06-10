@@ -1,0 +1,20 @@
+#/gps/verbose 2
+#Set the General Particle Source to be Lu-176
+/gps/particle ion
+/gps/ion 71 176
+
+# Position region equal to the Middle Side LYSO Crystal
+# The crystal's 20mm length is now lying along the X-axis
+/gps/pos/type Volume
+/gps/pos/shape Para          
+/gps/pos/centre 12.01 0 10 mm    # Centered at X=12.01mm, Z=10mm
+/gps/pos/halfx 10 mm             # Long axis is now X
+/gps/pos/halfy 2 mm
+/gps/pos/halfz 2 mm
+
+# Set the energy distribution of Source
+/gps/ene/type Mono
+/gps/ene/mono 0. MeV
+
+# Set the direction distribution of Source
+/gps/ang/type iso
