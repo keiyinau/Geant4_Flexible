@@ -1,0 +1,24 @@
+# =======================================================
+# Source: Submerged LYSO Crystal (10 ml Vial Calibration)
+# Y-Axis Vertical Setup
+# =======================================================
+
+/gps/particle ion
+/gps/ion 71 176
+
+# Set position to match the interior of the submerged LYSO crystal
+# Center is shifted to Y = 12.706 mm
+/gps/pos/type Volume
+/gps/pos/shape Para          
+/gps/pos/centre 0 12.706 0 mm    
+/gps/pos/halfx 2 mm              # 4mm total width -> 2mm half-length
+/gps/pos/halfy 10 mm             # 20mm total height -> 10mm half-length
+/gps/pos/halfz 2 mm              # 4mm total depth -> 2mm half-length
+
+# Set primary ion kinetic energy to 0 MeV 
+# This forces Geant4's G4RadioactiveDecay process to handle the true decay mechanics
+/gps/ene/type Mono
+/gps/ene/mono 0. MeV
+
+# Allow isotropic emission (4pi direction distribution)
+/gps/ang/type iso
