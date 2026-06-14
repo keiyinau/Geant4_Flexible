@@ -700,10 +700,10 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
     rotation->rotateZ(rotateZ);
 
     // === 2. CONFIGURATION (edit only these) ===
-    const std::string data_dir          = "phase1/v4";
-    const std::string hodoscope_prefix  = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_Hodoscope_";
-    const std::string pmt_prefix        = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_PMT_";
-    const std::string lightguide_prefix = "hodoscope_v4_zigzag_hodoscope_v4_zigzag_PMT_4_LightGuide_";
+    const std::string data_dir          = "phase1/finalize";
+    const std::string hodoscope_prefix  = "hodoscope_finalize_hodoscope_finalize_Hodoscope_";
+    const std::string pmt_prefix        = "hodoscope_finalize_hodoscope_finalize_PMT_";
+    const std::string lightguide_prefix = "hodoscope_finalize_hodoscope_finalize_LightGuide_";
 
     // === 3. ROBUST DISCOVERY (map by number) ===
     auto discover_numbered = [&](const std::string& prefix) -> std::map<int, std::string> {
@@ -806,7 +806,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
         if (!Lightguide_name_list[i].empty()) {
             G4VSolid* lgSolid = load_stl_solid(Lightguide_name_list[i]);
             G4LogicalVolume* logicLG = new G4LogicalVolume(
-                lgSolid, matWrapping, Lightguide_name_list[i] + name + "Logic");
+                lgSolid, matAcrylic, Lightguide_name_list[i] + name + "Logic");
             logicLightGuides.push_back(logicLG);
 
             physLightGuides[i] = new G4PVPlacement(
@@ -814,7 +814,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
                 Lightguide_name_list[i] + name, logicWorld, false, i, true);
         }
     }
-
+    
     // === 8. OPTICAL SURFACES (with safety guards) ===
     for (size_t i = 0; i < n_units; ++i) {
         // Only create border surfaces when both volumes exist
@@ -839,6 +839,11 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(
                 physLightGuides[i], physSiPM[i], surfLGPMT);
         }
     }
+
+    G4VSolid* frameSolid = load_stl_solid("phase1/finalize/hodoscope_finalize_hodoscope_finalize_Supporting_Frame");
+    G4LogicalVolume* logicFrame = new G4LogicalVolume(frameSolid, matAcrylic, "SupportingFrameLogic");
+    new G4PVPlacement(rotation, translation, logicFrame, "SupportingFrame", logicWorld, false, 0, true);
+
 }
 
 

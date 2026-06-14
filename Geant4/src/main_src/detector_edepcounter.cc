@@ -1,21 +1,18 @@
 #include "detector_edepcounter.hh"
 #include "event.hh"
+
 Detect_edep::Detect_edep(G4String name) : G4VSensitiveDetector(name), fHitsCollectionID(-1)
 {
-    ClearVectorsCounts(); // Initialize the vectors to store accumulated data
+    ClearVectorsCounts(); 
     collectionName.insert("EdepCollection");
 }
 
-Detect_edep::~Detect_edep()
-{}
+Detect_edep::~Detect_edep() {}
 
 void Detect_edep::Initialize(G4HCofThisEvent* hce)
 {
-    edep_per_detector.clear(); // Clear the map at the start of each event
-    optical_per_detector.clear(); // Clear the optical photon count map
-    first_time_per_detector.clear(); // Clear the time map
-    G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-    //G4cout << "MySensitiveDetector::Initialize called for Event=" << eventID << G4endl;
+    ClearVectorsCounts(); // Clear everything at the start of the event
+    
     if (fHitsCollectionID < 0) {
         fHitsCollectionID = GetCollectionID(0);
     }
@@ -26,39 +23,40 @@ void Detect_edep::Initialize(G4HCofThisEvent* hce)
 void Detect_edep::EndOfEvent(G4HCofThisEvent*)
 {
     SaveToRoot();
-    ClearVectorsCounts(); // Clear the accumulated counts at the end of each event
+    ClearVectorsCounts(); 
 }
 
-G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
+G4bool Detect_edep::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 {
     G4Track* track = aStep->GetTrack();
     G4String detector_Name = track->GetTouchable()->GetVolume()->GetName();
     G4String particle = track->GetParticleDefinition()->GetParticleName();
     G4double edep_step = aStep->GetTotalEnergyDeposit();
-    if (particle == "opticalphoton" && track->GetCurrentStepNumber() == 1) {
-        optical_per_detector[detector_Name]++;
+
+    // Handle Optical Photons separately
+    if (particle == "opticalphoton") {
+        if (track->GetCurrentStepNumber() == 1) {
+            optical_per_detector[detector_Name]++;
+        }
+        return true;
     }
-    if (particle != "opticalphoton" && edep_step > 0.) { // Skip optical photons and zero-edep steps
+
+    // Handle standard particles (electrons, gammas, etc.) depositing energy
+    if (edep_step > 0.) {
+        
+        // 1. Accumulate total energy into this detector
         edep_per_detector[detector_Name] += edep_step;
 
-        // New: Record the earliest global time for the first interaction (min time of depositing steps)
+        // 2. Record the earliest time of interaction in this detector
         G4double time = aStep->GetPreStepPoint()->GetGlobalTime();
-        auto it = first_time_per_detector.find(detector_Name);
-        if (it == first_time_per_detector.end() || time < it->second) {
+        
+        // If this detector hasn't been hit yet, OR if this hit is earlier than the saved one
+        if (first_time_per_detector.find(detector_Name) == first_time_per_detector.end() || time < first_time_per_detector[detector_Name]) {
             first_time_per_detector[detector_Name] = time;
         }
-
     }
-    //if(particle=="electron" && track->GetCurrentStepNumber()==1){
-    //    track->SetTrackStatus(fStopAndKill);
-    //}
-    return true;
-}
 
-// This function stores information to an Ntuple then it can be saved in run.cc
-void Detect_edep::SaveToStepData(G4Step* aStep, G4TouchableHistory* ROhist, G4Track* track)
-{
-    // This function is no longer needed for per-step saving; accumulation happens in ProcessHits
+    return true;
 }
 
 void Detect_edep::SaveToRoot()
@@ -66,66 +64,41 @@ void Detect_edep::SaveToRoot()
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
     G4int evt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
     const MyEventAction* eventAction = static_cast<const MyEventAction*>(G4RunManager::GetRunManager()->GetUserEventAction());
+    
     G4double primaryTime = 0.0;
     if (!eventAction) {
         G4cerr << "Warning: No EventAction found — using absolute times" << G4endl;
-        primaryTime = 0.0;
     } else {
         primaryTime = eventAction->GetPrimaryDecayTime();
-        if (primaryTime == 0.0) G4cout << "Warning: primaryTime unset for event " << evt << " — using absolute" << G4endl;
     }
 
+    // Loop through each detector that had energy deposited
     for (const auto& pair : edep_per_detector) {
-        if (pair.second >= 0. * eV) {
+        G4String detName = pair.first;
+        G4double edep_acc = pair.second;
+        
+        // Only save if energy was actually deposited
+        if (edep_acc > 0. * eV) {
             analysisManager->FillNtupleIColumn(1, 0, evt); // eventID
-            analysisManager->FillNtupleSColumn(1, 1, pair.first); // detectorName
-            analysisManager->FillNtupleDColumn(1, 2, pair.second / MeV); // edep_accumulated
-            G4double firstTime = first_time_per_detector.count(pair.first) > 0 ? first_time_per_detector[pair.first] : primaryTime;
+            analysisManager->FillNtupleSColumn(1, 1, detName); // detectorName
+            
+            // The TOTAL accumulated edep for the whole detector
+            analysisManager->FillNtupleDColumn(1, 2, edep_acc / MeV); 
+            
+            // Calculate the relative time using the earliest hit in the detector
+            G4double firstTime = first_time_per_detector[detName];
             G4double rel_time = (firstTime - primaryTime) / ns;
-            analysisManager->FillNtupleDColumn(1, 3, rel_time);
-            analysisManager->FillNtupleIColumn(1, 4, optical_per_detector[pair.first]);
+            
+            analysisManager->FillNtupleDColumn(1, 3, rel_time); 
+            analysisManager->FillNtupleIColumn(1, 4, optical_per_detector[detName]);
             analysisManager->AddNtupleRow(1);
         }
     }
 }
 
-// Output Information just touch the detector
-void Detect_edep::ReadOut(G4Step* step, G4Track* track) {
-
-    G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-    G4int trackID = track->GetTrackID();
-    G4int stepID = track->GetCurrentStepNumber();
-    G4String particle_name = track->GetDefinition()->GetParticleName();
-    G4String creator_process_name = "NULL";
-    G4String physVol_name = track->GetTouchable()->GetVolume()->GetName();
-    G4ThreeVector postDetectorPosition = track->GetTouchable()->GetVolume()->GetTranslation();
-
-    G4StepPoint* poststep = step->GetPostStepPoint();
-    G4ThreeVector postPosition = poststep->GetPosition();
-    G4double postKE = poststep->GetKineticEnergy();
-
-    // Get the process name of the vertex of that particle
-    if (track->GetCreatorProcess())
-        creator_process_name = track->GetCreatorProcess()->GetProcessName();
-
-    G4cout << "----------" << G4endl;
-    G4cout << "Particle : " << particle_name << G4endl;
-    G4cout << "stepID : " << stepID << G4endl;
-    G4cout << "trackID : " << trackID << G4endl;
-    G4cout << "eventID : " << eventID << G4endl;
-    G4cout << "Creator Process : " << creator_process_name << G4endl;
-    G4cout << "Detector name :" << physVol_name << G4endl;/*
-    G4cout << "Detector position is:" << postDetectorPosition/cm << " cm" << G4endl;*/
-    G4cout << "Position : " << postPosition/mm << "mm" << G4endl;
-    G4cout << "Kinetic Energy is:" << postKE/MeV << " MeV" << G4endl;
-    G4cout << "----------" << G4endl;
-}
-
 void Detect_edep::ClearVectorsCounts()
 {
-    //G4cout << "Clearing photon counts: opticalPhotonCounts size=" << opticalPhotonCounts.size() 
-    //       << ", exitData size=" << exitData.size() << G4endl;
-    CurrentData.clear();
     edep_per_detector.clear();
-    first_time_per_detector.clear(); // New: Clear the time map
+    first_time_per_detector.clear();
+    optical_per_detector.clear();
 }
