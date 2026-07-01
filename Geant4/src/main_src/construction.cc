@@ -791,7 +791,8 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     logicTapflon.push_back(logicWrap);
     G4VPhysicalVolume* physWrap = new G4PVPlacement(rotation, translation, logicWrap, "Wrap_" + name, logicWorld, false, 0, true);
 
-    // === 6. SiPM DETECTORS & OPTICAL GREASE (1 Channel Only) ===
+    // === 6. SiPM DETECTORS & OPTICAL GREASE (Dual Channels) ===
+    // --- Channel 1 ---
     auto grease1Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_1_Optical_grease_1_Body1.stl");
     grease1Mesh->SetScale(1.0);
     G4LogicalVolume* logicGrease1 = new G4LogicalVolume(grease1Mesh->GetSolid(), matGrease, "Grease1_" + name + "_Logic");
@@ -802,11 +803,12 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4LogicalVolume* logicSiPM_vol1 = new G4LogicalVolume(sipmMesh1->GetSolid(), matSiPM, "SiPMMount1_" + name + "_Logic");
     logicSiPM.push_back(logicSiPM_vol1); 
     
-    // [CRITICAL FIX]: Tell the SD manager that this geometry is active!
+    // Tell the SD manager that this geometry is active (Pointer fallback)
     logicCalorimeter = logicSiPM_vol1; 
     
     G4VPhysicalVolume* physSiPM1 = new G4PVPlacement(rotation, translation, logicSiPM_vol1, "SiPM1_" + name, logicWorld, false, 0, true);    
-   // === 6. SiPM DETECTORS & OPTICAL GREASE (2 Channel Only) ===
+
+    // --- Channel 2 (New SiPM and Grease) ---
     auto grease2Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_Optical_grease_1_Body1.stl");
     grease2Mesh->SetScale(1.0);
     G4LogicalVolume* logicGrease2 = new G4LogicalVolume(grease2Mesh->GetSolid(), matGrease, "Grease2_" + name + "_Logic");
@@ -815,12 +817,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     auto sipmMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_SiPM_1_Body1.stl");
     sipmMesh2->SetScale(1.0);
     G4LogicalVolume* logicSiPM_vol2 = new G4LogicalVolume(sipmMesh2->GetSolid(), matSiPM, "SiPMMount2_" + name + "_Logic");
-    logicSiPM.push_back(logicSiPM_vol2); 
+    logicSiPM.push_back(logicSiPM_vol2); // 放入 Vector，確保 SD Manager 兩邊都掃描到！
     
-    // [CRITICAL FIX]: Tell the SD manager that this geometry is active!
-    logicCalorimeter = logicSiPM_vol2; 
-    
-    G4VPhysicalVolume* physSiPM2 = new G4PVPlacement(rotation, translation, logicSiPM_vol2, "SiPM2_" + name, logicWorld, false, 0, true);    
+    G4VPhysicalVolume* physSiPM2 = new G4PVPlacement(rotation, translation, logicSiPM_vol2, "SiPM2_" + name, logicWorld, false, 0, true);
 
     // ==========================================
     // 7. OPTICAL SURFACES & BORDERS
@@ -882,6 +881,13 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
 
     new G4LogicalBorderSurface("Grease1_to_SiPM1_" + name, physGrease1, physSiPM1, surfCoupling);
     new G4LogicalBorderSurface("SiPM1_to_Grease1_" + name, physSiPM1, physGrease1, surfCoupling);
+
+    // Path for SiPM 2
+    new G4LogicalBorderSurface("Glass_to_Grease2_" + name, physGlass1, physGrease2, surfCoupling);
+    new G4LogicalBorderSurface("Grease2_to_Glass_" + name, physGrease2, physGlass1, surfCoupling);
+
+    new G4LogicalBorderSurface("Grease2_to_SiPM2_" + name, physGrease2, physSiPM2, surfCoupling);
+    new G4LogicalBorderSurface("SiPM2_to_Grease2_" + name, physSiPM2, physGrease2, surfCoupling);
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
