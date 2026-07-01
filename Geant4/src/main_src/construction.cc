@@ -835,7 +835,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         surfReflector = new G4OpticalSurface("ReflectorSurf");
         surfReflector->SetType(dielectric_metal); 
         surfReflector->SetModel(unified);
-        surfReflector->SetFinish(groundfrontpainted); 
+        surfReflector->SetFinish(polishedfrontpainted); 
         surfReflector->SetSigmaAlpha(0.1 * degree); 
 
         G4MaterialPropertiesTable* mptReflector = new G4MaterialPropertiesTable();
