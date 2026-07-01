@@ -3,4 +3,4 @@
 /MyDetector/setFileName "Lu_176_LY_{LY}"
 
 # Run 6806 events for this specific light yield
-/run/beamOn 1000000
+/run/beamOn 100000

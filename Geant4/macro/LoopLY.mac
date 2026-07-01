@@ -3,9 +3,9 @@
 /control/verbose 0
 
 # Set the active region of Na-22
-/control/execute region_setup_Lu176.mac
-
+/control/execute default_GPS_setup.mac
+ikquw2iô
 # Make sure file_name is empty so Geant4 auto-numbers the output files!
 
 # Loop from 1000 to 10000 photons/MeV in steps of 1000
-/control/loop run_single_LY.mac LY 1000 10000 4000
+/control/loop run_single_LY.mac LY 0 10000 1000

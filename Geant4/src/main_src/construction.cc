@@ -2,12 +2,13 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=false;
+    logicOptical=true;
+    fLightYield=1000;		// Light yield of scintillator, in photons/MeV. This is a made-up value for demonstration; adjust based on actual material properties.
+
 	DefineMaterials();
 
 
     coordinate_name="coordinates.txt";
-    fLightYield=10000;		// Light yield of scintillator, in photons/MeV. This is a made-up value for demonstration; adjust based on actual material properties.
 	isDetector_Shell = false;
 	isSource=false;
 	isTPC = false;
@@ -20,7 +21,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
     matContainer=matAcrylic;
     matScintillator=matWater;
     matSiPM=matSi;
-    matWrapping=matTeflon;
+    matWrapping=matAl;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
@@ -289,13 +290,19 @@ G4String MyDetectorConstruction::file_name = "";
 void MyDetectorConstruction::DefineMaterials() {
 	G4NistManager* nist = G4NistManager::Instance();
 	//Define the world material as Air
-	Air = nist->FindOrBuildMaterial("G4_AIR");
+// Define the world material as Air
+    Air = nist->FindOrBuildMaterial("G4_AIR");
     std::vector<G4double> Air_absorption_Energy, Air_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_Air.txt", Air_absorption_Energy, Air_absorption_Index);
-    G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
-    mptAir->AddProperty("RINDEX", "Air");
-    mptAir->AddProperty("ABSLENGTH", Air_absorption_Energy, Air_absorption_Index,Air_absorption_Index.size());
     
+    G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
+    
+    // [修改這裡] 顯式定義 Air 的 RINDEX 為 1.0
+    G4double airEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
+    G4double rIndexAir[] = { 1.0, 1.0, 1.0, 1.0 }; 
+    mptAir->AddProperty("RINDEX", airEnergies, rIndexAir, 4);
+    
+    mptAir->AddProperty("ABSLENGTH", Air_absorption_Energy, Air_absorption_Index, Air_absorption_Index.size());
 
     // Define the world material as vacuum
 	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
@@ -310,29 +317,51 @@ void MyDetectorConstruction::DefineMaterials() {
     // End Xenon gas
 
     // Define water
+// Define water
     matWater = nist->FindOrBuildMaterial("G4_WATER");
     G4MaterialPropertiesTable* mptWater = new G4MaterialPropertiesTable();
     std::vector<G4double> Water_absorption_Energy, Water_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_Water.txt", Water_absorption_Energy, Water_absorption_Index);
-    mptWater->AddProperty("RINDEX", "Water");
-    mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index,Water_absorption_Index.size());
-    // === NEW: Add Liquid Scintillation Properties ===
-    // 1. Placeholder Emission Spectrum (e.g., 2.5 eV to 3.0 eV -> ~413nm to ~496nm)
-    G4double liquidEnergy[] = { 2.5*eV, 3.0*eV }; 
-    G4double liquidEmission[] = { 1.0, 1.0 }; // Flat emission profile
-    mptWater->AddProperty("SCINTILLATIONCOMPONENT1", liquidEnergy, liquidEmission, 2);
+    
+    // [修改這裡] 顯式定義 Water 的 RINDEX 為 1.33
+    G4double waterEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
+    G4double rIndexWater[] = { 1.49, 1.49, 1.49, 1.49 }; 
+    mptWater->AddProperty("RINDEX", waterEnergies, rIndexWater, 4);
+    
+    mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index, Water_absorption_Index.size());
+    
+    // === Liquid Scintillation Properties ===
+    std::vector<G4double> LS_emission_Energy, LS_emission_fractions;
+    readAndProcessData_Energy("LAB_DayaBay_Normalized.csv", LS_emission_Energy, LS_emission_fractions);
+    mptWater->AddConstProperty("RESOLUTIONSCALE", 0.);
+    mptWater->AddProperty("SCINTILLATIONCOMPONENT1", LS_emission_Energy, LS_emission_fractions,LS_emission_fractions.size());
+    
+    //G4double liquidEnergy[] = { 2.5*eV, 3.0*eV }; 
+    //G4double liquidEmission[] = { 1.0, 1.0 }; 
+    //mptWater->AddProperty("SCINTILLATIONCOMPONENT1", liquidEnergy, liquidEmission, 2);
 
-    // 2. The Variable you will study: Light Yield (Photons per MeV)
     mptWater->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
     
-    // 3. Resolution and Timing (Typical liquid scintillator timings)
-    mptWater->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    mptWater->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns); // Fast decay
+    // [新增這裡] Geant4 11.0 要求明確指出各 Component 的權重比例
+    mptWater->AddConstProperty("SCINTILLATIONYIELD1", 1.0); 
     
-    matWater->SetMaterialPropertiesTable(mptWater);
-    // End water
+    mptWater->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    mptWater->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns); 
+        // End water
 
+    matGrease = new G4Material("OpticalGrease", 1.06*g/cm3, 2);
+    matGrease->AddElement(nist->FindOrBuildElement("C"), 2);
+    matGrease->AddElement(nist->FindOrBuildElement("H"), 6); // 簡單的碳氫化合物模擬
 
+    G4MaterialPropertiesTable* mptGrease = new G4MaterialPropertiesTable();
+
+    // 使用與 Glass 相同的能量範圍，避免 Geant4 內插出錯
+    G4double greaseEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
+    G4double rIndexGrease[] = { 1.46, 1.46, 1.46, 1.46 }; 
+    G4double absGrease[] = { 10.*m, 10.*m, 10.*m, 10.*m }; // 設為 10m 確保 100% 透明
+
+    mptGrease->AddProperty("RINDEX", greaseEnergies, rIndexGrease, 4);
+    mptGrease->AddProperty("ABSLENGTH", greaseEnergies, absGrease, 4);
 
 	//NaCl
 	matNaCl = new G4Material("NaCl", 2.16*g/cm3, 2);
@@ -394,14 +423,14 @@ void MyDetectorConstruction::DefineMaterials() {
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
     }
 
-    mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+    //mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
     
     //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
     //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
     //mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
     //mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
     //mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
-    //mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
+    mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
     //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
     //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
@@ -471,8 +500,8 @@ void MyDetectorConstruction::DefineMaterials() {
     std::vector<G4double> tapflon_refraction_Energy, tapflon_refraction_Index;
 	readAndProcessData_Energy_txt("Refraction_Index_Teflon_Gray.txt", tapflon_refraction_Energy, tapflon_refraction_Index);
 	mptTeflon = new G4MaterialPropertiesTable();
-	mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
-    mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
+	//mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
+    //mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
     // End Tapflon
 
 	// Define SiPM
@@ -530,6 +559,7 @@ void MyDetectorConstruction::DefineMaterials() {
         matAl->SetMaterialPropertiesTable(mptAl);
         matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
         matTeflon->SetMaterialPropertiesTable(mptTeflon);
+        matGrease->SetMaterialPropertiesTable(mptGrease);
     }
 
 
@@ -718,89 +748,140 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(rotateX);
     rotation->rotateY(rotateY);
-    rotation->rotateZ(rotateZ); // Remove this line if no self rotation
+    rotation->rotateZ(rotateZ); 
     
     // === 1. DEFINE STL FILE PREFIX ===
-    std::string prefix = "Darkbox2/DarkBox_sim3_DarkBox_sim3_";
+    std::string prefix = "Darkbox_sim6/";
     
     // === 2. GLASS VIAL (20ml outer shell) ===
-    auto glassMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Glass_Vial_20ml.stl");
-    glassMesh->SetScale(1.0);
-    G4LogicalVolume* logicGlass = new G4LogicalVolume(glassMesh->GetSolid(), matGlass, "GlassVial_" + name + "_Logic");
-    G4VPhysicalVolume* physGlass = new G4PVPlacement(rotation, translation, logicGlass, "GlassVial_" + name, logicWorld, false, 0, true);
+    auto glassInnerMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_cuvette_1_Kartell_1938_Cuvette_EXACT.stl");
+    glassInnerMesh->SetScale(1.0);
+    G4LogicalVolume* logicGlass1 = new G4LogicalVolume(glassInnerMesh->GetSolid(), matGlass, "InnerCuvette" + name + "_Logic");
+    G4VPhysicalVolume* physGlass1 = new G4PVPlacement(rotation, translation, logicGlass1, "InnerCuvette" + name, logicWorld, false, 0, true);
+   
+    // === 2.5 CUVETTE CAP (Outer Glass Lid) ===
+    auto capMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Teflon_Full_Wrap.stl");
+    capMesh->SetScale(1.0);
+    G4LogicalVolume* logicCap = new G4LogicalVolume(capMesh->GetSolid(), matTeflon, "Teflontape" + name + "_Logic");
+    G4VPhysicalVolume* physCap = new G4PVPlacement(rotation, translation, logicCap, "Teflontape" + name, logicWorld, false, 0, true);
+    
+    // === Outer Glass Vial ===
+    auto glassOuterMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Glass_Vial_20mL.stl");
+    glassOuterMesh->SetScale(1.0);
+    G4LogicalVolume* logicGlass2 = new G4LogicalVolume(glassOuterMesh->GetSolid(), matGlass, "OuterCuvette" + name + "_Logic");
+    G4VPhysicalVolume* physGlass2 = new G4PVPlacement(rotation, translation, logicGlass2, "OuterCuvette" + name, logicWorld, false, 0, true);
 
-    // === 3. LIQUID SCINTILLATOR (10ml Water) ===
-    auto waterMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Water_10ml.stl");
+    // === 3. LIQUID SCINTILLATOR (10ml Water/Soup) ===
+    auto waterMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Liquid_Scintillator_Soup.stl");
     waterMesh->SetScale(1.0);
     G4LogicalVolume* logicWater = new G4LogicalVolume(waterMesh->GetSolid(), matScintillator, "WaterScint_" + name + "_Logic");
-    
-    logicScintillators.push_back(logicWater); // Push liquid scintillator to SD array
+    logicScintillators.push_back(logicWater); 
     G4VPhysicalVolume* physWater = new G4PVPlacement(rotation, translation, logicWater, "WaterScint_" + name, logicWorld, false, 0, true);    
     
     // === 4. SUBMERGED LYSO CRYSTAL ===
-    auto lysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "LYSO_Submerged.stl");
+    auto lysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_1_Crystal.stl");
     lysoMesh->SetScale(1.0);
     G4LogicalVolume* logicLYSO = new G4LogicalVolume(lysoMesh->GetSolid(), matLYSO, "LYSO_" + name + "_Logic");
-    
-    // Optional: push logicLYSO to logicScintillators if you want to track energy deposited inside the source itself
-    // logicScintillators.push_back(logicLYSO); 
     G4VPhysicalVolume* physLYSO = new G4PVPlacement(rotation, translation, logicLYSO, "LYSO_" + name, logicWorld, false, 0, true);
 
-    // === 5. LYSO WRAPPING (0.5mm Beta Blocker) ===
-    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Wrap_Submerged.stl");
+    // === 5. LYSO WRAPPING (Beta Blocker) ===
+    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_wrap_1_1mm wrap.stl");
     wrapMesh->SetScale(1.0);
     G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "Wrap_" + name + "_Logic");
-    
     logicTapflon.push_back(logicWrap);
     G4VPhysicalVolume* physWrap = new G4PVPlacement(rotation, translation, logicWrap, "Wrap_" + name, logicWorld, false, 0, true);
 
-    // === 6. SiPM DETECTOR (Outside Glass) ===
-    auto sipmMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "SiPM_Outside.stl");
-    sipmMesh->SetScale(1.0);
-    G4LogicalVolume* logicSiPM_vol = new G4LogicalVolume(sipmMesh->GetSolid(), matSiPM, "SiPM_" + name + "_Logic");
-    
-    logicCalorimeter = logicSiPM_vol;
-    logicSiPM.push_back(logicCalorimeter); // Push to SiPM SD array
-    G4VPhysicalVolume* physSiPM = new G4PVPlacement(rotation, translation, logicCalorimeter, "SiPM_" + name, logicWorld, false, 0, true);    
+    // === 6. SiPM DETECTORS & OPTICAL GREASE (1 Channel Only) ===
+    auto grease1Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_1_Optical_grease_1_Body1.stl");
+    grease1Mesh->SetScale(1.0);
+    G4LogicalVolume* logicGrease1 = new G4LogicalVolume(grease1Mesh->GetSolid(), matGrease, "Grease1_" + name + "_Logic");
+    G4VPhysicalVolume* physGrease1 = new G4PVPlacement(rotation, translation, logicGrease1, "Grease1_" + name, logicWorld, false, 0, true);    
 
+    auto sipmMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_1_SiPM_1_Body1.stl");
+    sipmMesh1->SetScale(1.0);
+    G4LogicalVolume* logicSiPM_vol1 = new G4LogicalVolume(sipmMesh1->GetSolid(), matSiPM, "SiPMMount1_" + name + "_Logic");
+    logicSiPM.push_back(logicSiPM_vol1); 
+    
+    // [CRITICAL FIX]: Tell the SD manager that this geometry is active!
+    logicCalorimeter = logicSiPM_vol1; 
+    
+    G4VPhysicalVolume* physSiPM1 = new G4PVPlacement(rotation, translation, logicSiPM_vol1, "SiPM1_" + name, logicWorld, false, 0, true);    
+   // === 6. SiPM DETECTORS & OPTICAL GREASE (2 Channel Only) ===
+    auto grease2Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_Optical_grease_1_Body1.stl");
+    grease2Mesh->SetScale(1.0);
+    G4LogicalVolume* logicGrease2 = new G4LogicalVolume(grease2Mesh->GetSolid(), matGrease, "Grease2_" + name + "_Logic");
+    G4VPhysicalVolume* physGrease2 = new G4PVPlacement(rotation, translation, logicGrease2, "Grease2_" + name, logicWorld, false, 0, true);    
+
+    auto sipmMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_SiPM_1_Body1.stl");
+    sipmMesh2->SetScale(1.0);
+    G4LogicalVolume* logicSiPM_vol2 = new G4LogicalVolume(sipmMesh2->GetSolid(), matSiPM, "SiPMMount2_" + name + "_Logic");
+    logicSiPM.push_back(logicSiPM_vol2); 
+    
+    // [CRITICAL FIX]: Tell the SD manager that this geometry is active!
+    logicCalorimeter = logicSiPM_vol2; 
+    
+    G4VPhysicalVolume* physSiPM2 = new G4PVPlacement(rotation, translation, logicSiPM_vol2, "SiPM2_" + name, logicWorld, false, 0, true);    
 
     // ==========================================
     // 7. OPTICAL SURFACES & BORDERS
     // ==========================================
     
-    // Define Surface Properties
-    G4OpticalSurface* surfCoupling = new G4OpticalSurface("CrystalSiPM_Coupling");
-    surfCoupling->SetType(dielectric_dielectric);
-    surfCoupling->SetFinish(polished);           
-    surfCoupling->SetModel(unified);
-    surfCoupling->SetSigmaAlpha(0.05*degree);    
+    // We use 'static' to ensure these templates are only created ONCE in memory
+    static G4OpticalSurface* surfReflector = nullptr;
+    static G4OpticalSurface* surfWaterGlass = nullptr;
+    static G4OpticalSurface* surfCoupling = nullptr;
 
-    G4OpticalSurface* surfTeflon = new G4OpticalSurface("TeflonSurf");
-    surfTeflon->SetType(dielectric_dielectric);
-    surfTeflon->SetFinish(groundbackpainted); // Good for aluminum/teflon wrapping reflection
-    surfTeflon->SetModel(unified);
-    surfTeflon->SetSigmaAlpha(0.25*degree);   
-    surfTeflon->SetMaterialPropertiesTable(mptTeflon);
+    if (!surfReflector) {
+        // --- Reflector Setup (Teflon / Tyvek) ---
+        surfReflector = new G4OpticalSurface("ReflectorSurf");
+        surfReflector->SetType(dielectric_metal); 
+        surfReflector->SetModel(unified);
+        surfReflector->SetFinish(groundfrontpainted); 
+        surfReflector->SetSigmaAlpha(0.1 * degree); 
 
-    G4OpticalSurface* surfWaterGlass = new G4OpticalSurface("WaterGlass_Surf");
-    surfWaterGlass->SetType(dielectric_dielectric);
-    surfWaterGlass->SetModel(unified);
-    surfWaterGlass->SetFinish(polished); 
+        G4MaterialPropertiesTable* mptReflector = new G4MaterialPropertiesTable();
+        G4double reflectorEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
+        G4double reflectorReflectivity[] = { 0.98, 0.98, 0.98, 0.98 }; 
+        mptReflector->AddProperty("REFLECTIVITY", reflectorEnergy, reflectorReflectivity, 4);
+        surfReflector->SetMaterialPropertiesTable(mptReflector);
+    }
 
-    // Apply Border Surfaces
-    
-    // A. Glass to SiPM Coupling
-    new G4LogicalBorderSurface("Glass-SiPM_Coupling", physGlass, physSiPM, surfCoupling);
-    
-    // B. Water to Glass Interface
-    new G4LogicalBorderSurface("Water_to_Glass", physWater, physGlass, surfWaterGlass);
-    new G4LogicalBorderSurface("Glass_to_Water", physGlass, physWater, surfWaterGlass);
-    
-    // C. LYSO to Inside of Wrapping
-    new G4LogicalBorderSurface("LYSO-Teflon", physLYSO, physWrap, surfTeflon);
-    
-    // D. Water to Outside of Wrapping (Reflects optical photons generated in water)
-    new G4LogicalBorderSurface("Water-Wrap_Reflection", physWater, physWrap, surfTeflon);
+    if (!surfWaterGlass) {
+        // --- Internal Refraction Setup ---
+        surfWaterGlass = new G4OpticalSurface("WaterGlass_Surf");
+        surfWaterGlass->SetType(dielectric_dielectric);
+        surfWaterGlass->SetModel(unified);
+        surfWaterGlass->SetFinish(polished); 
+    }
+
+    if (!surfCoupling) {
+        // --- Sensor Coupling Setup (Grease) ---
+        surfCoupling = new G4OpticalSurface("SensorCoupling_Surf");
+        surfCoupling->SetType(dielectric_dielectric);
+        surfCoupling->SetModel(unified);
+        surfCoupling->SetFinish(polished); 
+    }
+
+    // --- Apply Skin Surfaces (The "Light Trap") ---
+    new G4LogicalSkinSurface("LYSO_Wrap_Skin_" + name, logicWrap, surfReflector);
+    new G4LogicalSkinSurface("OuterGlass_Skin_" + name, logicGlass2, surfReflector);
+    new G4LogicalSkinSurface("Cap_Skin_" + name, logicCap, surfReflector);
+
+    // --- Apply Internal Borders (Fluid & Inner Glass Dynamics) ---
+    // Make them perfectly bi-directional
+    new G4LogicalBorderSurface("Water_to_InnerGlass_" + name, physWater, physGlass1, surfWaterGlass);
+    new G4LogicalBorderSurface("InnerGlass_to_Water_" + name, physGlass1, physWater, surfWaterGlass);
+
+    new G4LogicalBorderSurface("Water_to_LYSO_" + name, physWater, physLYSO, surfWaterGlass);
+    new G4LogicalBorderSurface("LYSO_to_Water_" + name, physLYSO, physWater, surfWaterGlass);
+
+    // --- Apply Sensor Borders (The Grease Bridge) ---
+    // Path for SiPM 1 (Bidirectional for absolute safety)
+    new G4LogicalBorderSurface("Glass_to_Grease1_" + name, physGlass1, physGrease1, surfCoupling);
+    new G4LogicalBorderSurface("Grease1_to_Glass_" + name, physGrease1, physGlass1, surfCoupling);
+
+    new G4LogicalBorderSurface("Grease1_to_SiPM1_" + name, physGrease1, physSiPM1, surfCoupling);
+    new G4LogicalBorderSurface("SiPM1_to_Grease1_" + name, physSiPM1, physGrease1, surfCoupling);
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
