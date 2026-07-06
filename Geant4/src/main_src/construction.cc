@@ -288,300 +288,169 @@ bool MyDetectorConstruction::readAndProcessData_Nonproportionality(const std::st
 G4String MyDetectorConstruction::file_name = "";
 
 void MyDetectorConstruction::DefineMaterials() {
-	G4NistManager* nist = G4NistManager::Instance();
-	//Define the world material as Air
-// Define the world material as Air
+    G4NistManager* nist = G4NistManager::Instance();
+
+    // ==========================================
+    // 1. World Material (Air) - Air Coupling 必需
+    // ==========================================
     Air = nist->FindOrBuildMaterial("G4_AIR");
+    G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
+    
     std::vector<G4double> Air_absorption_Energy, Air_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_Air.txt", Air_absorption_Energy, Air_absorption_Index);
     
-    G4MaterialPropertiesTable* mptAir = new G4MaterialPropertiesTable();
-    
-    // [修改這裡] 顯式定義 Air 的 RINDEX 為 1.0
+    // 顯式定義 Air 的 RINDEX 為 1.0 (極度重要，確保光子穿透表面後不被刪除)
     G4double airEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
     G4double rIndexAir[] = { 1.0, 1.0, 1.0, 1.0 }; 
     mptAir->AddProperty("RINDEX", airEnergies, rIndexAir, 4);
-    
     mptAir->AddProperty("ABSLENGTH", Air_absorption_Energy, Air_absorption_Index, Air_absorption_Index.size());
 
-    // Define the world material as vacuum
-	Vacuum = nist->FindOrBuildMaterial("G4_Galactic");
-	// Defining Xenon gas for test
-	auto a = 131.29*g/mole;
-	G4Element* Xe = new G4Element("Xe", "Xe", 54., a);
-	auto density = 5.858*mg/cm3;  
-	double pressure = 1*bar;  // [X->Your choice]
-	double temperature = 296.15*kelvin;  // [your choice]
-	matXe  = new G4Material("matXe", density, 1, kStateGas, temperature, pressure);
-	matXe->AddElement(Xe, 1);  //--> Monoatomic nature
-    // End Xenon gas
+    // ==========================================
+    // 2. Radioactive Source Materials
+    // ==========================================
+    // NaCl (Active Source) - 修正比例為 1:1
+    matNaCl = new G4Material("NaCl", 2.16*g/cm3, 2);
+    matNaCl->AddElement(nist->FindOrBuildElement("Na"), 1);
+    matNaCl->AddElement(nist->FindOrBuildElement("Cl"), 1);
 
-    // Define water
-// Define water
-    matWater = nist->FindOrBuildMaterial("G4_WATER");
-    G4MaterialPropertiesTable* mptWater = new G4MaterialPropertiesTable();
-    std::vector<G4double> Water_absorption_Energy, Water_absorption_Index;
-    readAndProcessData_Energy_cm_txt("AbsorptionLength_Water.txt", Water_absorption_Energy, Water_absorption_Index);
+    // Ti Foil
+    G4Element* Ti = nist->FindOrBuildElement("Ti");
+    matTi = new G4Material("Ti_", 4.507*g/cm3, 1);
+    matTi->AddElement(Ti, 1.);
+
+    // ==========================================
+    // 3. Setup Components & Elements
+    // ==========================================
+    G4Element* elH  = nist->FindOrBuildElement("H");
+    G4Element* elC  = nist->FindOrBuildElement("C");
+    G4Element* elO  = nist->FindOrBuildElement("O");
+    G4Element* elSi = nist->FindOrBuildElement("Si");
+    G4Element* elCl = nist->FindOrBuildElement("Cl");
+
+    G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV };
+    const G4int nEntries = sizeof(photonEnergy) / sizeof(G4double);
+
+    // Cuvette (Quartz / Fused Silica)
+    matCuvette = new G4Material("matCuvette", 2.20*g/cm3, 2);
+    matCuvette->AddElement(elSi, 1);
+    matCuvette->AddElement(elO, 2);
+    G4MaterialPropertiesTable* mptCuvette = new G4MaterialPropertiesTable();
+    G4double rindexCuvette[] = { 1.46, 1.46, 1.46, 1.46 }; 
+    mptCuvette->AddProperty("RINDEX", photonEnergy, rindexCuvette, nEntries);
+
+    // PVC (Opaque)
+    matPVC = new G4Material("matPVC", 1.35*g/cm3, 3);
+    matPVC->AddElement(elC, 2);
+    matPVC->AddElement(elH, 3);
+    matPVC->AddElement(elCl, 1);
+
+    // Photopolymer (3D Printing Resin)
+    matPhotopolymer = new G4Material("matPhotopolymer", 1.20*g/cm3, 3);
+    matPhotopolymer->AddElement(elC, 5);
+    matPhotopolymer->AddElement(elH, 8);
+    matPhotopolymer->AddElement(elO, 2);
+
+    // ==========================================
+    // 4. Scintillators
+    // ==========================================
     
-    // [修改這裡] 顯式定義 Water 的 RINDEX 為 1.33
-    G4double waterEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
-    G4double rIndexWater[] = { 1.49, 1.49, 1.49, 1.49 }; 
-    mptWater->AddProperty("RINDEX", waterEnergies, rIndexWater, 4);
+    // --- Liquid Scintillator (Generator) ---
+    matGenerator = new G4Material("matGenerator", 0.867*g/cm3, 2);
+    matGenerator->AddElement(elC, 7);
+    matGenerator->AddElement(elH, 8);
+    G4MaterialPropertiesTable* mptGenerator = new G4MaterialPropertiesTable();
     
-    mptWater->AddProperty("ABSLENGTH", Water_absorption_Energy, Water_absorption_Index, Water_absorption_Index.size());
+    G4double rindexGenerator[] = { 1.50, 1.50, 1.50, 1.50 }; 
+    mptGenerator->AddProperty("RINDEX", photonEnergy, rindexGenerator, nEntries);
     
-    // === Liquid Scintillation Properties ===
+    // 載入 Daya Bay LAB 發光數據
     std::vector<G4double> LS_emission_Energy, LS_emission_fractions;
     readAndProcessData_Energy("LAB_DayaBay_Normalized.csv", LS_emission_Energy, LS_emission_fractions);
-    mptWater->AddConstProperty("RESOLUTIONSCALE", 0.);
-    mptWater->AddProperty("SCINTILLATIONCOMPONENT1", LS_emission_Energy, LS_emission_fractions,LS_emission_fractions.size());
+    mptGenerator->AddProperty("SCINTILLATIONCOMPONENT1", LS_emission_Energy, LS_emission_fractions, LS_emission_fractions.size());
+    mptGenerator->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
+    mptGenerator->AddConstProperty("SCINTILLATIONYIELD1", 1.0); 
+    mptGenerator->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    mptGenerator->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns);
+
+    // ==========================================
+    // --- 4. Plastic Scintillator (PVT - EJ-200 / BC-408 Equivalent) ---
+    // ==========================================
+    matPlasticScintillator = new G4Material("matPlasticScintillator", 1.023*g/cm3, 2);
+    matPlasticScintillator->AddElement(elC, 9);
+    matPlasticScintillator->AddElement(elH, 10);
     
-    //G4double liquidEnergy[] = { 2.5*eV, 3.0*eV }; 
-    //G4double liquidEmission[] = { 1.0, 1.0 }; 
-    //mptWater->AddProperty("SCINTILLATIONCOMPONENT1", liquidEnergy, liquidEmission, 2);
-
-    mptWater->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
+    G4MaterialPropertiesTable* mptPlasticScint = new G4MaterialPropertiesTable();
     
-    // [新增這裡] Geant4 11.0 要求明確指出各 Component 的權重比例
-    mptWater->AddConstProperty("SCINTILLATIONYIELD1", 1.0); 
+    // 1. 定義能量陣列 (必須由低能量/長波長 排列至 高能量/短波長)
+    // 對應波長: 500nm, 475nm, 450nm, 425nm(Peak), 410nm, 400nm, 380nm
+    G4double pvtEnergies[] = { 2.48*eV, 2.61*eV, 2.75*eV, 2.92*eV, 3.02*eV, 3.10*eV, 3.26*eV };
+    const G4int numPvtEntries = sizeof(pvtEnergies)/sizeof(G4double);
     
-    mptWater->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    mptWater->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns); 
-        // End water
-
-    matGrease = new G4Material("OpticalGrease", 1.06*g/cm3, 2);
-    matGrease->AddElement(nist->FindOrBuildElement("C"), 2);
-    matGrease->AddElement(nist->FindOrBuildElement("H"), 6); // 簡單的碳氫化合物模擬
-
-    G4MaterialPropertiesTable* mptGrease = new G4MaterialPropertiesTable();
-
-    // 使用與 Glass 相同的能量範圍，避免 Geant4 內插出錯
-    G4double greaseEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; 
-    G4double rIndexGrease[] = { 1.46, 1.46, 1.46, 1.46 }; 
-    G4double absGrease[] = { 10.*m, 10.*m, 10.*m, 10.*m }; // 設為 10m 確保 100% 透明
-
-    mptGrease->AddProperty("RINDEX", greaseEnergies, rIndexGrease, 4);
-    mptGrease->AddProperty("ABSLENGTH", greaseEnergies, absGrease, 4);
-
-	//NaCl
-	matNaCl = new G4Material("NaCl", 2.16*g/cm3, 2);
-	matNaCl->AddElement(nist->FindOrBuildElement("Na"), 1);
-	matNaCl->AddElement(nist->FindOrBuildElement("Cl"), 4);
-	// End NaCl
-    matLSO = new G4Material("Lu2SiO5", 7.4*g/cm3, 3);
-	G4Element* Lu = nist->FindOrBuildElement("Lu");
-	G4Element* Si = nist->FindOrBuildElement("Si");
-	G4Element* O = nist->FindOrBuildElement("O");
-	matLSO->AddElement(Lu, 2);
-	matLSO->AddElement(Si, 1);
-	matLSO->AddElement(O, 5);
-    G4MaterialPropertiesTable* mptLSO = new G4MaterialPropertiesTable();
-    //LSO Emssion spectrum
-    std::vector<G4double> LSO_emission_Energy, LSO_emission_fractions;
-    readAndProcessData_Energy("EmissionSpectrum_LSO_Ce_295K.csv", LSO_emission_Energy, LSO_emission_fractions);
-    std::vector<G4double> LSO_refraction_Energy, LSO_refraction_Index;
-    readAndProcessData_txt("RefractiveIndex_LSO_Ce.txt", LSO_refraction_Energy, LSO_refraction_Index);
-    std::vector<G4double> LSO_absorption_Energy, LSO_absorption_Index;
-    readAndProcessData_Energy_cm_txt("AbsorptionLength_LSO_Ce.txt", LSO_absorption_Energy, LSO_absorption_Index);
-    mptLSO->AddConstProperty("RESOLUTIONSCALE", 0.);
-    mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
-    mptLSO->AddProperty("RINDEX", LSO_refraction_Energy, LSO_refraction_Index,LSO_refraction_Index.size());
-    mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
-    mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
-    mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
-    // End LSO
-
-    // Define elements (use NIST for common ones)
-    G4Element* elLu = nist->FindOrBuildElement("Lu");
-    G4Element* elY  = nist->FindOrBuildElement("Y");
-    G4Element* elSi = nist->FindOrBuildElement("Si");
-    G4Element* elO  = nist->FindOrBuildElement("O");
-
-    // Optionally include Ce for doping (trace amount; adjust fraction if needed)
-    G4Element* elCe =  nist->FindOrBuildElement("Ce");
-
-    // Define the material with density ~7.1 g/cm³ (common value for LYSO(Ce))
-    matLYSO = new G4Material("LYSO", 7.1 * g/cm3, 4);  // 4 components (or 5 if including Ce)
-
-    // Add elements by mass fraction (calculated from atomic ratios)
-    matLYSO->AddElement(elLu, 0.7146);  // ~71.46%
-    matLYSO->AddElement(elY, 0.0403);   // ~4.03%
-    matLYSO->AddElement(elSi, 0.0637);  // ~6.37%
-    matLYSO->AddElement(elO, 0.1814);   // ~18.14%
-    G4MaterialPropertiesTable* mptLYSO = new G4MaterialPropertiesTable();
-    std::vector<G4double> LYSO_emission_Energy, LYSO_emission_fractions;
-    readAndProcessData_Energy("EmissionSpectrum_LYSO_Ce.csv", LYSO_emission_Energy, LYSO_emission_fractions);
-    std::vector<G4double> LYSO_refraction_Energy, LYSO_refraction_Index;
-    readAndProcessData_txt("RefractiveIndex_LYSO_Ce.txt", LYSO_refraction_Energy, LYSO_refraction_Index);
-    std::vector<G4double> LYSO_absorption_Energy, LYSO_absorption_Index;
-    readAndProcessData_Energy_cm_txt("AbsorptionLength_LYSO_Ce.txt", LYSO_absorption_Energy, LYSO_absorption_Index);
-    std::vector<G4double> LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative;
-    readAndProcessData_Nonproportionality("Nonproportionality_LYSO_Ce_Relative.txt", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative);
-    G4double baseYield=26.0000/keV; //Previous 33 keV
-    std::vector<G4double> LYSO_LY_Nonproportion_fractions(LYSO_LY_Nonproportion_relative.size());
-    for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
-        LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
-    }
-
-    //mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
+    // 2. 基礎光學屬性: 折射率 (RINDEX) 與 吸收長度 (ABSLENGTH)
+    // EJ-200 嘅 Refractive Index 係 1.58，Bulk Attenuation Length 係 380 cm
+    G4double rindexPvt[] = { 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58 }; 
+    G4double absPvt[]    = { 380.0*cm, 380.0*cm, 380.0*cm, 380.0*cm, 380.0*cm, 380.0*cm, 380.0*cm };
     
-    //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
-    //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
-    //mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
-    //mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
-    //mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
-    mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
-    mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
-    //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
-    //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
-    //mptLYSO->AddConstProperty("ONSAGER_k_O", 0.29,true);
-    //matLYSO->GetIonisation()->SetBirksConstant(0.186 * mm/MeV); // For birks-onsager
-    //matLYSO->GetIonisation()->SetBirksConstant(0.0028 * cm/MeV);
-
-	// CsI
-	matCsI = nist->FindOrBuildMaterial("G4_CESIUM_IODIDE");
-	G4MaterialPropertiesTable* mptCsI = new G4MaterialPropertiesTable();
-	//CsI Emssion spectrum
-	std::vector<G4double> CsI_emission_Energy, CsI_emission_fractions;
-	readAndProcessData_Energy("EmissionSpectrum_295K.csv", CsI_emission_Energy, CsI_emission_fractions);
-	std::vector<G4double> CsI_refraction_Energy, CsI_refraction_Index;
-	readAndProcessData_txt("RefractiveIndexINFO_CsI.txt", CsI_refraction_Energy, CsI_refraction_Index);
-	std::vector<G4double> CsI_transmission_Energy, CsI_rtransmission_Index;
-	readAndProcessData_txt("transmittance_CsI.txt", CsI_transmission_Energy, CsI_rtransmission_Index);
-	std::vector<G4double> CsI_absorption_Energy, CsI_absorption_Index;
-	readAndProcessData_Energy_cm_txt("Absorption_CsITi.txt", CsI_absorption_Energy, CsI_absorption_Index);
-
-
-
-	mptCsI->AddConstProperty("RESOLUTIONSCALE", 1.);	
-	mptCsI->AddProperty("SCINTILLATIONCOMPONENT1", CsI_emission_Energy, CsI_emission_fractions,CsI_emission_fractions.size());
-	mptCsI->AddProperty("RINDEX", CsI_refraction_Energy, CsI_refraction_Index,CsI_refraction_Index.size());	
-	mptCsI->AddProperty("TRANSMITTANCE", CsI_transmission_Energy, CsI_rtransmission_Index,CsI_rtransmission_Index.size());	
-    mptCsI->AddProperty("ABSLENGTH", CsI_absorption_Energy, CsI_absorption_Index,CsI_absorption_Index.size());
-	mptCsI->AddConstProperty("SCINTILLATIONYIELD", 3./keV);
-	mptCsI->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 25.0*ns);	
-	// End CsI
-
-	// Define Aluminium for wrapping and protection
-	matAl = nist->FindOrBuildMaterial("G4_Al");
-	G4MaterialPropertiesTable* mptAl = new G4MaterialPropertiesTable();
-    const G4int nEntries = 2; 
-    G4double PhotonEnergy[nEntries] = {1.5 * eV, 3.0 * eV}; 
-    G4double RIndex_al[nEntries] = {1.37, 0.44}; 
-    mptAl->AddProperty("RINDEX", PhotonEnergy, RIndex_al, nEntries);
-    // End Aluminium
-
-	// Define Acrylic
-	matAcrylic = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
-	G4MaterialPropertiesTable* mptAcrylic = new G4MaterialPropertiesTable();
-    mptAcrylic->AddProperty("RINDEX", "PMMA");
-	// End Acrylic
+    mptPlasticScint->AddProperty("RINDEX", pvtEnergies, rindexPvt, numPvtEntries);
+    mptPlasticScint->AddProperty("ABSLENGTH", pvtEnergies, absPvt, numPvtEntries);
     
-    // Define Glass
-    matGlass = nist->FindOrBuildMaterial("G4_Pyrex_Glass");
-    //// 2. Define photon energies (e.g., covering the visible spectrum)
-    G4double photonEnergies[] = { 2.034*eV, 2.384*eV, 2.755*eV, 3.100*eV }; // ~610nm to 400nm
-    const G4int numEntries = sizeof(photonEnergies)/sizeof(G4double);
+    // 3. 發光頻譜 (Scintillation Emission Spectrum)
+    // 根據 EJ-200 規格曲線設定嘅相對強度 (Peak 位於 425nm / 2.92 eV)
+    G4double emissionPvt[] = { 0.05, 0.20, 0.50, 1.00, 0.60, 0.10, 0.00 };
+    mptPlasticScint->AddProperty("SCINTILLATIONCOMPONENT1", pvtEnergies, emissionPvt, numPvtEntries);
+    
+    // 4. 發光產量與時間常數 (Yield & Time Constants)
+    mptPlasticScint->AddConstProperty("SCINTILLATIONYIELD", 10000.0/MeV); // 每 MeV 產生 10,000 光子
+    mptPlasticScint->AddConstProperty("SCINTILLATIONYIELD1", 1.0);        // 100% 權重分配比呢個 Component
+    mptPlasticScint->AddConstProperty("RESOLUTIONSCALE", 1.0);            // 預設統計分佈
+    mptPlasticScint->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 2.1 * ns); // 衰減時間 (Decay Time)
+    mptPlasticScint->AddConstProperty("SCINTILLATIONRISETIME1", 0.9 * ns);     // 上升時間 (Rise Time)
+    
+    // 將 Properties Table 綁定至 Material
+    matPlasticScintillator->SetMaterialPropertiesTable(mptPlasticScint);
+    // ==========================================
+    // 5. Sensors (SiPM)
+    // ==========================================
+    matSi = nist->FindOrBuildMaterial("G4_Si");
+    std::vector<G4double> Si_reflectance_Energy, Si_reflectance_fractions;
+    readAndProcessData_Energy_txt("Reflectance_Si.txt", Si_reflectance_Energy, Si_reflectance_fractions);
+    std::vector<G4double> Si_transmission_Energy, Si_rtransmission_Index;
+    readAndProcessData_txt("transmittance_Si.txt", Si_transmission_Energy, Si_rtransmission_Index);
+    std::vector<G4double> Si_refraction_Energy, Si_refraction_Index;
+    readAndProcessData_txt("RefractiveIndexINFO_Si.txt", Si_refraction_Energy, Si_refraction_Index);
 
-    // 3. Define the Refractive Index of Pyrex/Borosilicate glass (~1.47)
-    G4double rIndexGlass[] = { 1.47, 1.47, 1.47, 1.47 }; 
+    G4MaterialPropertiesTable* mptSi = new G4MaterialPropertiesTable();
+    mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions, Si_reflectance_fractions.size());
+    mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index, Si_rtransmission_Index.size());  
+    mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index, Si_refraction_Energy.size());    
 
-    // 4. Create the Material Properties Table and attach it
-    G4MaterialPropertiesTable* mptGlass = new G4MaterialPropertiesTable();
-    mptGlass->AddProperty("RINDEX", photonEnergies, rIndexGlass, numEntries);
-    // 5. Attach the table to the NIST material
-    matGlass->SetMaterialPropertiesTable(mptGlass);
-    // End Glass
-
-	// Define Tapflon(teflon) for wrapping
-	matTeflon = nist->FindOrBuildMaterial("G4_TEFLON");
-	std::vector<G4double> tapflon_reflectance_Energy, tapflon_reflectance_fractions;
-	readAndProcessData_Energy_txt("teflon_Reflectance-modified.txt", tapflon_reflectance_Energy, tapflon_reflectance_fractions);
-    std::vector<G4double> tapflon_refraction_Energy, tapflon_refraction_Index;
-	readAndProcessData_Energy_txt("Refraction_Index_Teflon_Gray.txt", tapflon_refraction_Energy, tapflon_refraction_Index);
-	mptTeflon = new G4MaterialPropertiesTable();
-	//mptTeflon->AddProperty("REFLECTIVITY", tapflon_reflectance_Energy, tapflon_reflectance_fractions,tapflon_reflectance_fractions.size());
-    //mptTeflon->AddProperty("RINDEX", tapflon_refraction_Energy, tapflon_refraction_Index,tapflon_refraction_Index.size());
-    // End Tapflon
-
-	// Define SiPM
-	matSi = nist->FindOrBuildMaterial("G4_Si");
-	std::vector<G4double> Si_reflectance_Energy, Si_reflectance_fractions;
-	readAndProcessData_Energy_txt("Reflectance_Si.txt", Si_reflectance_Energy, Si_reflectance_fractions);
-	std::vector<G4double> Si_transmission_Energy, Si_rtransmission_Index;
-	readAndProcessData_txt("transmittance_Si.txt", Si_transmission_Energy, Si_rtransmission_Index);
-	std::vector<G4double> Si_refraction_Energy, Si_refraction_Index;
-	readAndProcessData_txt("RefractiveIndexINFO_Si.txt", Si_refraction_Energy, Si_refraction_Index);
-
-	G4MaterialPropertiesTable* mptSi = new G4MaterialPropertiesTable();
-	mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
-    mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
-    mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
-
-    // CsI-Teflon (reflective surface)
-    //surfCsI_Teflon = new G4OpticalSurface("CsI_Teflon_Surface");
-    ////surfCsI_Teflon->SetType(dielectric_dielectric); // Teflon as reflective surface, dielectric_metal
-    ////surfCsI_Teflon->SetModel(unified);
-    ////surfCsI_Teflon->SetFinish(polished);
-    //surfCsI_Teflon->SetType(dielectric_dielectric);
-    //surfCsI_Teflon->SetModel(unified);
-    //surfCsI_Teflon->SetFinish(ground); // specular->polishedteflonair, diffusive->groundteflonair
-    //surfCsI_Teflon->SetSigmaAlpha(0.2);
-    ////End surface
-//
-    //// CsI-SiPM (dielectric-dielectric interface)
-    //surfCsI_SiPM = new G4OpticalSurface("CsI_SiPM_Surface");
-    //surfCsI_SiPM->SetType(dielectric_dielectric);
-    //surfCsI_SiPM->SetModel(glisur); // Glisur for smooth dielectric interface
-    //surfCsI_SiPM->SetFinish(polished);
-	//// End SiPM
-//
-    //// CsI-AlFoil (reflective surface)
-    //surfCsI_AlFoil = new G4OpticalSurface("CsI_AlFoil_Surface");
-    //surfCsI_AlFoil->SetType(dielectric_metal); // Al as reflective surface
-    //surfCsI_AlFoil->SetModel(unified);
-    //surfCsI_AlFoil->SetFinish(ground);
-
-
-    G4OpticalSurface* surfCrystalGrease = new G4OpticalSurface("CrystalGrease");
-    surfCrystalGrease->SetType(dielectric_dielectric);
-    surfCrystalGrease->SetFinish(polished);
-    surfCrystalGrease->SetModel(unified);
-    surfCrystalGrease->SetSigmaAlpha(0.05*degree);
-    //End surface
+    // ==========================================
+    // 6. Optical Physics Toggle
+    // ==========================================
     if(logicOptical){
         Air->SetMaterialPropertiesTable(mptAir);
-        matWater->SetMaterialPropertiesTable(mptWater);
-        matLSO->SetMaterialPropertiesTable(mptLSO);
-        matLYSO->SetMaterialPropertiesTable(mptLYSO);
+        matCuvette->SetMaterialPropertiesTable(mptCuvette);
+        matGenerator->SetMaterialPropertiesTable(mptGenerator);
+        matPlasticScintillator->SetMaterialPropertiesTable(mptPlasticScint);
         matSi->SetMaterialPropertiesTable(mptSi);
-        matCsI->SetMaterialPropertiesTable(mptCsI);
-        matAl->SetMaterialPropertiesTable(mptAl);
-        matAcrylic->SetMaterialPropertiesTable(mptAcrylic);
-        matTeflon->SetMaterialPropertiesTable(mptTeflon);
-        matGrease->SetMaterialPropertiesTable(mptGrease);
     }
 
-
+    // ==========================================
+    // 7. Debug Dumps
+    // ==========================================
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of LYSO"<<std::endl;
-    mptLYSO->DumpTable();
+    std::cout<<"Printing the material properties of Liquid Scintillator (Generator)"<<std::endl;
+    mptGenerator->DumpTable();
     std::cout<<"==========================="<<std::endl;
+    std::cout<<"Printing the material properties of Plastic Scintillator"<<std::endl;
+    mptPlasticScint->DumpTable();
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of Teflon"<<std::endl;
-    mptTeflon->DumpTable();
+    std::cout<<"Printing the material properties of Air"<<std::endl;
+    mptAir->DumpTable();
     std::cout<<"==========================="<<std::endl;
-    std::cout<<"Printing the material properties of Si"<<std::endl;
+    std::cout<<"Printing the material properties of Si (Sensors)"<<std::endl;
     mptSi->DumpTable();
     std::cout<<"==========================="<<std::endl;
-
-
-
-	// Ti_
-	G4Element* Ti = nist->FindOrBuildElement("Ti");
-	matTi = new G4Material("Ti_", 4.507*g/cm3, 1);	//The density of G4_Ti is 4.54*g/cm3
-	matTi->AddElement(Ti, 1.);
-	//end Ti
 }
 
 void MyDetectorConstruction::DefineMessenger() {
@@ -750,144 +619,182 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     rotation->rotateY(rotateY);
     rotation->rotateZ(rotateZ); 
     
+
     // === 1. DEFINE STL FILE PREFIX ===
-    std::string prefix = "Darkbox_sim6/";
+    std::string prefix = "Generator/";
     
-    // === 2. GLASS VIAL (20ml outer shell) ===
-    auto glassInnerMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_cuvette_1_Kartell_1938_Cuvette_EXACT.stl");
-    glassInnerMesh->SetScale(1.0);
-    G4LogicalVolume* logicGlass1 = new G4LogicalVolume(glassInnerMesh->GetSolid(), matGlass, "InnerCuvette" + name + "_Logic");
-    G4VPhysicalVolume* physGlass1 = new G4PVPlacement(rotation, translation, logicGlass1, "InnerCuvette" + name, logicWorld, false, 0, true);
+    // === 2.Radioactive Source ===
+    auto activesourceMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_Na22Source_1_Na22Active.stl");
+    activesourceMesh->SetScale(1.0);
+    G4LogicalVolume* logicactivesourceMesh = new G4LogicalVolume(activesourceMesh->GetSolid(), matNaCl, "logicactivesourceNa22" + name + "_Logic");
+    G4VPhysicalVolume* physactivesource = new G4PVPlacement(rotation, translation, logicactivesourceMesh, "activesourceNa22" + name, logicWorld, false, 0, true);
    
-    // === 2.5 CUVETTE CAP (Outer Glass Lid) ===
-    auto capMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Teflon_Full_Wrap.stl");
-    capMesh->SetScale(1.0);
-    G4LogicalVolume* logicCap = new G4LogicalVolume(capMesh->GetSolid(), matTeflon, "Teflontape" + name + "_Logic");
-    G4VPhysicalVolume* physCap = new G4PVPlacement(rotation, translation, logicCap, "Teflontape" + name, logicWorld, false, 0, true);
+    auto FoilsourceMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_Na22Source_1_TiFoil.stl");
+    FoilsourceMesh->SetScale(1.0);
+    G4LogicalVolume* logicFoilsourceMesh = new G4LogicalVolume(FoilsourceMesh->GetSolid(), matTi, "logicFoilsourceTiRing" + name + "_Logic");
+    G4VPhysicalVolume* physFoilsource = new G4PVPlacement(rotation, translation, logicFoilsourceMesh, "FoilsourceTiRing" + name, logicWorld, false, 0, true);
+   
+    auto PVCsourceMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_SourcePVC_1_Body1.stl");
+    PVCsourceMesh->SetScale(1.0);
+    G4LogicalVolume* logicPVCsourceMesh = new G4LogicalVolume(PVCsourceMesh->GetSolid(), matPVC, "logicPVCsourcePVC" + name + "_Logic");
+    G4VPhysicalVolume* physPVCsource = new G4PVPlacement(rotation, translation, logicPVCsourceMesh, "PVCsourcePVC" + name, logicWorld, false, 0, true);
+   
+    // === Plastic scintillator ===
+    auto plasticscint1Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_PlasticScint_1_Body1.stl");
+    plasticscint1Mesh->SetScale(1.0);
+    G4LogicalVolume* logicPlasticScint1 = new G4LogicalVolume(plasticscint1Mesh->GetSolid(), matPlasticScintillator, "PlasticScint_" + name + "_Logic");
+    G4VPhysicalVolume* physPlasticScint1 = new G4PVPlacement(rotation, translation, logicPlasticScint1, "PlasticScint_" + name, logicWorld, false, 0, true);
+    logicScintillators.push_back(logicPlasticScint1);
+
+    auto plasticscint2Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_PlasticScint_2_Body1.stl");
+    plasticscint2Mesh->SetScale(1.0);
+    G4LogicalVolume* logicPlasticScint2 = new G4LogicalVolume(plasticscint2Mesh->GetSolid(), matPlasticScintillator, "PlasticScint_" + name + "_Logic");
+    G4VPhysicalVolume* physPlasticScint2 = new G4PVPlacement(rotation, translation, logicPlasticScint2, "PlasticScint_" + name, logicWorld, false, 0, true);
+    logicScintillators.push_back(logicPlasticScint2);
     
-    // === Outer Glass Vial ===
-    auto glassOuterMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Glass_Vial_20mL.stl");
-    glassOuterMesh->SetScale(1.0);
-    G4LogicalVolume* logicGlass2 = new G4LogicalVolume(glassOuterMesh->GetSolid(), matGlass, "OuterCuvette" + name + "_Logic");
-    G4VPhysicalVolume* physGlass2 = new G4PVPlacement(rotation, translation, logicGlass2, "OuterCuvette" + name, logicWorld, false, 0, true);
+    // Cuvette
+    auto cuvetteMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_1_cuvette.stl");
+    cuvetteMesh1->SetScale(1.0);
+    G4LogicalVolume* logicCuvette1 = new G4LogicalVolume(cuvetteMesh1->GetSolid(), matCuvette, "Cuvette_" + name + "_Logic");
+    G4VPhysicalVolume* physCuvette1 = new G4PVPlacement(rotation, translation, logicCuvette1, "Cuvette_" + name, logicWorld, false, 0, true);
 
-    // === 3. LIQUID SCINTILLATOR (10ml Water/Soup) ===
-    auto waterMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_Bottle_1_Liquid_Scintillator_Soup.stl");
-    waterMesh->SetScale(1.0);
-    G4LogicalVolume* logicWater = new G4LogicalVolume(waterMesh->GetSolid(), matScintillator, "WaterScint_" + name + "_Logic");
-    logicScintillators.push_back(logicWater); 
-    G4VPhysicalVolume* physWater = new G4PVPlacement(rotation, translation, logicWater, "WaterScint_" + name, logicWorld, false, 0, true);    
-    
-    // === 4. SUBMERGED LYSO CRYSTAL ===
-    auto lysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_1_Crystal.stl");
-    lysoMesh->SetScale(1.0);
-    G4LogicalVolume* logicLYSO = new G4LogicalVolume(lysoMesh->GetSolid(), matLYSO, "LYSO_" + name + "_Logic");
-    G4VPhysicalVolume* physLYSO = new G4PVPlacement(rotation, translation, logicLYSO, "LYSO_" + name, logicWorld, false, 0, true);
+    auto cuvetteMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_2_cuvette.stl");
+    cuvetteMesh2->SetScale(1.0);
+    G4LogicalVolume* logicCuvette2 = new G4LogicalVolume(cuvetteMesh2->GetSolid(), matCuvette, "Cuvette_" + name + "_Logic");
+    G4VPhysicalVolume* physCuvette2 = new G4PVPlacement(rotation, translation, logicCuvette2, "Cuvette_" + name, logicWorld, false, 0, true);
 
-    // === 5. LYSO WRAPPING (Beta Blocker) ===
-    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_wrap_1_0.5mm wrap.stl");
-    wrapMesh->SetScale(1.0);
-    G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "Wrap_" + name + "_Logic");
-    logicTapflon.push_back(logicWrap);
-    G4VPhysicalVolume* physWrap = new G4PVPlacement(rotation, translation, logicWrap, "Wrap_" + name, logicWorld, false, 0, true);
+    // CuvettePVC
+    auto cuvettePVCMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_1_PVC.stl");
+    cuvettePVCMesh1->SetScale(1.0);
+    G4LogicalVolume* logicCuvettePVC1 = new G4LogicalVolume(cuvettePVCMesh1->GetSolid(), matPVC, "CuvettePVC_" + name + "_Logic");
+    G4VPhysicalVolume* physCuvettePVC1 = new G4PVPlacement(rotation, translation, logicCuvettePVC1, "CuvettePVC_" + name, logicWorld, false, 0, true);
 
-    // === 6. SiPM DETECTORS & OPTICAL GREASE (Dual Channels) ===
-    // --- Channel 1 ---
-    auto grease1Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_1_Optical_grease_1_Body1.stl");
-    grease1Mesh->SetScale(1.0);
-    G4LogicalVolume* logicGrease1 = new G4LogicalVolume(grease1Mesh->GetSolid(), matGrease, "Grease1_" + name + "_Logic");
-    G4VPhysicalVolume* physGrease1 = new G4PVPlacement(rotation, translation, logicGrease1, "Grease1_" + name, logicWorld, false, 0, true);    
+    auto cuvettePVCMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_2_PVC.stl");
+    cuvettePVCMesh2->SetScale(1.0);
+    G4LogicalVolume* logicCuvettePVC2 = new G4LogicalVolume(cuvettePVCMesh2->GetSolid(), matPVC, "CuvettePVC_" + name + "_Logic");
+    G4VPhysicalVolume* physCuvettePVC2 = new G4PVPlacement(rotation, translation, logicCuvettePVC2, "CuvettePVC_" + name, logicWorld, false, 0, true);
 
-    auto sipmMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_1_SiPM_1_Body1.stl");
+    // CuvetteLS
+    auto cuvetteLSMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_1_LS.stl");
+    cuvetteLSMesh1->SetScale(1.0);
+    G4LogicalVolume* logicCuvetteLS1 = new G4LogicalVolume(cuvetteLSMesh1->GetSolid(), matGenerator, "CuvetteLS_" + name + "_Logic");
+    logicScintillators.push_back(logicCuvetteLS1);
+    G4VPhysicalVolume* physCuvetteLS1 = new G4PVPlacement(rotation, translation, logicCuvetteLS1, "CuvetteLS_" + name, logicWorld, false, 0, true);
+
+    auto cuvetteLSMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_2_LS.stl");
+    cuvetteLSMesh2->SetScale(1.0);
+    G4LogicalVolume* logicCuvetteLS2 = new G4LogicalVolume(cuvetteLSMesh2->GetSolid(), matGenerator, "CuvetteLS_" + name + "_Logic");
+    logicScintillators.push_back(logicCuvetteLS2);
+    G4VPhysicalVolume* physCuvetteLS2 = new G4PVPlacement(rotation, translation, logicCuvetteLS2, "CuvetteLS_" + name, logicWorld, false, 0, true);
+
+    // Ps_CoverDisk
+    auto coverDiskMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_ps_disk_cover_1_Body1.stl");
+    coverDiskMesh->SetScale(1.0);
+    G4LogicalVolume* logicCoverDisk = new G4LogicalVolume(coverDiskMesh->GetSolid(), matPhotopolymer, "CoverDisk_" + name + "_Logic");
+    G4VPhysicalVolume* physCoverDisk = new G4PVPlacement(rotation, translation, logicCoverDisk, "CoverDisk_" + name, logicWorld, false, 0, true);
+
+    auto holderDiskMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_ps_disk_holder_1_Body1.stl");
+    holderDiskMesh->SetScale(1.0);
+    G4LogicalVolume* logicHolderDisk = new G4LogicalVolume(holderDiskMesh->GetSolid(), matPhotopolymer, "HolderDisk_" + name + "_Logic");
+    G4VPhysicalVolume* physHolderDisk = new G4PVPlacement(rotation, translation, logicHolderDisk, "HolderDisk_" + name, logicWorld, false, 0, true);
+
+    // SiPMs 1-4
+    auto sipmMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_SiPMs_1_Body1.stl");
     sipmMesh1->SetScale(1.0);
     G4LogicalVolume* logicSiPM_vol1 = new G4LogicalVolume(sipmMesh1->GetSolid(), matSiPM, "SiPMMount1_" + name + "_Logic");
-    logicSiPM.push_back(logicSiPM_vol1); 
-    
-    // Tell the SD manager that this geometry is active (Pointer fallback)
-    logicCalorimeter = logicSiPM_vol1; 
-    
-    G4VPhysicalVolume* physSiPM1 = new G4PVPlacement(rotation, translation, logicSiPM_vol1, "SiPM1_" + name, logicWorld, false, 0, true);    
+    logicSiPM.push_back(logicSiPM_vol1);
+    G4VPhysicalVolume* physSiPM1 = new G4PVPlacement(rotation, translation, logicSiPM_vol1, "SiPMMount1_" + name, logicWorld, false, 0, true);
 
-    // --- Channel 2 (New SiPM and Grease) ---
-    auto grease2Mesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_Optical_grease_1_Body1.stl");
-    grease2Mesh->SetScale(1.0);
-    G4LogicalVolume* logicGrease2 = new G4LogicalVolume(grease2Mesh->GetSolid(), matGrease, "Grease2_" + name + "_Logic");
-    G4VPhysicalVolume* physGrease2 = new G4PVPlacement(rotation, translation, logicGrease2, "Grease2_" + name, logicWorld, false, 0, true);    
-
-    auto sipmMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_SiPM_Greased_2_SiPM_1_Body1.stl");
+    auto sipmMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_SiPMs_1_Body2.stl");
     sipmMesh2->SetScale(1.0);
     G4LogicalVolume* logicSiPM_vol2 = new G4LogicalVolume(sipmMesh2->GetSolid(), matSiPM, "SiPMMount2_" + name + "_Logic");
-    logicSiPM.push_back(logicSiPM_vol2); // 放入 Vector，確保 SD Manager 兩邊都掃描到！
-    
-    G4VPhysicalVolume* physSiPM2 = new G4PVPlacement(rotation, translation, logicSiPM_vol2, "SiPM2_" + name, logicWorld, false, 0, true);
+    logicSiPM.push_back(logicSiPM_vol2);
+    G4VPhysicalVolume* physSiPM2 = new G4PVPlacement(rotation, translation, logicSiPM_vol2, "SiPMMount2_" + name, logicWorld, false, 0, true);
 
+    auto sipmMesh3 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_SiPMs_1_Body3.stl");
+    sipmMesh3->SetScale(1.0);
+    G4LogicalVolume* logicSiPM_vol3 = new G4LogicalVolume(sipmMesh3->GetSolid(), matSiPM, "SiPMMount3_" + name + "_Logic");
+    logicSiPM.push_back(logicSiPM_vol3);
+    G4VPhysicalVolume* physSiPM3 = new G4PVPlacement(rotation, translation, logicSiPM_vol3, "SiPMMount3_" + name, logicWorld, false, 0, true);
+    
+    auto sipmMesh4 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_SiPMs_1_Body5.stl");
+    sipmMesh4->SetScale(1.0);
+    G4LogicalVolume* logicSiPM_vol4 = new G4LogicalVolume(sipmMesh4->GetSolid(), matSiPM, "SiPMMount4_" + name + "_Logic");
+    logicSiPM.push_back(logicSiPM_vol4);
+    G4VPhysicalVolume* physSiPM4 = new G4PVPlacement(rotation, translation, logicSiPM_vol4, "SiPMMount4_" + name, logicWorld, false, 0, true);
+    logicCalorimeter=logicSiPM_vol1; // Set the first SiPM as the reference for the sensitive detector
     // ==========================================
     // 7. OPTICAL SURFACES & BORDERS
     // ==========================================
     
     // We use 'static' to ensure these templates are only created ONCE in memory
-    static G4OpticalSurface* surfReflector = nullptr;
-    static G4OpticalSurface* surfWaterGlass = nullptr;
-    static G4OpticalSurface* surfCoupling = nullptr;
+    static G4OpticalSurface* surfTyvekWrap = nullptr;
+    static G4OpticalSurface* surfSiPM = nullptr;
 
-    if (!surfReflector) {
-        // --- Reflector Setup (Teflon / Tyvek) ---
-        surfReflector = new G4OpticalSurface("ReflectorSurf");
-        surfReflector->SetType(dielectric_metal); 
-        surfReflector->SetModel(unified);
-        surfReflector->SetFinish(polishedfrontpainted); 
-        surfReflector->SetSigmaAlpha(0.1 * degree); 
+    if (!surfTyvekWrap) {
+        // --- 1 & 4. Reflector Setup (Tyvek on Ground Surface) ---
+        // 'groundfrontpainted' models a rough surface (ground) wrapped in a reflector (Tyvek)
+        surfTyvekWrap = new G4OpticalSurface("Tyvek_Surf");
+        surfTyvekWrap->SetType(dielectric_metal); // Tyvek is opaque, treated as metal boundary for reflection
+        surfTyvekWrap->SetModel(unified);
+        surfTyvekWrap->SetFinish(groundfrontpainted); 
+        surfTyvekWrap->SetSigmaAlpha(0.2); // Roughness parameter (can be tuned)
 
-        G4MaterialPropertiesTable* mptReflector = new G4MaterialPropertiesTable();
-        G4double reflectorEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
-        G4double reflectorReflectivity[] = { 0.98, 0.98, 0.98, 0.98 }; 
-        mptReflector->AddProperty("REFLECTIVITY", reflectorEnergy, reflectorReflectivity, 4);
-        surfReflector->SetMaterialPropertiesTable(mptReflector);
+        G4MaterialPropertiesTable* mptTyvek = new G4MaterialPropertiesTable();
+        // Setup energy array (adjust the range 2.0-3.5 eV based on your plastic scintillator emission spectrum)
+        G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
+        G4double reflectivity[] = { 0.98, 0.98, 0.98, 0.98 }; // Tyvek typically has ~98% reflectivity
+        mptTyvek->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 4);
+        surfTyvekWrap->SetMaterialPropertiesTable(mptTyvek);
     }
 
-    if (!surfWaterGlass) {
-        // --- Internal Refraction Setup ---
-        surfWaterGlass = new G4OpticalSurface("WaterGlass_Surf");
-        surfWaterGlass->SetType(dielectric_dielectric);
-        surfWaterGlass->SetModel(unified);
-        surfWaterGlass->SetFinish(polished); 
+    if (!surfSiPM) {
+        // --- 3. SiPM Surface Setup ---
+        // Ensure photons hitting the SiPM are absorbed (detected) and not reflected back
+        surfSiPM = new G4OpticalSurface("SiPM_Surf");
+        surfSiPM->SetType(dielectric_metal); 
+        surfSiPM->SetModel(unified);
+        surfSiPM->SetFinish(polished);
+        
+        G4MaterialPropertiesTable* mptSiPM = new G4MaterialPropertiesTable();
+        G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
+        G4double reflectivity[] = { 0.0, 0.0, 0.0, 0.0 }; // 0% reflection = completely absorbed
+        G4double efficiency[]   = { 1.0, 1.0, 1.0, 1.0 }; // 100% QE for now (can map to actual PDE later)
+        mptSiPM->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 4);
+        mptSiPM->AddProperty("EFFICIENCY", photonEnergy, efficiency, 4);
+        surfSiPM->SetMaterialPropertiesTable(mptSiPM);
     }
 
-    if (!surfCoupling) {
-        // --- Sensor Coupling Setup (Grease) ---
-        surfCoupling = new G4OpticalSurface("SensorCoupling_Surf");
-        surfCoupling->SetType(dielectric_dielectric);
-        surfCoupling->SetModel(unified);
-        surfCoupling->SetFinish(polished); 
-    }
+    // --- Apply Skin Surfaces ---
+    // Apply Tyvek wrapping to the ground surfaces of the disks
+    new G4LogicalSkinSurface("CoverDisk_Skin_" + name, logicCoverDisk, surfTyvekWrap);
+    new G4LogicalSkinSurface("HolderDisk_Skin_" + name, logicHolderDisk, surfTyvekWrap);
 
-    // --- Apply Skin Surfaces (The "Light Trap") ---
-    new G4LogicalSkinSurface("LYSO_Wrap_Skin_" + name, logicWrap, surfReflector);
-    new G4LogicalSkinSurface("OuterGlass_Skin_" + name, logicGlass2, surfReflector);
-    new G4LogicalSkinSurface("Cap_Skin_" + name, logicCap, surfReflector);
+    // [新增] Apply Diffusive Wrapping to Cuvettes
+    // 這會將整個比色皿的外圍包上漫反射材料 (Tyvek/Teflon)
+    new G4LogicalSkinSurface("Cuvette1_Skin_" + name, logicCuvette1, surfTyvekWrap);
+    new G4LogicalSkinSurface("Cuvette2_Skin_" + name, logicCuvette2, surfTyvekWrap);
 
-    // --- Apply Internal Borders (Fluid & Inner Glass Dynamics) ---
-    // Make them perfectly bi-directional
-    new G4LogicalBorderSurface("Water_to_InnerGlass_" + name, physWater, physGlass1, surfWaterGlass);
-    new G4LogicalBorderSurface("InnerGlass_to_Water_" + name, physGlass1, physWater, surfWaterGlass);
+    // Apply Absorbing surface to SiPMs
+    new G4LogicalSkinSurface("SiPM1_Skin_" + name, logicSiPM_vol1, surfSiPM);
+    new G4LogicalSkinSurface("SiPM2_Skin_" + name, logicSiPM_vol2, surfSiPM);
+    new G4LogicalSkinSurface("SiPM3_Skin_" + name, logicSiPM_vol3, surfSiPM);
+    new G4LogicalSkinSurface("SiPM4_Skin_" + name, logicSiPM_vol4, surfSiPM);
+    // Apply Absorbing surface to SiPMs
+    new G4LogicalSkinSurface("SiPM1_Skin_" + name, logicSiPM_vol1, surfSiPM);
+    new G4LogicalSkinSurface("SiPM2_Skin_" + name, logicSiPM_vol2, surfSiPM);
+    new G4LogicalSkinSurface("SiPM3_Skin_" + name, logicSiPM_vol3, surfSiPM);
+    new G4LogicalSkinSurface("SiPM4_Skin_" + name, logicSiPM_vol4, surfSiPM);
 
-    new G4LogicalBorderSurface("Water_to_LYSO_" + name, physWater, physLYSO, surfWaterGlass);
-    new G4LogicalBorderSurface("LYSO_to_Water_" + name, physLYSO, physWater, surfWaterGlass);
-
-    // --- Apply Sensor Borders (The Grease Bridge) ---
-    // Path for SiPM 1 (Bidirectional for absolute safety)
-    new G4LogicalBorderSurface("Glass_to_Grease1_" + name, physGlass1, physGrease1, surfCoupling);
-    new G4LogicalBorderSurface("Grease1_to_Glass_" + name, physGrease1, physGlass1, surfCoupling);
-
-    new G4LogicalBorderSurface("Grease1_to_SiPM1_" + name, physGrease1, physSiPM1, surfCoupling);
-    new G4LogicalBorderSurface("SiPM1_to_Grease1_" + name, physSiPM1, physGrease1, surfCoupling);
-
-    // Path for SiPM 2
-    new G4LogicalBorderSurface("Glass_to_Grease2_" + name, physGlass1, physGrease2, surfCoupling);
-    new G4LogicalBorderSurface("Grease2_to_Glass_" + name, physGrease2, physGlass1, surfCoupling);
-
-    new G4LogicalBorderSurface("Grease2_to_SiPM2_" + name, physGrease2, physSiPM2, surfCoupling);
-    new G4LogicalBorderSurface("SiPM2_to_Grease2_" + name, physSiPM2, physGrease2, surfCoupling);
+    // --- 2. Optical Borders (Air Gap Explanation) ---
+    // NOTE: Since you explicitly stated there are air gaps between components (Air Coupled),
+    // NO G4LogicalBorderSurface is required or allowed here. 
+    // Geant4 automatically handles optical photon refraction & reflection at the boundaries 
+    // between your physical volumes and the logicWorld (Air gap) using Snell's law.
+    // 
+    // [CRITICAL REMINDER]: Ensure your matAir (logicWorld material) and matPlasticScintillator 
+    // both have the "RINDEX" (Refractive Index) array defined in their G4MaterialPropertiesTable 
+    // in your material definition file, otherwise optical photons will instantly die at the boundaries!
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {

@@ -1,24 +1,13 @@
-#/gps/verbose 2
-#Set the General Particle Source to be Lu-176
 /gps/particle ion
 /gps/ion 71 176
-
-#Position region of generated gps, should equal to the active region
-# The crystal's 20mm length is now along the Y-axis
-/gps/pos/type Volume
-/gps/pos/shape Para          # <-- Corrected: GPS uses 'Para' for rectangular prisms
-/gps/pos/centre 0 42 0 mm    # <-- Keep your verified center here
-/gps/pos/halfx  2 mm
-/gps/pos/halfy 10 mm         # <-- 10mm half-length remains along Y
-/gps/pos/halfz  2 mm
-
-#Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono
 /gps/ene/mono 0. MeV
-
-#Set the direction distribution of Source
-/gps/ang/type iso
-#/gps/ang/mintheta 0 degree
-#/gps/ang/maxtheta 180 degree
-#/gps/ang/minphi 0 degree
-#/gps/ang/maxphi 360 degree
+/gps/pos/type Volume
+/gps/pos/shape Box          
+/gps/pos/centre 0.0 0.0 13.42714 mm    
+/gps/pos/halfx 2.0 mm
+/gps/pos/halfy 2.0 mm
+/gps/pos/halfz 10.0 mm
+/gps/pos/confine LYSO_calor_unit_0
+/tracking/verbose 1
+/run/beamOn 10

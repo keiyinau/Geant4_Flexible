@@ -1,28 +1,22 @@
-# =======================================================
-# Source: Submerged LYSO Crystal (Self-Decay of Lu-176)
-# =======================================================
-/gps/particle ion
-# Z=71 (Lutetium), A=176
-/gps/ion 71 176
+#Set the General Particle Source to be Co60
+#/gps/particle ion
+#/gps/ion 11 22
 
-# Set position to match the bounding box of the STL
+#Position region of generated gps, should equal to the active region
 /gps/pos/type Volume
-/gps/pos/shape Para          
+/gps/pos/shape Cylinder
+/gps/pos/centre 0 0 0 mm
+/gps/pos/radius 4.765 mm
+/gps/pos/halfz 0.0001 mm
 
-# 精確 STL 中心點坐標 (X=0, Y=0, Z=36.93 mm)
-/gps/pos/centre 0.0 36.93 0.0 mm    
-
-# 半長度 (稍微加大 0.01 mm 確保 Bounding Box 完全包覆 STL 表面，避免漏計)
-/gps/pos/halfx 2.01 mm
-/gps/pos/halfy 10.01 mm
-/gps/pos/halfz 2.01 mm
-
-# 嚴格限制只能喺 LYSO 物理幾何內生成
-/gps/pos/confine LYSO_calor_unit_0
-
-# Set primary ion kinetic energy to 0 MeV 
+#Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono
 /gps/ene/mono 0. MeV
+/gps/number 1 #Simulating 0.1 s
 
-# Allow isotropic emission
+#Set the direction distribution of Source
 /gps/ang/type iso
+#/gps/ang/mintheta 0 degree
+#/gps/ang/maxtheta 180 degree
+#/gps/ang/minphi 0 degree
+#/gps/ang/maxphi 360 degree

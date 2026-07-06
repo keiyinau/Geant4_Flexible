@@ -29,7 +29,6 @@ file(GLOB DATA_FILES
 	"src/DataFile/crystal_coordinate/*.txt",
 	"src/DataFile/LYSO/*",
 	"src/DataFile/Liquid_scintillator/*.csv",
-
 )
 file(GLOB 3D_MODELS
 	"src/3DModel/*"

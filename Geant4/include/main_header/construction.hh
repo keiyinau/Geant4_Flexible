@@ -142,6 +142,9 @@ private:
 	G4Material *matTi, *matNaCl, *matCsI,*matLSO, *matLYSO;
 	G4Material *matSi, *matAl, *matAcrylic, *matTeflon, *matGlass, *matGrease; 
 
+	//Generator
+	G4Material *matCuvette, *matPVC, *matGenerator,*matPlasticScintillator,*matPhotopolymer;
+
 	G4double fLightYield;
 	//Setting
 	G4String coordinate_name;
