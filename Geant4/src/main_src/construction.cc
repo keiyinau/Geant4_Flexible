@@ -785,7 +785,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4VPhysicalVolume* physLYSO = new G4PVPlacement(rotation, translation, logicLYSO, "LYSO_" + name, logicWorld, false, 0, true);
 
     // === 5. LYSO WRAPPING (Beta Blocker) ===
-    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_wrap_1_1mm wrap.stl");
+    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Full_setup_Full_setup_LYSO_Detector_1_LYSO_wrap_1_0.5mm wrap.stl");
     wrapMesh->SetScale(1.0);
     G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "Wrap_" + name + "_Logic");
     logicTapflon.push_back(logicWrap);
