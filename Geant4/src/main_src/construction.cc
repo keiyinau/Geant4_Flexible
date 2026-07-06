@@ -337,18 +337,47 @@ void MyDetectorConstruction::DefineMaterials() {
     G4MaterialPropertiesTable* mptCuvette = new G4MaterialPropertiesTable();
     G4double rindexCuvette[] = { 1.46, 1.46, 1.46, 1.46 }; 
     mptCuvette->AddProperty("RINDEX", photonEnergy, rindexCuvette, nEntries);
+    G4double absCuvette[] = { 10.0*m, 10.0*m, 10.0*m, 10.0*m }; // 假設為高透光，吸收長度 10 米
+    mptCuvette->AddProperty("ABSLENGTH", photonEnergy, absCuvette, nEntries);
 
-    // PVC (Opaque)
+    // matPVC (Transparent Polyvinyl Chloride)
+    // ==========================================
     matPVC = new G4Material("matPVC", 1.35*g/cm3, 3);
     matPVC->AddElement(elC, 2);
     matPVC->AddElement(elH, 3);
     matPVC->AddElement(elCl, 1);
 
-    // Photopolymer (3D Printing Resin)
+    G4MaterialPropertiesTable* mptPVC = new G4MaterialPropertiesTable();
+
+    // 折射率 (RINDEX): 透明 PVC 一般約為 1.52 - 1.54
+    G4double rindexPVC[] = { 1.53, 1.53, 1.53, 1.53 };
+    mptPVC->AddProperty("RINDEX", photonEnergy, rindexPVC, nEntries);
+
+    // 吸收長度 (ABSLENGTH): 模擬透明 PVC 的有限透光度，設為 2.0 米
+    G4double absPVC[] = { 2.0*m, 2.0*m, 2.0*m, 2.0*m };
+    mptPVC->AddProperty("ABSLENGTH", photonEnergy, absPVC, nEntries);
+
+    matPVC->SetMaterialPropertiesTable(mptPVC);
+
+    // matPhotopolymer (3D Printing Resin - Clear Acrylic Base)
+    // ==========================================
     matPhotopolymer = new G4Material("matPhotopolymer", 1.20*g/cm3, 3);
     matPhotopolymer->AddElement(elC, 5);
     matPhotopolymer->AddElement(elH, 8);
     matPhotopolymer->AddElement(elO, 2);
+
+    G4MaterialPropertiesTable* mptPhotopolymer = new G4MaterialPropertiesTable();
+
+    // 折射率 (RINDEX): 標準光固化樹脂 (PMMA base) 約為 1.49
+    G4double rindexPhotopolymer[] = { 1.49, 1.49, 1.49, 1.49 };
+    mptPhotopolymer->AddProperty("RINDEX", photonEnergy, rindexPhotopolymer, nEntries);
+
+    // 吸收長度 (ABSLENGTH): 透明 3D 打印樹脂透光度有限，設為 3.0 cm
+    // (如果你用的是灰色/黑色不透明樹脂，請不要為此物料設定 RINDEX 和 ABSLENGTH)
+    G4double absPhotopolymer[] = { 3.0*cm, 3.0*cm, 3.0*cm, 3.0*cm };
+    mptPhotopolymer->AddProperty("ABSLENGTH", photonEnergy, absPhotopolymer, nEntries);
+
+    matPhotopolymer->SetMaterialPropertiesTable(mptPhotopolymer);
 
     // ==========================================
     // 4. Scintillators
@@ -364,14 +393,16 @@ void MyDetectorConstruction::DefineMaterials() {
     mptGenerator->AddProperty("RINDEX", photonEnergy, rindexGenerator, nEntries);
     
     // 載入 Daya Bay LAB 發光數據
-    std::vector<G4double> LS_emission_Energy, LS_emission_fractions;
-    readAndProcessData_Energy("LAB_DayaBay_Normalized.csv", LS_emission_Energy, LS_emission_fractions);
-    mptGenerator->AddProperty("SCINTILLATIONCOMPONENT1", LS_emission_Energy, LS_emission_fractions, LS_emission_fractions.size());
-    mptGenerator->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
-    mptGenerator->AddConstProperty("SCINTILLATIONYIELD1", 1.0); 
-    mptGenerator->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    mptGenerator->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns);
-
+    //std::vector<G4double> LS_emission_Energy, LS_emission_fractions;
+    //readAndProcessData_Energy("LAB_DayaBay_Normalized.csv", LS_emission_Energy, LS_emission_fractions);
+    //mptGenerator->AddProperty("SCINTILLATIONCOMPONENT1", LS_emission_Energy, LS_emission_fractions, LS_emission_fractions.size());
+    //mptGenerator->AddConstProperty("SCINTILLATIONYIELD", fLightYield/MeV);
+    //mptGenerator->AddConstProperty("SCINTILLATIONYIELD1", 1.0); 
+    //mptGenerator->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    //mptGenerator->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 5.0 * ns);
+    // 你可以根據 Daya Bay 或相關文獻調整此數值，這裡暫定為典型的 5 米
+    G4double absGenerator[] = { 5.0*m, 5.0*m, 5.0*m, 5.0*m }; 
+    mptGenerator->AddProperty("ABSLENGTH", photonEnergy, absGenerator, nEntries);
     // ==========================================
     // --- 4. Plastic Scintillator (PVT - EJ-200 / BC-408 Equivalent) ---
     // ==========================================
@@ -426,6 +457,7 @@ void MyDetectorConstruction::DefineMaterials() {
 
     // ==========================================
     // 6. Optical Physics Toggle
+    // ==========================================`
     // ==========================================
     if(logicOptical){
         Air->SetMaterialPropertiesTable(mptAir);
@@ -433,6 +465,10 @@ void MyDetectorConstruction::DefineMaterials() {
         matGenerator->SetMaterialPropertiesTable(mptGenerator);
         matPlasticScintillator->SetMaterialPropertiesTable(mptPlasticScint);
         matSi->SetMaterialPropertiesTable(mptSi);
+        matPhotopolymer->SetMaterialPropertiesTable(mptPhotopolymer);
+        
+        // [新增] 載入透明 PVC 嘅光學屬性
+        matPVC->SetMaterialPropertiesTable(mptPVC); 
     }
 
     // ==========================================
@@ -769,22 +805,8 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     // Apply Tyvek wrapping to the ground surfaces of the disks
     new G4LogicalSkinSurface("CoverDisk_Skin_" + name, logicCoverDisk, surfTyvekWrap);
     new G4LogicalSkinSurface("HolderDisk_Skin_" + name, logicHolderDisk, surfTyvekWrap);
-
-    // [新增] Apply Diffusive Wrapping to Cuvettes
-    // 這會將整個比色皿的外圍包上漫反射材料 (Tyvek/Teflon)
     new G4LogicalSkinSurface("Cuvette1_Skin_" + name, logicCuvette1, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette2_Skin_" + name, logicCuvette2, surfTyvekWrap);
-
-    // Apply Absorbing surface to SiPMs
-    new G4LogicalSkinSurface("SiPM1_Skin_" + name, logicSiPM_vol1, surfSiPM);
-    new G4LogicalSkinSurface("SiPM2_Skin_" + name, logicSiPM_vol2, surfSiPM);
-    new G4LogicalSkinSurface("SiPM3_Skin_" + name, logicSiPM_vol3, surfSiPM);
-    new G4LogicalSkinSurface("SiPM4_Skin_" + name, logicSiPM_vol4, surfSiPM);
-    // Apply Absorbing surface to SiPMs
-    new G4LogicalSkinSurface("SiPM1_Skin_" + name, logicSiPM_vol1, surfSiPM);
-    new G4LogicalSkinSurface("SiPM2_Skin_" + name, logicSiPM_vol2, surfSiPM);
-    new G4LogicalSkinSurface("SiPM3_Skin_" + name, logicSiPM_vol3, surfSiPM);
-    new G4LogicalSkinSurface("SiPM4_Skin_" + name, logicSiPM_vol4, surfSiPM);
 
     // --- 2. Optical Borders (Air Gap Explanation) ---
     // NOTE: Since you explicitly stated there are air gaps between components (Air Coupled),
