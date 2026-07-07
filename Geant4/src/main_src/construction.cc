@@ -766,6 +766,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     // We use 'static' to ensure these templates are only created ONCE in memory
     static G4OpticalSurface* surfTyvekWrap = nullptr;
     static G4OpticalSurface* surfSiPM = nullptr;
+    static G4OpticalSurface* surfMetalFoil = nullptr;
 
     if (!surfTyvekWrap) {
         // --- 1 & 4. Reflector Setup (Tyvek on Ground Surface) ---
@@ -800,6 +801,19 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         mptSiPM->AddProperty("EFFICIENCY", photonEnergy, efficiency, 4);
         surfSiPM->SetMaterialPropertiesTable(mptSiPM);
     }
+    if (!surfMetalFoil) {
+        surfMetalFoil = new G4OpticalSurface("MetalFoil_Surf");
+        surfMetalFoil->SetType(dielectric_metal); // 金屬邊界
+        surfMetalFoil->SetModel(unified);
+        surfMetalFoil->SetFinish(polished);       // 假設為平滑金屬箔片
+        
+        G4MaterialPropertiesTable* mptMetalFoil = new G4MaterialPropertiesTable();
+        G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
+        G4double reflectivity[] = { 0.50, 0.50, 0.50, 0.50 }; // 鈦金屬的可見光反射率約 50%
+        mptMetalFoil->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 4);
+        surfMetalFoil->SetMaterialPropertiesTable(mptMetalFoil);
+    }
+
 
     // --- Apply Skin Surfaces ---
     // Apply Tyvek wrapping to the ground surfaces of the disks
@@ -807,6 +821,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     new G4LogicalSkinSurface("HolderDisk_Skin_" + name, logicHolderDisk, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette1_Skin_" + name, logicCuvette1, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette2_Skin_" + name, logicCuvette2, surfTyvekWrap);
+    new G4LogicalSkinSurface("TiFoil_Skin_" + name, logicFoilsourceMesh, surfMetalFoil);
 
     // --- 2. Optical Borders (Air Gap Explanation) ---
     // NOTE: Since you explicitly stated there are air gaps between components (Air Coupled),
