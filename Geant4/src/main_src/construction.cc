@@ -2,7 +2,7 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=false;
+    logicOptical=true;
 	DefineMaterials();
 
 
@@ -20,7 +20,7 @@ MyDetectorConstruction::MyDetectorConstruction() {
     matContainer=matAcrylic;
     matScintillator=matWater;
     matSiPM=matSi;
-    matWrapping=matTeflon;
+    matWrapping=matAl;
 	// Set the default of each logical volume to be NULL so the sensitive detector selector can work well
 	logicDetector_Shell = NULL;
 	logicTPC = NULL;
@@ -354,12 +354,12 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_txt("RefractiveIndex_LSO_Ce.txt", LSO_refraction_Energy, LSO_refraction_Index);
     std::vector<G4double> LSO_absorption_Energy, LSO_absorption_Index;
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LSO_Ce.txt", LSO_absorption_Energy, LSO_absorption_Index);
-    mptLSO->AddConstProperty("RESOLUTIONSCALE", 0.);
-    mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
+    //mptLSO->AddConstProperty("RESOLUTIONSCALE", 0.);
+    //mptLSO->AddProperty("SCINTILLATIONCOMPONENT1", LSO_emission_Energy, LSO_emission_fractions,LSO_emission_fractions.size());
     mptLSO->AddProperty("RINDEX", LSO_refraction_Energy, LSO_refraction_Index,LSO_refraction_Index.size());
     mptLSO->AddProperty("ABSLENGTH", LSO_absorption_Energy, LSO_absorption_Index,LSO_absorption_Index.size());
-    mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
-    mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
+    //mptLSO->AddConstProperty("SCINTILLATIONYIELD", 26/keV);
+    //mptLSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40.0*ns);
     // End LSO
 
     // Define elements (use NIST for common ones)
@@ -396,12 +396,12 @@ void MyDetectorConstruction::DefineMaterials() {
 
     mptLYSO->AddConstProperty("SCINTILLATIONYIELD", baseYield); 
     
-    //mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
-    //mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
-    //mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
-    //mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
-    //mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
-    //mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
+    mptLYSO->AddProperty("ELECTRONSCINTILLATIONYIELD", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_fractions, LYSO_LY_Nonproportion_fractions.size());
+    mptLYSO->AddConstProperty("ELECTRONSCINTILLATIONYIELD1", 1.0);
+    mptLYSO->AddConstProperty("RESOLUTIONSCALE", 0);
+    mptLYSO->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 40. * ns);
+    mptLYSO->AddProperty("SCINTILLATIONCOMPONENT1", LYSO_emission_Energy, LYSO_emission_fractions,LYSO_emission_fractions.size());
+    mptLYSO->AddProperty("RINDEX", LYSO_refraction_Energy, LYSO_refraction_Index,LYSO_refraction_Index.size());
     mptLYSO->AddProperty("ABSLENGTH", LYSO_absorption_Energy, LYSO_absorption_Index,LYSO_absorption_Index.size());
     //mptLYSO->AddConstProperty("BIRKS_ETA_H", 0.002,true);
     //mptLYSO->AddConstProperty("ONSAGER_ETA_EH", 0.81,true);
@@ -485,7 +485,7 @@ void MyDetectorConstruction::DefineMaterials() {
 	readAndProcessData_txt("RefractiveIndexINFO_Si.txt", Si_refraction_Energy, Si_refraction_Index);
 
 	G4MaterialPropertiesTable* mptSi = new G4MaterialPropertiesTable();
-	mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
+	//mptSi->AddProperty("REFLECTIVITY", Si_reflectance_Energy, Si_reflectance_fractions,Si_reflectance_fractions.size());
     mptSi->AddProperty("TRANSMITTANCE", Si_transmission_Energy, Si_rtransmission_Index,Si_rtransmission_Index.size());	
     mptSi->AddProperty("RINDEX", Si_refraction_Energy, Si_refraction_Index,Si_refraction_Energy.size());	
 
@@ -718,58 +718,105 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     G4RotationMatrix* rotation = new G4RotationMatrix();
     rotation->rotateX(rotateX);
     rotation->rotateY(rotateY);
-    rotation->rotateZ(rotateZ); // Remove this line if no self rotation
+    rotation->rotateZ(rotateZ); 
     
     std::string prefix = "pixelated_lyso/";
     
-    // === 1. MAIN  LYSO CRYSTAL ===
+    // === 1. MAIN LYSO CRYSTAL ===
     auto mainLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_LYSO.stl");
     mainLysoMesh->SetScale(1.0);
     G4LogicalVolume* logicMainLYSO = new G4LogicalVolume(mainLysoMesh->GetSolid(), matLYSO, "MainLYSO_" + name + "_Logic");
-    logicScintillators.push_back(logicMainLYSO); // Main detector pushed to Sensitive Detector
-    new G4PVPlacement(rotation, translation, logicMainLYSO, "MainLYSO_" + name, logicWorld, false, 0, true);
+    logicScintillators.push_back(logicMainLYSO); 
+    logicCalorimeter=logicMainLYSO;
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physMainLYSO = new G4PVPlacement(rotation, translation, logicMainLYSO, "MainLYSO_" + name, logicWorld, false, 0, true);
     
     auto mainWrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_Alwrap.stl");
     mainWrapMesh->SetScale(1.0);
     G4LogicalVolume* logicMainWrap = new G4LogicalVolume(mainWrapMesh->GetSolid(), matWrapping, "MainWrap_" + name + "_Logic");
-    logicTapflon.push_back(logicMainWrap); // Main wrapping pushed to wrapping array
-    new G4PVPlacement(rotation, translation, logicMainWrap, "MainWrap_" + name, logicWorld, false, 0, true);
+    logicTapflon.push_back(logicMainWrap); 
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physMainWrap = new G4PVPlacement(rotation, translation, logicMainWrap, "MainWrap_" + name, logicWorld, false, 0, true);
 
     auto mainSiPM1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_SiPM1.stl");
     mainSiPM1->SetScale(1.0);
     G4LogicalVolume* logicMainSiPM1 = new G4LogicalVolume(mainSiPM1->GetSolid(), matSiPM, "MainSiPM1_" + name + "_Logic");
-    logicSiPM.push_back(logicMainSiPM1); // Main SiPM pushed to SiPM array
-    new G4PVPlacement(rotation, translation, logicMainSiPM1, "MainSiPM1_" + name, logicWorld, false, 0, true);
+    logicSiPM.push_back(logicMainSiPM1); 
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physMainSiPM1 = new G4PVPlacement(rotation, translation, logicMainSiPM1, "MainSiPM1_" + name, logicWorld, false, 0, true);
 
     auto mainSiPM2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_SiPM2.stl");
     mainSiPM2->SetScale(1.0);
     G4LogicalVolume* logicMainSiPM2 = new G4LogicalVolume(mainSiPM2->GetSolid(), matSiPM, "MainSiPM2_" + name + "_Logic");
-    logicSiPM.push_back(logicMainSiPM2); // Main SiPM pushed to SiPM array
-    new G4PVPlacement(rotation, translation, logicMainSiPM2, "MainSiPM2_" + name, logicWorld, false, 0, true);
+    logicSiPM.push_back(logicMainSiPM2); 
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physMainSiPM2 = new G4PVPlacement(rotation, translation, logicMainSiPM2, "MainSiPM2_" + name, logicWorld, false, 0, true);
 
-    // === 3. ONLY THE MIDDLE SIDE LYSO CRYSTAL, LYSO 1 2 3 corresponds middle, left right ===
+    // === 3. ONLY THE MIDDLE SIDE LYSO CRYSTAL ===
     auto sideLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_LYSO.stl");
     sideLysoMesh->SetScale(1.0);
-    G4LogicalVolume* logicSideLYSO = new G4LogicalVolume(sideLysoMesh->GetSolid(), matLYSO, "SideLYSO" + name + "_Logic");
-    
-    logicScintillators.push_back(logicSideLYSO); // Side crystal pushed to Sensitive Detector
-    new G4PVPlacement(rotation, translation, logicSideLYSO, "SideLYSO" + name, logicWorld, false, 0, true);
+    G4LogicalVolume* logicSideLYSO = new G4LogicalVolume(sideLysoMesh->GetSolid(), matLSO, "SideLYSO" + name + "_Logic");
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physSideLYSO = new G4PVPlacement(rotation, translation, logicSideLYSO, "SideLYSO" + name, logicWorld, false, 0, true);
 
     auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_wrapping.stl");
     wrapMesh->SetScale(1.0);
     G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "WrapSide" + name + "_Logic");
-    
-    logicTapflon.push_back(logicWrap); // Push to wrapping array
-    new G4PVPlacement(rotation, translation, logicWrap, "WrapSide" + name, logicWorld, false, 0, true);
+    logicTapflon.push_back(logicWrap); 
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physSideWrap = new G4PVPlacement(rotation, translation, logicWrap, "WrapSide" + name, logicWorld, false, 0, true);
 
     auto sideSiPM1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_SiPM.stl");
     sideSiPM1->SetScale(1.0);
     G4LogicalVolume* logicSideSiPM1 = new G4LogicalVolume(sideSiPM1->GetSolid(), matSiPM, "SideSiPM1" + name + "_Logic");
-    logicSiPM.push_back(logicSideSiPM1); // Side SiPM pushed to SiPM array
-    new G4PVPlacement(rotation, translation, logicSideSiPM1, "SideSiPM1" + name, logicWorld, false, 0, true);
+    logicSiPM.push_back(logicSideSiPM1); 
+    // [FIXED] Added G4VPhysicalVolume* to store the pointer
+    G4VPhysicalVolume* physSideSiPM1 = new G4PVPlacement(rotation, translation, logicSideSiPM1, "SideSiPM1" + name, logicWorld, false, 0, true);
+
     // ==========================================
-    // OPTICAL SURFACES (IGNORED FOR NOW)
+    // OPTICAL SURFACES
     // ==========================================
+    
+    // 1. 定義 LYSO 與 Wrapping (Al Foil) 之間的表面
+    G4OpticalSurface* wrapOpSurface = new G4OpticalSurface("WrapSurface_" + name);
+    wrapOpSurface->SetType(dielectric_metal); 
+    wrapOpSurface->SetModel(unified);
+    wrapOpSurface->SetFinish(ground); 
+    wrapOpSurface->SetSigmaAlpha(0.1); 
+
+    G4MaterialPropertiesTable* mptWrapSurface = new G4MaterialPropertiesTable();
+    const G4int numEntries = 2;
+    G4double photonEnergy[numEntries] = {1.5 * eV, 3.0 * eV}; 
+    G4double reflectivity[numEntries] = {0.90, 0.90}; 
+
+    mptWrapSurface->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, numEntries);
+    wrapOpSurface->SetMaterialPropertiesTable(mptWrapSurface);
+
+    // 2. 定義 LYSO 與 SiPM 之間的表面 (假設中間有光學硅脂或完美接觸)
+    // [FIXED] 先 new 出 sipmOpSurface，然後再設定 Grease 屬性
+    G4OpticalSurface* sipmOpSurface = new G4OpticalSurface("SiPMSurface_" + name);
+    sipmOpSurface->SetType(dielectric_dielectric);
+    sipmOpSurface->SetModel(unified);
+    sipmOpSurface->SetFinish(polished); 
+    
+
+    G4MaterialPropertiesTable* mptGrease = new G4MaterialPropertiesTable();
+    const G4int nEntriesGrease = 2;
+    G4double energyGrease[nEntriesGrease] = {1.5 * eV, 3.0 * eV}; 
+    G4double rindexGrease[nEntriesGrease] = {1.46, 1.46}; 
+
+    mptGrease->AddProperty("RINDEX", energyGrease, rindexGrease, nEntriesGrease);
+    
+    // 將 Grease 的屬性附加到剛才建立的 Surface 上
+    sipmOpSurface->SetMaterialPropertiesTable(mptGrease);
+
+    // 3. 建立 Logical Border Surfaces
+    new G4LogicalBorderSurface("MainLYSO_Wrap_Surf_" + name, physMainLYSO, physMainWrap, wrapOpSurface);
+    new G4LogicalBorderSurface("SideLYSO_Wrap_Surf_" + name, physSideLYSO, physSideWrap, wrapOpSurface);
+
+    new G4LogicalBorderSurface("MainLYSO_SiPM1_Surf_" + name, physMainLYSO, physMainSiPM1, sipmOpSurface);
+    new G4LogicalBorderSurface("MainLYSO_SiPM2_Surf_" + name, physMainLYSO, physMainSiPM2, sipmOpSurface);
+    new G4LogicalBorderSurface("SideLYSO_SiPM1_Surf_" + name, physSideLYSO, physSideSiPM1, sipmOpSurface);
 }
 
 void MyDetectorConstruction::ConstructCalorimeter() {
