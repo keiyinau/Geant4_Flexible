@@ -2,7 +2,7 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=false;
+    logicOptical=true;
 	DefineMaterials();
 
 
@@ -388,7 +388,7 @@ void MyDetectorConstruction::DefineMaterials() {
     readAndProcessData_Energy_cm_txt("AbsorptionLength_LYSO_Ce.txt", LYSO_absorption_Energy, LYSO_absorption_Index);
     std::vector<G4double> LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative;
     readAndProcessData_Nonproportionality("Nonproportionality_LYSO_Ce_Relative.txt", LYSO_LY_Nonproportion_Energy, LYSO_LY_Nonproportion_relative);
-    G4double baseYield=26.0000/keV; //Previous 33 keV
+    G4double baseYield=33.0000/keV; //Previous 33 keV
     std::vector<G4double> LYSO_LY_Nonproportion_fractions(LYSO_LY_Nonproportion_relative.size());
     for(int i=0;i<LYSO_LY_Nonproportion_relative.size();i++){
         LYSO_LY_Nonproportion_fractions[i]=LYSO_LY_Nonproportion_relative[i]*baseYield;
@@ -720,43 +720,53 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     rotation->rotateY(rotateY);
     rotation->rotateZ(rotateZ); // Remove this line if no self rotation
     
-    std::string prefix = "pixelated_lyso/Pixelized_crystal_test_Pixelized_crystal_test_";
+    std::string prefix = "pixelated_lyso/";
     
-    // === 1. MAIN UNWRAPPED LYSO CRYSTAL ===
-    auto mainLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Main_Unwrapped_LYSO.stl");
+    // === 1. MAIN  LYSO CRYSTAL ===
+    auto mainLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_LYSO.stl");
     mainLysoMesh->SetScale(1.0);
     G4LogicalVolume* logicMainLYSO = new G4LogicalVolume(mainLysoMesh->GetSolid(), matLYSO, "MainLYSO_" + name + "_Logic");
-    
     logicScintillators.push_back(logicMainLYSO); // Main detector pushed to Sensitive Detector
     new G4PVPlacement(rotation, translation, logicMainLYSO, "MainLYSO_" + name, logicWorld, false, 0, true);
+    
+    auto mainWrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_Alwrap.stl");
+    mainWrapMesh->SetScale(1.0);
+    G4LogicalVolume* logicMainWrap = new G4LogicalVolume(mainWrapMesh->GetSolid(), matWrapping, "MainWrap_" + name + "_Logic");
+    logicTapflon.push_back(logicMainWrap); // Main wrapping pushed to wrapping array
+    new G4PVPlacement(rotation, translation, logicMainWrap, "MainWrap_" + name, logicWorld, false, 0, true);
 
-    // === 2. ALL THREE SiPMs (Bottom, Middle, Top) ===
-    std::string positions[] = {"Bottom", "Middle", "Top"};
-    for (int i = 0; i < 3; i++) {
-        auto sipmMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "SiPM_" + positions[i] + ".stl");
-        sipmMesh->SetScale(1.0);
-        G4LogicalVolume* logicSiPM_part = new G4LogicalVolume(sipmMesh->GetSolid(), matSiPM, "SiPM_" + positions[i] + "_" + name + "_Logic");
-        
-        logicSiPM.push_back(logicSiPM_part); // Push to SiPM array
-        new G4PVPlacement(rotation, translation, logicSiPM_part, "SiPM_" + positions[i] + "_" + name, logicWorld, false, i, true);
-    }
+    auto mainSiPM1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_SiPM1.stl");
+    mainSiPM1->SetScale(1.0);
+    G4LogicalVolume* logicMainSiPM1 = new G4LogicalVolume(mainSiPM1->GetSolid(), matSiPM, "MainSiPM1_" + name + "_Logic");
+    logicSiPM.push_back(logicMainSiPM1); // Main SiPM pushed to SiPM array
+    new G4PVPlacement(rotation, translation, logicMainSiPM1, "MainSiPM1_" + name, logicWorld, false, 0, true);
 
-    // === 3. ONLY THE MIDDLE SIDE LYSO CRYSTAL ===
-    auto sideLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Side_LYSO_Middle.stl");
+    auto mainSiPM2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_twoend_1_SiPM2.stl");
+    mainSiPM2->SetScale(1.0);
+    G4LogicalVolume* logicMainSiPM2 = new G4LogicalVolume(mainSiPM2->GetSolid(), matSiPM, "MainSiPM2_" + name + "_Logic");
+    logicSiPM.push_back(logicMainSiPM2); // Main SiPM pushed to SiPM array
+    new G4PVPlacement(rotation, translation, logicMainSiPM2, "MainSiPM2_" + name, logicWorld, false, 0, true);
+
+    // === 3. ONLY THE MIDDLE SIDE LYSO CRYSTAL, LYSO 1 2 3 corresponds middle, left right ===
+    auto sideLysoMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_LYSO.stl");
     sideLysoMesh->SetScale(1.0);
-    G4LogicalVolume* logicSideLYSO = new G4LogicalVolume(sideLysoMesh->GetSolid(), matLYSO, "SideLYSO_Middle_" + name + "_Logic");
+    G4LogicalVolume* logicSideLYSO = new G4LogicalVolume(sideLysoMesh->GetSolid(), matLYSO, "SideLYSO" + name + "_Logic");
     
     logicScintillators.push_back(logicSideLYSO); // Side crystal pushed to Sensitive Detector
-    new G4PVPlacement(rotation, translation, logicSideLYSO, "SideLYSO_Middle_" + name, logicWorld, false, 0, true);
+    new G4PVPlacement(rotation, translation, logicSideLYSO, "SideLYSO" + name, logicWorld, false, 0, true);
 
-    // === 4. ONLY THE MIDDLE ALUMINUM WRAPPING ===
-    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Wrap_Middle.stl");
+    auto wrapMesh = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_wrapping.stl");
     wrapMesh->SetScale(1.0);
-    G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "Wrap_Middle_" + name + "_Logic");
+    G4LogicalVolume* logicWrap = new G4LogicalVolume(wrapMesh->GetSolid(), matWrapping, "WrapSide" + name + "_Logic");
     
     logicTapflon.push_back(logicWrap); // Push to wrapping array
-    new G4PVPlacement(rotation, translation, logicWrap, "Wrap_Middle_" + name, logicWorld, false, 0, true);
+    new G4PVPlacement(rotation, translation, logicWrap, "WrapSide" + name, logicWorld, false, 0, true);
 
+    auto sideSiPM1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Pixelized_Test_Pixelized_Test_LYSO_single_1_SiPM.stl");
+    sideSiPM1->SetScale(1.0);
+    G4LogicalVolume* logicSideSiPM1 = new G4LogicalVolume(sideSiPM1->GetSolid(), matSiPM, "SideSiPM1" + name + "_Logic");
+    logicSiPM.push_back(logicSideSiPM1); // Side SiPM pushed to SiPM array
+    new G4PVPlacement(rotation, translation, logicSideSiPM1, "SideSiPM1" + name, logicWorld, false, 0, true);
     // ==========================================
     // OPTICAL SURFACES (IGNORED FOR NOW)
     // ==========================================
