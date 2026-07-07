@@ -2,7 +2,7 @@
 #include "CADMesh.hh"
 MyDetectorConstruction::MyDetectorConstruction() {
 	// Define required materials
-    logicOptical=true;
+    logicOptical=false;
 	DefineMaterials();
 
 
