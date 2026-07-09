@@ -714,13 +714,13 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     auto cuvetteLSMesh1 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_1_LS.stl");
     cuvetteLSMesh1->SetScale(1.0);
     G4LogicalVolume* logicCuvetteLS1 = new G4LogicalVolume(cuvetteLSMesh1->GetSolid(), matGenerator, "CuvetteLS_" + name + "_Logic");
-    logicScintillators.push_back(logicCuvetteLS1);
+    //logicScintillators.push_back(logicCuvetteLS1);
     G4VPhysicalVolume* physCuvetteLS1 = new G4PVPlacement(rotation, translation, logicCuvetteLS1, "CuvetteLS_" + name, logicWorld, false, 0, true);
 
     auto cuvetteLSMesh2 = CADMesh::TessellatedMesh::FromSTL(prefix + "Positronium_Generator_Positronium_Generator_cuvetteParts_2_LS.stl");
     cuvetteLSMesh2->SetScale(1.0);
     G4LogicalVolume* logicCuvetteLS2 = new G4LogicalVolume(cuvetteLSMesh2->GetSolid(), matGenerator, "CuvetteLS_" + name + "_Logic");
-    logicScintillators.push_back(logicCuvetteLS2);
+    //logicScintillators.push_back(logicCuvetteLS2);
     G4VPhysicalVolume* physCuvetteLS2 = new G4PVPlacement(rotation, translation, logicCuvetteLS2, "CuvetteLS_" + name, logicWorld, false, 0, true);
 
     // Ps_CoverDisk
@@ -771,7 +771,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         // --- 1 & 4. Reflector Setup (Tyvek on Ground Surface) ---
         // 'groundfrontpainted' models a rough surface (ground) wrapped in a reflector (Tyvek)
         surfTyvekWrap = new G4OpticalSurface("Tyvek_Surf");
-        surfTyvekWrap->SetType(dielectric_metal); // Tyvek is opaque, treated as metal boundary for reflection
+        surfTyvekWrap->SetType(dielectric_dielectric); // Tyvek is opaque, treated as metal boundary for reflection
         surfTyvekWrap->SetModel(unified);
         surfTyvekWrap->SetFinish(groundfrontpainted); 
         surfTyvekWrap->SetSigmaAlpha(0.2); // Roughness parameter (can be tuned)
@@ -779,7 +779,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         G4MaterialPropertiesTable* mptTyvek = new G4MaterialPropertiesTable();
         // Setup energy array (adjust the range 2.0-3.5 eV based on your plastic scintillator emission spectrum)
         G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
-        G4double reflectivity[] = { 0.98, 0.98, 0.98, 0.98 }; // Tyvek typically has ~98% reflectivity
+        G4double reflectivity[] = { 0.9, 0.9, 0.9, 0.9 }; // Tyvek typically has ~98% reflectivity
         mptTyvek->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 4);
         surfTyvekWrap->SetMaterialPropertiesTable(mptTyvek);
     }
@@ -804,7 +804,7 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     new G4LogicalSkinSurface("HolderDisk_Skin_" + name, logicHolderDisk, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette1_Skin_" + name, logicCuvette1, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette2_Skin_" + name, logicCuvette2, surfTyvekWrap);
-    new G4LogicalSkinSurface("PVC_Skin_" + name, logicPVCsourceMesh, surfTyvekWrap);
+    //new G4LogicalSkinSurface("PVC_Skin_" + name, logicPVCsourceMesh, surfTyvekWrap);
     new G4LogicalSkinSurface("TiFoil_Skin_" + name, logicFoilsourceMesh, surfMetalFoil);
     
     // --- 2. Optical Borders (Air Gap Explanation) ---
