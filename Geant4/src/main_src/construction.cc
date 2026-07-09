@@ -765,7 +765,6 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     
     // We use 'static' to ensure these templates are only created ONCE in memory
     static G4OpticalSurface* surfTyvekWrap = nullptr;
-    static G4OpticalSurface* surfSiPM = nullptr;
     static G4OpticalSurface* surfMetalFoil = nullptr;
 
     if (!surfTyvekWrap) {
@@ -785,22 +784,6 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
         surfTyvekWrap->SetMaterialPropertiesTable(mptTyvek);
     }
 
-    if (!surfSiPM) {
-        // --- 3. SiPM Surface Setup ---
-        // Ensure photons hitting the SiPM are absorbed (detected) and not reflected back
-        surfSiPM = new G4OpticalSurface("SiPM_Surf");
-        surfSiPM->SetType(dielectric_metal); 
-        surfSiPM->SetModel(unified);
-        surfSiPM->SetFinish(polished);
-        
-        G4MaterialPropertiesTable* mptSiPM = new G4MaterialPropertiesTable();
-        G4double photonEnergy[] = { 2.0*eV, 2.5*eV, 3.0*eV, 3.5*eV }; 
-        G4double reflectivity[] = { 0.0, 0.0, 0.0, 0.0 }; // 0% reflection = completely absorbed
-        G4double efficiency[]   = { 1.0, 1.0, 1.0, 1.0 }; // 100% QE for now (can map to actual PDE later)
-        mptSiPM->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 4);
-        mptSiPM->AddProperty("EFFICIENCY", photonEnergy, efficiency, 4);
-        surfSiPM->SetMaterialPropertiesTable(mptSiPM);
-    }
     if (!surfMetalFoil) {
         surfMetalFoil = new G4OpticalSurface("MetalFoil_Surf");
         surfMetalFoil->SetType(dielectric_metal); // 金屬邊界
@@ -821,8 +804,9 @@ void MyDetectorConstruction::ConstructCalorimeter_unit_3d(G4ThreeVector translat
     new G4LogicalSkinSurface("HolderDisk_Skin_" + name, logicHolderDisk, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette1_Skin_" + name, logicCuvette1, surfTyvekWrap);
     new G4LogicalSkinSurface("Cuvette2_Skin_" + name, logicCuvette2, surfTyvekWrap);
+    new G4LogicalSkinSurface("PVC_Skin_" + name, logicPVCsourceMesh, surfTyvekWrap);
     new G4LogicalSkinSurface("TiFoil_Skin_" + name, logicFoilsourceMesh, surfMetalFoil);
-
+    
     // --- 2. Optical Borders (Air Gap Explanation) ---
     // NOTE: Since you explicitly stated there are air gaps between components (Air Coupled),
     // NO G4LogicalBorderSurface is required or allowed here. 
