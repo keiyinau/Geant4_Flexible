@@ -7,8 +7,10 @@
 /gps/pos/shape Cylinder
 /gps/pos/centre 0 0 0 mm
 /gps/pos/radius 4.765 mm
-/gps/pos/halfz 0.0001 mm
-
+/gps/pos/halfz 0.0025 mm
+# Rotate the cylinder so its axis (local Z) points along the global X-axis
+/gps/pos/rot1 0 1 0
+/gps/pos/rot2 0 0 1
 #Set the energy distribution of Source, Mono (single value)
 /gps/ene/type Mono
 /gps/ene/mono 0. MeV
