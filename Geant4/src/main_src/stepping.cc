@@ -97,7 +97,7 @@ void MySteppingAction::UserSteppingAction(const G4Step* step)
         if (track->GetCreatorProcess() != nullptr) {
             creator = track->GetCreatorProcess()->GetProcessName();
         }
-        G4double energy = track->GetKineticEnergy();
+        G4double energy = preStepPoint->GetKineticEnergy();
         G4ThreeVector pos = preStepPoint->GetPosition(); // Creation position (decay vertex)
         G4ThreeVector mom = preStepPoint->GetMomentum();
         G4ThreeVector pol = track->GetPolarization();
